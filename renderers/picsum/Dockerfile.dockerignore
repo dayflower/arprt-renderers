@@ -1,0 +1,6 @@
+**
+!LICENSE
+!renderers
+!renderers/picsum
+!renderers/picsum/renderer.py
+!renderers/picsum/requirements.txt
