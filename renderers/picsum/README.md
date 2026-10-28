@@ -40,13 +40,11 @@ compatible gray4 output retains its own dithering. See upstream
 [display overrides](https://github.com/dayflower/arprt/blob/d53e6f6b71bf1e3bb1c7495ae842aff08c4d1a87/notes/OPERATIONS.md#display-overrides)
 for firmware requiring `spec.display.pngByteLimit: 90000`.
 
-The current source replaces Python/Pillow with a pure Go implementation using
+Picsum 0.2.0 replaces Python/Pillow with a pure Go implementation using
 Lanczos resizing, centered cropping and JPEG EXIF orientation. It preserves the
 output contract, not pixel-for-pixel or compressed-byte equality with Pillow:
 resampling, quantization and PNG compression can produce different results.
-The published 0.1.0 image and the pinned Screen examples still use Python/Pillow;
-the Go implementation is prepared for release as 0.2.0. See the
-[changelog](CHANGELOG.md) for the release changes.
+See the [changelog](CHANGELOG.md) for the release changes.
 
 Downloads are bounded to 8,000,000 bytes, use a 20-second timeout and at most
 three attempts on I/O errors. Requests contain only dimensions and a random
@@ -101,24 +99,24 @@ running container.
 
 ## Images and Kubernetes usage
 
-[Picsum **0.1.0**](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.1.0) is available for Linux amd64 and arm64,
+[Picsum **0.2.0**](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.2.0) is available for Linux amd64 and arm64,
 independently versioned from ARPRT. Pull the public image:
 
 ```sh
-docker pull ghcr.io/dayflower/arprt-renderer-picsum:0.1.0
+docker pull ghcr.io/dayflower/arprt-renderer-picsum:0.2.0
 ```
 
 The Screen examples pin the immutable multi-platform reference:
 
-`ghcr.io/dayflower/arprt-renderer-picsum@sha256:80c222a07f422d2c1e157fdab02e956f2e92af251e24db3547d1a2eecec562d2`
+`ghcr.io/dayflower/arprt-renderer-picsum@sha256:3efae210201cd37cb0b730892d5ab69edd73b20cbc6e1d35f2e4a9eb8ec14f34`
 
 To build/push a custom image, use your own registry and update
 `spec.source.job.renderer.image`:
 
 ```sh
-make -C renderers/picsum image IMAGE=registry.example.com/arprt-renderer-picsum:0.1.0
-make -C renderers/picsum container-check IMAGE=registry.example.com/arprt-renderer-picsum:0.1.0
-docker push registry.example.com/arprt-renderer-picsum:0.1.0
+make -C renderers/picsum image IMAGE=registry.example.com/arprt-renderer-picsum:0.2.0
+make -C renderers/picsum container-check IMAGE=registry.example.com/arprt-renderer-picsum:0.2.0
+docker push registry.example.com/arprt-renderer-picsum:0.2.0
 ```
 
 Builds compile a static Go binary with fixed dependencies in `go.mod`/`go.sum`;
