@@ -70,10 +70,12 @@ Ruff's version, Python target version and lint rules remain repository-wide.
 
 ## Validation scope
 
-The Go migration is unreleased. Local Linux amd64 builds, offline tests and CLI
-checks under Job restrictions have passed. Native arm64 execution, live Picsum
+The Go migration is prepared for release as 0.2.0. Local Linux amd64 builds,
+offline tests and CLI checks under Job restrictions have passed. The merged Go
+migration also passed native Linux amd64 and arm64 checks in CI. Live Picsum
 requests, Kubernetes integration and physical displays remain unverified for
-the Go implementation. CI is configured to check both native architectures.
+the Go implementation. The release workflow checks both native architectures
+again at the tagged revision before publishing.
 The 0.1.0 evidence below applies to the released Python/Pillow implementation.
 
 The [Picsum 0.1.0 release](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.1.0) passed native Linux amd64 and arm64
