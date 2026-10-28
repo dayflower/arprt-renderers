@@ -20,7 +20,8 @@ validation scope.
 
 The current Picsum source is a Go implementation with a minimal static runtime
 image. The published 0.1.0 image remains Python/Pillow; the Go implementation is
-unreleased. See the renderer README for migration details and local builds.
+prepared for release as 0.2.0. See the renderer README and
+[Picsum changelog](renderers/picsum/CHANGELOG.md) for migration details and local builds.
 
 ```sh
 make setup

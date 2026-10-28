@@ -45,7 +45,8 @@ Lanczos resizing, centered cropping and JPEG EXIF orientation. It preserves the
 output contract, not pixel-for-pixel or compressed-byte equality with Pillow:
 resampling, quantization and PNG compression can produce different results.
 The published 0.1.0 image and the pinned Screen examples still use Python/Pillow;
-the Go implementation has not been released.
+the Go implementation is prepared for release as 0.2.0. See the
+[changelog](CHANGELOG.md) for the release changes.
 
 Downloads are bounded to 8,000,000 bytes, use a 20-second timeout and at most
 three attempts on I/O errors. Requests contain only dimensions and a random
