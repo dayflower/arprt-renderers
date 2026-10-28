@@ -18,6 +18,10 @@ Picsum 0.1.0 is available for Linux amd64 and arm64 as
 multi-platform image digest; release notes record the source revision and
 validation scope.
 
+The current Picsum source is a Go implementation with a minimal static runtime
+image. The published 0.1.0 image remains Python/Pillow; the Go implementation is
+unreleased. See the renderer README for migration details and local builds.
+
 ```sh
 make setup
 make check

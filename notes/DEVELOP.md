@@ -1,7 +1,8 @@
 # Development
 
 Use uv, Make and Docker, plus the language toolchain needed by each renderer
-(Python 3.13 for Picsum). The root Makefile runs shared lint/format checks and
+(Go 1.27.3 for Picsum, selected by its `go.mod`). Python 3 is also required for
+Picsum container/release tools. The root Makefile runs shared lint/format checks and
 delegates renderer checks to their own Makefiles. Ruff and CI's uv are pinned in the root Makefile and workflow respectively.
 
 Run these commands from the repository root:
@@ -13,12 +14,16 @@ make -C renderers/picsum image
 make -C renderers/picsum container-check
 ```
 
-`make setup` calls each renderer's `setup` target. Picsum creates its own
-`renderers/picsum/.venv/` and installs exactly its pinned requirements. Renderer
-environments are separate, so dependencies and language versions can differ.
+`make setup` calls each renderer's `setup` target. Picsum downloads and verifies
+its fixed Go modules. A Go installation with automatic toolchain selection can
+download the pinned toolchain. Renderer modules remain separate, so dependencies
+and language versions can differ. `make -C renderers/picsum build` produces the
+local static CLI at `renderers/picsum/dist/renderer`.
 
 `make check` runs shared Ruff lint/import-order and formatting checks, then each
-renderer's `check` target. `make format` applies shared Python formatting. To work
+renderer's `check` target. Picsum checks Go formatting, runs `go vet` and Go
+tests, and runs the Python standard-library release guard tests.
+`make format` applies shared Python formatting; use `gofmt -w` for Go files. To work
 only on Picsum:
 
 ```sh
@@ -31,9 +36,11 @@ guard tests. Its release tools and tests live under `renderers/picsum/`.
 Its `image` and `container-check` targets accept `IMAGE` (default
 `arprt-renderer-picsum:dev`); `image` also accepts `VERSION` and `REVISION` for
 OCI labels. The container checker generates synthetic inputs and disables the
-network. Only its disposable output parent is writable, including unit-test
-temporary files; no `/tmp` tmpfs is provided. Dependencies are installed at image
-build time, never inside a running renderer.
+network. It exports a static Go test binary using the Dockerfile's `test-export`
+target and mounts it read-only into the exact production image. The runtime
+contains no Python, compiler or test suite. Only its disposable output parent is
+writable, including unit-test temporary files; no `/tmp` tmpfs is provided.
+Dependencies are downloaded at build time, never inside a running renderer.
 
 The [CI workflow](../.github/workflows/ci.yaml) runs on PRs, main pushes and manual
 dispatch. It runs repository-wide lint/format checks and calls each renderer's
@@ -41,8 +48,8 @@ verification workflow. Each renderer workflow prepares its own toolchain and
 dependencies; the shared CI job does not run renderer setup or tests.
 
 The reusable [Picsum checks](../.github/workflows/check-picsum.yaml) run lint/format
-on `renderers/picsum/` using the global Ruff configuration, set up Picsum's Python
-environment, and run its tests. Native amd64 and arm64 jobs build and check the
+on `renderers/picsum/` using the global Ruff configuration, set up Picsum's Go
+toolchain, and run its tests. Native amd64 and arm64 jobs build and check the
 shipped image, including all three CLI modes, four clockwise rotations, accepted
 target palettes, default paths and separate custom paths. Automated tests make
 no live Picsum requests.
@@ -62,6 +69,12 @@ Ruff's version, Python target version and lint rules remain repository-wide.
 `RUFF_PATHS` only selects which paths to check or format; its default is `.`.
 
 ## Validation scope
+
+The Go migration is unreleased. Local Linux amd64 builds, offline tests and CLI
+checks under Job restrictions have passed. Native arm64 execution, live Picsum
+requests, Kubernetes integration and physical displays remain unverified for
+the Go implementation. CI is configured to check both native architectures.
+The 0.1.0 evidence below applies to the released Python/Pillow implementation.
 
 The [Picsum 0.1.0 release](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.1.0) passed native Linux amd64 and arm64
 container builds, offline unit tests and CLI checks under Job restrictions.
