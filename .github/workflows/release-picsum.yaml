@@ -1,0 +1,102 @@
+name: release Picsum
+
+on:
+  push:
+    tags: ['picsum/v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  # Serialize all Picsum releases, including different versions and reruns.
+  group: release-picsum
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.metadata.outputs.tag }}
+      version: ${{ steps.metadata.outputs.version }}
+      revision: ${{ steps.metadata.outputs.revision }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: metadata
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python3 renderers/picsum/release.py guard "$RELEASE_TAG"
+
+  checks:
+    needs: guard
+    uses: ./.github/workflows/check-picsum.yaml
+    with:
+      archive: true
+      version: ${{ needs.guard.outputs.version }}
+      revision: ${{ needs.guard.outputs.revision }}
+
+  publish:
+    needs: [guard, checks]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      packages: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ needs.guard.outputs.tag }}
+      RELEASE_VERSION: ${{ needs.guard.outputs.version }}
+      SOURCE_REVISION: ${{ needs.guard.outputs.revision }}
+      IMAGE: ghcr.io/dayflower/arprt-renderer-picsum
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.guard.outputs.revision }}
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: picsum-image-*
+          path: ${{ runner.temp }}/picsum-images
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Refuse existing version and platform tags or release
+        run: python3 renderers/picsum/release.py unused "$GITHUB_REPOSITORY" "$RELEASE_TAG"
+      - name: Publish the tested platform images and multi-platform index
+        env:
+          IMAGE_ARCHIVES: ${{ runner.temp }}/picsum-images
+        run: |
+          for arch in amd64 arm64; do
+            docker load --input "$IMAGE_ARCHIVES/picsum-$arch.tar"
+            tested="arprt-renderer-picsum:check-$arch"
+            test "$(docker image inspect --format '{{.Os}}/{{.Architecture}}' "$tested")" = "linux/$arch"
+            test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$tested")" = "$SOURCE_REVISION"
+            test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.version"}}' "$tested")" = "$RELEASE_VERSION"
+            docker tag "$tested" "$IMAGE:$RELEASE_VERSION-$arch"
+            docker push "$IMAGE:$RELEASE_VERSION-$arch"
+          done
+          docker buildx imagetools create --tag "$IMAGE:$RELEASE_VERSION" \
+            --annotation "index:org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --annotation "index:org.opencontainers.image.revision=$SOURCE_REVISION" \
+            --annotation "index:org.opencontainers.image.version=$RELEASE_VERSION" \
+            "$IMAGE:$RELEASE_VERSION-amd64" "$IMAGE:$RELEASE_VERSION-arm64"
+          mkdir -p dist
+          docker buildx imagetools inspect --format '{{json .Manifest}}' "$IMAGE:$RELEASE_VERSION" > dist/picsum-index.json
+      - name: Record the release and digest
+        run: |
+          python3 renderers/picsum/release-notes.py
+          gh release create "$RELEASE_TAG" --verify-tag --latest=false --title "Picsum $RELEASE_VERSION" \
+            --notes-file dist/picsum-release.md dist/picsum-index.json
+          cat dist/picsum-release.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: picsum-distribution
+          path: dist/
+          retention-days: 90
