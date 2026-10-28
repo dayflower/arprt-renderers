@@ -17,9 +17,8 @@ spec:
   source:
     job:
       renderer:
-        # Initial release candidate, not yet published. Build/push your own image
-        # and replace this reference until the public release is available.
-        image: ghcr.io/dayflower/arprt-renderer-picsum:0.1.0
+        # Pin the Picsum 0.1.0 multi-platform image.
+        image: ghcr.io/dayflower/arprt-renderer-picsum@sha256:80c222a07f422d2c1e157fdab02e956f2e92af251e24db3547d1a2eecec562d2
         # The controller normalizes RGB input to the E1002's Spectra 6 palette.
         args: ["--palette", "rgb"]
         resources:

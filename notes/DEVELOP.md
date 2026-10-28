@@ -63,12 +63,17 @@ Ruff's version, Python target version and lint rules remain repository-wide.
 
 ## Validation scope
 
-During the initial migration, local Linux amd64 container builds, offline unit
-tests and restricted CLI checks are the validation baseline. Native arm64 runs
-are configured in GitHub Actions but have not yet run for this new repository.
-Public GHCR pulls, release execution, Kubernetes scheduling/PVC collection and
-physical displays remain unverified until separately exercised. A multi-platform
-build or emulated execution alone is not evidence of native arm64 acceptance.
+The [Picsum 0.1.0 release](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.1.0) passed native Linux amd64 and arm64
+container builds, offline unit tests and CLI checks under Job restrictions.
+Anonymous public tag/digest pulls and OCI revision/version labels were
+verified for both platforms. Published image config digests match the exact
+image archives tested on the native runners. The public amd64 image also
+passed the offline container checker after publication.
+
+Live Picsum requests, Kubernetes scheduling/PVC collection and physical
+displays remain unverified for this release. The native prepublication
+checks and the postpublication amd64 execution have distinct scopes;
+a multi-platform build or emulation alone is not native arm64 acceptance.
 
 ARPRT v0.2.2 is the imported contract/source baseline, not a claim of an end-to-end
 test against a deployed controller. Record expanded validation in the relevant
