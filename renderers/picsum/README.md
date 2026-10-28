@@ -85,10 +85,19 @@ package installation inside a running container.
 
 ## Images and Kubernetes usage
 
-The first candidate is **0.1.0**, independently versioned from ARPRT v0.2.2.
-`ghcr.io/dayflower/arprt-renderer-picsum:0.1.0` is the intended reference and is
-**not published yet**. Until publication, build/push to your own accessible
-registry and edit the selected Screen's `spec.source.job.renderer.image`:
+[Picsum **0.1.0**](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.1.0) is available for Linux amd64 and arm64,
+independently versioned from ARPRT. Pull the public image:
+
+```sh
+docker pull ghcr.io/dayflower/arprt-renderer-picsum:0.1.0
+```
+
+The Screen examples pin the immutable multi-platform reference:
+
+`ghcr.io/dayflower/arprt-renderer-picsum@sha256:80c222a07f422d2c1e157fdab02e956f2e92af251e24db3547d1a2eecec562d2`
+
+To build/push a custom image, use your own registry and update
+`spec.source.job.renderer.image`:
 
 ```sh
 make -C renderers/picsum image IMAGE=registry.example.com/arprt-renderer-picsum:0.1.0
@@ -98,17 +107,17 @@ docker push registry.example.com/arprt-renderer-picsum:0.1.0
 
 Builds install the pinned Pillow dependency; the base image is pinned by digest.
 Release builds add OCI version, source repository, MIT license and source revision
-labels. After a public release, pull the image tag above or preferably its index
-digest from the GitHub release. Distribution targets Linux amd64 and arm64; CI
-uses native runners for both. See [validation scope](../../notes/DEVELOP.md#validation-scope)
-for the evidence actually available at migration time.
+labels. The release records the image index digest and source revision. CI
+uses native amd64 and arm64 runners; anonymous pulls have been verified for
+both. See [validation scope](../../notes/DEVELOP.md#validation-scope) for the
+specific checks performed.
 
 Allow DNS and outbound HTTPS to `picsum.photos` and its redirect CDN
 `fastly.picsum.photos`, plus image-pull access from cluster nodes to your registry.
 No runtime dependency downloads are needed. A Job failure follows the controller's
 compatible-prior-output fallback behavior; it does not publish a partial file.
 
-After replacing the not-yet-published image reference, select one Screen:
+Apply the OG Screen and assign it to your Device:
 
 ```sh
 kubectl -n arprt apply --validate=strict -f renderers/picsum/screen.yaml

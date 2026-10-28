@@ -11,11 +11,12 @@ and of one another. No shared SDK is required.
 
 | Renderer | Execution | Image | Release tags | Status |
 | --- | --- | --- | --- | --- |
-| [Picsum](renderers/picsum/README.md) | Kubernetes Job CLI | `ghcr.io/dayflower/arprt-renderer-picsum` | `picsum/vMAJOR.MINOR.PATCH` | Initial candidate 0.1.0; not yet published |
+| [Picsum](renderers/picsum/README.md) | Kubernetes Job CLI | `ghcr.io/dayflower/arprt-renderer-picsum` | `picsum/vMAJOR.MINOR.PATCH` | Released [0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.1.0) |
 
-The checked-in Screen references describe the intended first image, which is
-**not available yet**. Build/push your own image and replace the reference until
-the public release and anonymous pull checks have completed.
+Picsum 0.1.0 is available for Linux amd64 and arm64 as
+`ghcr.io/dayflower/arprt-renderer-picsum:0.1.0`. The Screen examples pin its
+multi-platform image digest; release notes record the source revision and
+validation scope.
 
 ```sh
 make setup

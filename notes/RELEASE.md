@@ -1,8 +1,9 @@
 # Renderer releases
 
-The initial Picsum candidate is `0.1.0`; there is no published image or release
-yet. Do not advertise the package as available until publication and anonymous
-pulls have been verified.
+[Picsum 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.1.0) is published and anonymously pullable for Linux
+amd64 and arm64. Its release notes record the immutable image reference,
+source revision and validation scope. The following procedure applies to
+subsequent releases; choose a version that has not been published before.
 
 ## Initial setup
 
@@ -25,11 +26,12 @@ ARPRT and other renderers. Before pushing any Codex-contributed commits, inspect
 their messages and preserve the required co-author attribution.
 
 Run the checks in [DEVELOP](DEVELOP.md), then create an annotated tag
-on that main commit (commands below describe the initial candidate only):
+on that main commit (this example assumes VERSION was updated to 0.1.1):
 
 ```sh
-git tag -a picsum/v0.1.0 -m 'Picsum 0.1.0'
-git push origin refs/tags/picsum/v0.1.0
+picsum_version=0.1.1
+git tag -a "picsum/v${picsum_version}" -m "Picsum ${picsum_version}"
+git push origin "refs/tags/picsum/v${picsum_version}"
 ```
 
 The [Picsum workflow](../.github/workflows/release-picsum.yaml) accepts only canonical
@@ -64,19 +66,22 @@ digest and manually finish the release without rebuilding or repushing images.
 
 ## Public availability
 
-The first GHCR package may be private by default. Set it to public, then verify
-pulls without credentials. Use a fresh empty Docker config, not your existing
-login, and verify each platform and the recorded digest:
+Confirm that the GHCR package is Public; a new package may require changing
+its visibility in package settings. Verify pulls without credentials using
+a fresh empty Docker config and the same `picsum_version` selected above:
 
 ```sh
 mkdir -p dist/anonymous-docker
-DOCKER_CONFIG="$PWD/dist/anonymous-docker" docker pull --platform linux/amd64 ghcr.io/dayflower/arprt-renderer-picsum:0.1.0
-DOCKER_CONFIG="$PWD/dist/anonymous-docker" docker pull --platform linux/arm64 ghcr.io/dayflower/arprt-renderer-picsum:0.1.0
+DOCKER_CONFIG="$PWD/dist/anonymous-docker" docker pull --platform linux/amd64 "ghcr.io/dayflower/arprt-renderer-picsum:${picsum_version}"
+DOCKER_CONFIG="$PWD/dist/anonymous-docker" docker pull --platform linux/arm64 "ghcr.io/dayflower/arprt-renderer-picsum:${picsum_version}"
 ```
 
 Also pull the release's `ghcr.io/dayflower/arprt-renderer-picsum@sha256:...`
 reference and run
 `make -C renderers/picsum container-check IMAGE=<digest-reference>` on each native
-architecture. Record results in the release. Remove the initial
-not-published notices only after this succeeds; prefer that digest in the Screens.
-No Helm publication is needed for the Job renderer.
+architecture where a native host is available. Record the actual verification
+scope in the release, distinguishing it from the native prepublication CI
+checks. Update the READMEs and pin the verified digest in the Screen examples
+after public availability is confirmed. If release immutability is enabled,
+assets cannot be added after publication; record later verification in the
+editable release notes. No Helm publication is needed for the Job renderer.
