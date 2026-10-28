@@ -58,7 +58,7 @@ def validate(path, palette):
         offset += 12 + length
     assert offset == len(png)
     assert png[-12:] == chunk(b"IEND", b"")
-    assert not path.with_suffix(".tmp").exists()
+    assert not list(path.parent.glob(".picsum-*.tmp"))
 
 
 def check(image):
@@ -72,21 +72,33 @@ def check(image):
         root.chmod(0o755)
         output.chmod(0o777)
         (inputs / "photo.png").write_bytes(photo())
-        (inputs / "environment.py").write_text(
-            "import os\n"
-            "from pathlib import Path\n"
-            "assert os.getuid() == os.getgid() == 1000\n"
-            "assert not Path('/var/run/secrets/kubernetes.io/serviceaccount/token').exists()\n"
-            "for name in ('/tmp/probe', '/app/probe', '/fixtures/probe', '/arprt/context.json'):\n"
-            "    try:\n"
-            "        with open(name, 'ab'):\n"
-            "            pass\n"
-            "    except OSError:\n"
-            "        continue\n"
-            "    raise AssertionError('Unexpected writable path: ' + name)\n"
-            "status = Path('/proc/self/status').read_text().splitlines()\n"
-            "assert 'NoNewPrivs:\\t1' in status\n"
-            "assert 'CapEff:\\t0000000000000000' in status\n"
+        platform = subprocess.check_output(
+            [
+                "docker",
+                "image",
+                "inspect",
+                "--format",
+                "{{.Os}}/{{.Architecture}}",
+                image,
+            ],
+            text=True,
+        ).strip()
+        assert platform in ("linux/amd64", "linux/arm64")
+        # Compile tests with the same pinned toolchain for the image architecture.
+        # Mount this separate binary into the exact production image: no compiler,
+        # Python interpreter or test dependencies belong in the runtime image.
+        run(
+            "docker",
+            "build",
+            "--platform",
+            platform,
+            "--target",
+            "test-export",
+            "--output",
+            f"type=local,dest={inputs}",
+            "-f",
+            str(PICSUM / "Dockerfile"),
+            str(PICSUM.parents[1]),
         )
 
         def docker(context, output_parent="/arprt", extra=()):
@@ -117,26 +129,18 @@ def check(image):
         base = json.loads((PICSUM / "fixtures/render-context-v1.json").read_text())
         context.write_text(json.dumps(base))
         run(
-            *docker(context, extra=("--entrypoint", "python3")),
-            "/fixtures/environment.py",
-        )
-        run(
             *docker(
                 context,
                 extra=(
                     "--env=TMPDIR=/arprt",
-                    "--mount",
-                    f"type=bind,src={PICSUM / 'test_renderer.py'},dst=/app/test_renderer.py,readonly",
+                    "--env=PICSUM_JOB_CHECK=1",
                     "--mount",
                     f"type=bind,src={PICSUM / 'fixtures'},dst=/app/fixtures,readonly",
                     "--entrypoint",
-                    "python3",
+                    "/fixtures/renderer.test",
                 ),
             ),
-            "-m",
-            "unittest",
-            "-v",
-            "test_renderer",
+            "-test.v",
         )
         # Verify default paths and gray4 before exercising explicit custom paths.
         run(*docker(context), "--input", "/fixtures/photo.png")
@@ -175,6 +179,27 @@ def check(image):
                 )
                 validate(destination, palette)
                 assert destination.stat().st_uid == 1000
+        # The shipped CLI must preserve prior output on a failed conversion.
+        prior = destination.read_bytes()
+        (inputs / "invalid.png").write_bytes(b"invalid image")
+        result = subprocess.run(
+            [
+                *docker(context, "/work"),
+                "--context",
+                "/work/context.json",
+                "--output",
+                "/work/result.png",
+                "--input",
+                "/fixtures/invalid.png",
+                "--palette",
+                "rgb",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode != 0
+        assert destination.read_bytes() == prior
+        validate(destination, "rgb")
         print(
             "PASS: offline unit tests, default/custom CLI paths, palettes and rotations"
         )

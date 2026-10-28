@@ -2,5 +2,7 @@
 !LICENSE
 !renderers
 !renderers/picsum
-!renderers/picsum/renderer.py
-!renderers/picsum/requirements.txt
+!renderers/picsum/*.go
+!renderers/picsum/go.mod
+!renderers/picsum/go.sum
+!renderers/picsum/THIRD_PARTY_NOTICES.md

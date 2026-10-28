@@ -1,6 +1,6 @@
 # Picsum renderer
 
-A Python/Pillow CLI for ARPRT Kubernetes Jobs. It downloads a random photograph
+A Go CLI for ARPRT Kubernetes Jobs. It downloads a random photograph
 from [Lorem Picsum](https://picsum.photos/) or reads a local image, then writes a
 PNG. It renders only the photograph; timestamp, battery and Wi-Fi overlays belong
 to the controller. This is maintained by ARPRT, which is independent, unofficial
@@ -40,6 +40,13 @@ compatible gray4 output retains its own dithering. See upstream
 [display overrides](https://github.com/dayflower/arprt/blob/d53e6f6b71bf1e3bb1c7495ae842aff08c4d1a87/notes/OPERATIONS.md#display-overrides)
 for firmware requiring `spec.display.pngByteLimit: 90000`.
 
+The current source replaces Python/Pillow with a pure Go implementation using
+Lanczos resizing, centered cropping and JPEG EXIF orientation. It preserves the
+output contract, not pixel-for-pixel or compressed-byte equality with Pillow:
+resampling, quantization and PNG compression can produce different results.
+The published 0.1.0 image and the pinned Screen examples still use Python/Pillow;
+the Go implementation has not been released.
+
 Downloads are bounded to 8,000,000 bytes, use a 20-second timeout and at most
 three attempts on I/O errors. Requests contain only dimensions and a random
 cache-busting value, never device data. When Picsum supplies a photo ID, logs
@@ -48,24 +55,29 @@ Local input and responses with no ID log no photo URL.
 
 ## Local rendering and offline checks
 
-Run from the repository root. Install uv, Python 3.13 and Make for development:
+Run from the repository root. Install Go (the toolchain is pinned in `go.mod`),
+Python 3 and Make for development. uv is needed only for the shared Ruff checks;
+Python is used for container/release tooling, not the renderer runtime:
 
 ```sh
 make -C renderers/picsum setup
-renderers/picsum/.venv/bin/python renderers/picsum/renderer.py \
+make -C renderers/picsum build
+renderers/picsum/dist/renderer \
   --context renderers/picsum/fixtures/render-context-v1.json \
   --input /path/to/photo.jpg --output /path/to/picsum.png
-renderers/picsum/.venv/bin/python renderers/picsum/renderer.py \
+renderers/picsum/dist/renderer \
   --context renderers/picsum/fixtures/render-context-spectra6.json \
   --palette rgb --input /path/to/photo.jpg --output /path/to/picsum-rgb.png
 make -C renderers/picsum check
 ```
 
-Use `--palette bw` for black/white output. Local JPEG and other Pillow-supported
-image formats work with `--input`; omit it to fetch from Picsum. `--context`
+Use `--palette bw` for black/white output. JPEG, PNG, GIF (first frame), TIFF,
+BMP and WebP inputs work with `--input`; omit it to fetch from Picsum. Other
+Pillow-specific formats are not supported by the Go implementation. `--context`
 defaults to `/arprt/context.json`, `--output` to `/arprt/output.png`. Output is
-written to a sibling `.tmp` file and atomically replaced, preserving existing
-output if rendering fails. The output parent must exist and be writable.
+written to a unique sibling `.picsum-*.tmp` file and atomically replaced,
+preserving existing output if rendering fails. The output parent must exist and
+be writable.
 
 To build and exercise the actual image without any Picsum requests:
 
@@ -79,9 +91,12 @@ the CLI with the network disabled, a read-only root, UID/GID 1000, all capabilit
 dropped, no privilege escalation and no ServiceAccount token. Only the output
 parent is mounted writable; there is no `/tmp` tmpfs. It tests default and custom
 context/output paths and every supported palette/rotation combination. Unit-test
-temporary files are redirected into that same output directory, without changing
-the shipped CLI's environment. Neither normal runtime nor offline tests need
-package installation inside a running container.
+temporary files are redirected into that same output directory. A separate Go
+test binary is compiled by the Dockerfile's `test-export` target and mounted
+read-only into the production image. This keeps the test suite out of the shipped
+image while exercising its runtime filesystem and security restrictions.
+Neither normal runtime nor offline tests need package installation inside a
+running container.
 
 ## Images and Kubernetes usage
 
@@ -105,7 +120,11 @@ make -C renderers/picsum container-check IMAGE=registry.example.com/arprt-render
 docker push registry.example.com/arprt-renderer-picsum:0.1.0
 ```
 
-Builds install the pinned Pillow dependency; the base image is pinned by digest.
+Builds compile a static Go binary with fixed dependencies in `go.mod`/`go.sum`;
+the Go build image is pinned by digest. The runtime uses `scratch` and contains
+the binary, HTTPS CA certificates and license notices, with no shell, Python,
+package manager or runtime dependency installation. Third-party licenses are
+recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and shipped in the image.
 Release builds add OCI version, source repository, MIT license and source revision
 labels. The release records the image index digest and source revision. CI
 uses native amd64 and arm64 runners; anonymous pulls have been verified for
