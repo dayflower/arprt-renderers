@@ -11,17 +11,16 @@ and of one another. No shared SDK is required.
 
 | Renderer | Execution | Image | Release tags | Status |
 | --- | --- | --- | --- | --- |
-| [Picsum](renderers/picsum/README.md) | Kubernetes Job CLI | `ghcr.io/dayflower/arprt-renderer-picsum` | `picsum/vMAJOR.MINOR.PATCH` | Released [0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.1.0) |
+| [Picsum](renderers/picsum/README.md) | Kubernetes Job CLI | `ghcr.io/dayflower/arprt-renderer-picsum` | `picsum/vMAJOR.MINOR.PATCH` | Released [0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.2.0) |
 
-Picsum 0.1.0 is available for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-picsum:0.1.0`. The Screen examples pin its
+Picsum 0.2.0 is available for Linux amd64 and arm64 as
+`ghcr.io/dayflower/arprt-renderer-picsum:0.2.0`. The Screen examples pin its
 multi-platform image digest; release notes record the source revision and
 validation scope.
 
-The current Picsum source is a Go implementation with a minimal static runtime
-image. The published 0.1.0 image remains Python/Pillow; the Go implementation is
-prepared for release as 0.2.0. See the renderer README and
-[Picsum changelog](renderers/picsum/CHANGELOG.md) for migration details and local builds.
+Picsum 0.2.0 uses a static Go binary in a minimal runtime image. See the renderer
+README and [Picsum changelog](renderers/picsum/CHANGELOG.md) for migration details
+and local builds.
 
 ```sh
 make setup

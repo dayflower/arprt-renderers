@@ -1,6 +1,6 @@
 # Renderer releases
 
-[Picsum 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.1.0) is published and anonymously pullable for Linux
+[Picsum 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.2.0) is published and anonymously pullable for Linux
 amd64 and arm64. Its release notes record the immutable image reference,
 source revision and validation scope. The following procedure applies to
 subsequent releases; choose a version that has not been published before.
@@ -26,10 +26,10 @@ ARPRT and other renderers. Before pushing any Codex-contributed commits, inspect
 their messages and preserve the required co-author attribution.
 
 Run the checks in [DEVELOP](DEVELOP.md), then create an annotated tag
-on that main commit (this example assumes VERSION was updated to 0.1.1):
+on that main commit (this example assumes VERSION was updated to 0.2.1):
 
 ```sh
-picsum_version=0.1.1
+picsum_version=0.2.1
 git tag -a "picsum/v${picsum_version}" -m "Picsum ${picsum_version}"
 git push origin "refs/tags/picsum/v${picsum_version}"
 ```
@@ -49,8 +49,9 @@ tag whose commit is on origin/main and tests that exact revision. It then:
    rate-limit and server failures stop publication.
 3. Publishes `ghcr.io/dayflower/arprt-renderer-picsum:<version>-amd64` and
    `:<version>-arm64`, then assembles `:<version>` as a multi-platform index.
-   There is no mutable `latest` tag. OCI image/index metadata records version,
-   source repository and exact source revision; images include the MIT license.
+   There is no mutable `latest` tag. OCI image labels record version, source
+   repository and exact source revision; images include the MIT license. The multi-platform index and
+   release asset record the platform manifests and immutable image reference.
 4. Creates a renderer-specific GitHub release, attaches index digest/platform
    metadata and records the immutable image reference. This is workflow evidence,
    not a claim of cluster, live-service or physical-device acceptance.

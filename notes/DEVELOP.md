@@ -70,25 +70,18 @@ Ruff's version, Python target version and lint rules remain repository-wide.
 
 ## Validation scope
 
-The Go migration is prepared for release as 0.2.0. Local Linux amd64 builds,
-offline tests and CLI checks under Job restrictions have passed. The merged Go
-migration also passed native Linux amd64 and arm64 checks in CI. Live Picsum
-requests, Kubernetes integration and physical displays remain unverified for
-the Go implementation. The release workflow checks both native architectures
-again at the tagged revision before publishing.
-The 0.1.0 evidence below applies to the released Python/Pillow implementation.
+The [Picsum 0.2.0 release](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.2.0)
+passed native Linux amd64 and arm64 container builds, offline unit tests and CLI
+checks under Job restrictions at source revision
+`c14896bacee28e645089518bf1d8c0a09f602ab0`. Anonymous public tag/digest pulls and
+OCI revision/version labels were verified for both platforms. Published image
+config digests match the exact image archives tested on the native runners.
+The public amd64 image also passed the offline container checker after publication.
 
-The [Picsum 0.1.0 release](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.1.0) passed native Linux amd64 and arm64
-container builds, offline unit tests and CLI checks under Job restrictions.
-Anonymous public tag/digest pulls and OCI revision/version labels were
-verified for both platforms. Published image config digests match the exact
-image archives tested on the native runners. The public amd64 image also
-passed the offline container checker after publication.
-
-Live Picsum requests, Kubernetes scheduling/PVC collection and physical
-displays remain unverified for this release. The native prepublication
-checks and the postpublication amd64 execution have distinct scopes;
-a multi-platform build or emulation alone is not native arm64 acceptance.
+Live Picsum requests, Kubernetes scheduling/PVC collection and physical displays
+remain unverified for this release. Native prepublication checks and the
+postpublication amd64 execution have distinct scopes; anonymous arm64 pulls
+verify availability, not postpublication native arm64 execution.
 
 ARPRT v0.2.2 is the imported contract/source baseline, not a claim of an end-to-end
 test against a deployed controller. Record expanded validation in the relevant
