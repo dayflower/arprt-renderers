@@ -5,7 +5,9 @@ an external webcappi service, and atomically writes an ARPRT Job output file.
 It displays headlines, optional summaries, categories, sources, bookmark counts,
 optional thumbnails and feed-supplied article dates.
 ARPRT is independent and unofficial, with no affiliation with or endorsement by
-TRMNL. This renderer has no published image or release yet.
+TRMNL. [RSS 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.1.0)
+is publicly available for Linux amd64 and arm64 as
+`ghcr.io/dayflower/arprt-renderer-rss:0.1.0`.
 
 ## Supported input and limits
 
@@ -241,18 +243,17 @@ NHK, Hatena Bookmark, Yahoo! News and Livedoor feeds through the real CLI at bot
 logical viewport sizes. All ten captures succeeded and were visually inspected; no layout
 correction was needed. These are point-in-time visual checks. See the
 [validation record](VALIDATION.md) for observed feed behavior, software and cluster
-verification, and remaining release and physical-display checks. No public image
-availability is claimed. See [third-party notices](THIRD_PARTY_NOTICES.md) for
-dependency licenses.
+verification, public-image checks and the limits of physical-display observation.
+See [third-party notices](THIRD_PARTY_NOTICES.md) for dependency licenses.
 
 ## Screen configuration
 
-Build with `make -C renderers/rss image` and load `arprt-renderer-rss:dev` into
-your cluster using its local image-loading mechanism. [screen.yaml](screen.yaml)
-is a starting example with synthetic feed and webcappi endpoints: replace both
-before use. The example uses the local build because no RSS image is published.
-The planned registry is `ghcr.io/dayflower/arprt-renderer-rss`; after publication
-and anonymous-pull verification, pin its verified multi-platform digest.
+[screen.yaml](screen.yaml) pins the verified multi-platform digest of RSS 0.1.0
+from `ghcr.io/dayflower/arprt-renderer-rss`. It uses synthetic feed and webcappi
+endpoints: replace both before applying it. Anonymous tag and digest pulls were
+verified for Linux amd64 and arm64. To use a development build instead, run
+`make -C renderers/rss image`, load `arprt-renderer-rss:dev` into your cluster
+and replace the example image reference with that local image.
 A matching 800 × 480 gray4 or spectra6 Device must select this Screen. Rotation
 comes from the Device's Render Context, rather than a renderer CLI option.
 
@@ -277,10 +278,11 @@ Ruff checks, fixed-module setup, Go checks and offline release guard tests.
 Separate native Linux amd64 and arm64 runners build the production image,
 check OCI version/revision labels and execute the offline container checker.
 [Normal CI](../../.github/workflows/ci.yaml) also runs shared checks and Picsum
-verification. Configuring both native jobs is not evidence that they have run;
-local validation currently covers Linux amd64 only.
+verification. The RSS 0.1.0 release passed both native jobs; its public amd64 image
+also passed the container checker after publication. Anonymous arm64 pulls confirm
+availability, while native arm64 execution was verified before publication.
 
-VERSION is independently set to `0.1.0`, an unreleased initial version.
+VERSION is independently set to `0.1.0`, the initial published RSS release.
 [RSS releases](../../.github/workflows/release-rss.yaml) accept annotated,
 canonical stable `rss/vMAJOR.MINOR.PATCH` tags matching VERSION on `origin/main`.
 They call only RSS verification, transfer the exact tested native image archives

@@ -89,10 +89,13 @@ editable release notes. No Helm publication is needed for the Job renderer.
 
 ## Publishing RSS
 
-RSS is unreleased. Its independent [VERSION](../renderers/rss/VERSION) is `0.1.0`;
-this does not imply an available registry tag. Its planned package is
-`ghcr.io/dayflower/arprt-renderer-rss`, with canonical stable
-`rss/vMAJOR.MINOR.PATCH` annotated tags and its own `release-rss` concurrency group.
+[RSS 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.1.0)
+is published and anonymously pullable for Linux amd64 and arm64 as
+`ghcr.io/dayflower/arprt-renderer-rss:0.1.0`. Its release notes record the
+immutable reference, source revision and validation scope. The following
+procedure applies to subsequent releases; choose an unpublished version.
+RSS keeps its independent [VERSION](../renderers/rss/VERSION), canonical stable
+`rss/vMAJOR.MINOR.PATCH` annotated tags and `release-rss` concurrency group.
 Do not change Picsum or controller versions for an RSS release.
 
 Apply the initial setup above to `rss/v*` tag protection and the
@@ -107,10 +110,11 @@ cannot substitute for native arm64 validation. The
 browser and disposable-cluster acceptance scope; it does not replace release
 checks against the revision intended for publication.
 
-When publication is authorized, tag the reviewed main revision:
+When publication is authorized, tag the reviewed main revision. This example
+assumes VERSION was updated to the unused version 0.1.1:
 
 ```sh
-rss_version=0.1.0
+rss_version=0.1.1
 git tag -a "rss/v${rss_version}" -m "RSS ${rss_version}"
 git push origin "refs/tags/rss/v${rss_version}"
 ```
@@ -150,5 +154,5 @@ anonymous pull checks and postpublication execution separately. Then update the
 root/renderer README status and replace the local image in
 [the RSS Screen example](../renderers/rss/screen.yaml) with the verified
 multi-platform digest. Keep its feed and webcappi endpoints synthetic in the
-repository. No RSS image publication, cluster deployment or physical validation
-is implied by adding these release tools.
+repository. Publishing a renderer does not deploy it or change existing
+Device assignments.

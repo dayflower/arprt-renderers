@@ -158,4 +158,6 @@ render. A subsequent physical check displayed the live Hatena Bookmark feed on
 both targets with existing rotation and overlay settings: the user reported
 readable gray4 text and rougher Spectra 6 text. This narrow check does not establish
 acceptance of other feeds, rotations, photos or overlays. Broader production-cluster
-behavior and native arm64 execution remain unverified. RSS is not yet published.
+behavior remains unverified. RSS 0.1.0 passed native amd64 and arm64 release checks,
+anonymous tag/digest pulls on both platforms, and postpublication amd64 container
+checks. Postpublication native arm64 execution was not performed.

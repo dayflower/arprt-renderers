@@ -9,9 +9,8 @@ spec:
   source:
     job:
       renderer:
-        # Build locally and load into your cluster; no RSS image is published yet.
-        # After publication, replace this with the verified multi-platform digest.
-        image: arprt-renderer-rss:dev
+        # RSS 0.1.0; verified Linux amd64/arm64 multi-platform image.
+        image: ghcr.io/dayflower/arprt-renderer-rss@sha256:5a21c46f62cb2c79a39b2e02327ca3954203470048ba0389b6252cfc9fc2c80d
         args:
           - --feed-url
           - https://news.example.com/feed.xml
