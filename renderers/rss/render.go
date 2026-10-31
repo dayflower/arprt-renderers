@@ -77,15 +77,15 @@ body{padding:16px;font-family:"Noto Sans CJK JP","Noto Sans JP",sans-serif;overf
 main{height:100%;overflow:hidden}h1{font-size:24px;line-height:1.3;margin:0 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 article{padding:8px 0;border-top:1px solid #888;break-inside:avoid}h2{font-size:23px;line-height:1.35;font-weight:700;margin:0;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .meta{font-size:14px;line-height:1.4;color:#444;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.summary{font-size:17px;line-height:1.4;margin-top:4px;max-height:4.2em;overflow:hidden;overflow-wrap:anywhere}.block{display:block}.bullet:before{content:"• "}.empty{font-size:20px}
-</style></head><body><main><h1>{{.Title}}</h1>{{range .Articles}}<article><h2>{{.Title}}</h2>{{if .Meta}}<div class="meta">{{.Meta}}</div>{{end}}{{if .Summary}}<div class="summary">{{range .Summary}}<span class="block{{if .Bullet}} bullet{{end}}">{{.Text}}</span>{{end}}</div>{{end}}</article>{{else}}<p class="empty">No articles available.</p>{{end}}</main>
+.summary{font-size:17px;line-height:1.4;margin-top:4px;max-height:4.2em;overflow:hidden;overflow-wrap:anywhere}.block{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}.summary-label{font-size:14px;line-height:1.4;margin-top:4px}.bullet:before{content:"• "}.empty{font-size:20px}
+</style></head><body><main><h1>{{.Title}}</h1>{{range .Articles}}<article><h2>{{.Title}}</h2>{{if .Meta}}<div class="meta">{{.Meta}}</div>{{end}}{{if .Summary}}{{if .SummaryLabel}}<div class="summary-label">{{.SummaryLabel}}</div>{{end}}<div class="summary">{{range .Summary}}<span class="block{{if .Bullet}} bullet{{end}}">{{.Text}}</span>{{end}}</div>{{end}}</article>{{else}}<p class="empty">No articles available.</p>{{end}}</main>
 <script>
-(async()=>{await document.fonts.ready;await new Promise(requestAnimationFrame);const main=document.querySelector('main');let rows=[...main.querySelectorAll('article')];const fits=row=>row.getBoundingClientRect().bottom<=main.getBoundingClientRect().bottom;while(rows.length>1&&!fits(rows.at(-1)))rows.pop().remove();if(rows.length&&!fits(rows[0])){rows[0].querySelector('.summary')?.remove();rows[0].querySelector('.meta')?.remove()}document.body.id='rss-ready'})();
+(async()=>{await document.fonts.ready;await new Promise(requestAnimationFrame);for(const summary of document.querySelectorAll('.summary')){let remaining=3;for(const block of [...summary.children]){if(!remaining){block.remove();continue}block.style.webkitLineClamp=String(remaining);const line=parseFloat(getComputedStyle(block).lineHeight);remaining-=Math.min(remaining,Math.ceil(block.getBoundingClientRect().height/line))}}await new Promise(requestAnimationFrame);const main=document.querySelector('main');let rows=[...main.querySelectorAll('article')];const fits=row=>row.getBoundingClientRect().bottom<=main.getBoundingClientRect().bottom;while(rows.length>1&&!fits(rows.at(-1)))rows.pop().remove();if(rows.length&&!fits(rows[0])){rows[0].querySelector('.summary')?.remove();rows[0].querySelector('.summary-label')?.remove();rows[0].querySelector('.meta')?.remove()}if(rows.length&&!fits(rows[0]))rows[0].remove();document.body.id='rss-ready'})();
 </script></body></html>`))
 
 type viewArticle struct {
-	Title, Meta string
-	Summary     []summaryBlock
+	Title, Meta, SummaryLabel string
+	Summary                   []summaryBlock
 }
 type viewFeed struct {
 	Title    string
@@ -106,6 +106,9 @@ func renderHTML(f feed, title string, maxItems int, summary bool, location *time
 		if a.Category != "" {
 			meta = append(meta, a.Category)
 		}
+		if a.BookmarkCount != nil {
+			meta = append(meta, strconv.FormatUint(*a.BookmarkCount, 10)+" users")
+		}
 		source := a.Source
 		if source == "" {
 			source = f.Title
@@ -118,7 +121,17 @@ func renderHTML(f feed, title string, maxItems int, summary bool, location *time
 		}
 		v.Meta = strings.Join(meta, " · ")
 		if summary {
-			v.Summary = a.Summary
+			v.SummaryLabel = a.SummaryLabel
+			bullets := 0
+			for _, block := range a.Summary {
+				if block.Bullet {
+					bullets++
+					if bullets > 3 {
+						continue
+					}
+				}
+				v.Summary = append(v.Summary, block)
+			}
 		}
 		view.Articles = append(view.Articles, v)
 	}

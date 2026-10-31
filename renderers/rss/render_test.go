@@ -312,6 +312,7 @@ func TestProductionCLI(t *testing.T) {
 		}
 	}
 	checkCLI(t, binary)
+	checkProfilesCLI(t, binary)
 }
 func checkCLI(t *testing.T, binary string) {
 	t.Helper()
@@ -419,7 +420,7 @@ func checkCLI(t *testing.T, binary string) {
 			t.Fatal(err)
 		}
 	}
-	for _, extra := range [][]string{{"--max-items", "0"}, {"--profile", "auto"}, {"--timezone", "Unknown/Zone"}, {"--feed-url", server.URL + "/feed"}} {
+	for _, extra := range [][]string{{"--max-items", "0"}, {"--profile", "unknown"}, {"--timezone", "Unknown/Zone"}, {"--feed-url", server.URL + "/feed"}} {
 		args := []string{"--context", contextPath, "--output", output, "--input", "fixtures/rss2.xml", "--webcappi-url", server.URL}
 		args = append(args, extra...)
 		if err := invoke(args); err == nil {

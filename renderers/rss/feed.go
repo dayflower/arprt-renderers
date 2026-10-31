@@ -20,6 +20,7 @@ const (
 	rssNS     = "http://purl.org/rss/1.0/"
 	rdfNS     = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 	dcNS      = "http://purl.org/dc/elements/1.1/"
+	hatenaNS  = "http://www.hatena.ne.jp/info/xmlns#"
 	contentNS = "http://purl.org/rss/1.0/modules/content/"
 )
 
@@ -120,12 +121,15 @@ type summaryBlock struct {
 }
 type article struct {
 	ID, Title, URL, Source, Category string
+	ImageURL, SummaryLabel           string
+	BookmarkCount                    *uint64
 	Summary                          []summaryBlock
 	Date                             time.Time
 	Raw                              *xmlNode
 }
 type feed struct {
 	Title    string
+	Profile  string
 	Articles []article
 }
 
@@ -146,9 +150,15 @@ func httpURL(s string) string {
 
 // Only text crosses into templates; feed markup and attributes are discarded.
 func summaryHTML(s string) []summaryBlock {
+	return summaryHTMLMode(s, false)
+}
+func summaryHTMLMode(s string, trimCTA bool) []summaryBlock {
 	doc, err := html.Parse(strings.NewReader(clip(s, 65536)))
 	if err != nil {
 		return nil
+	}
+	if trimCTA {
+		removeTrailingCTA(doc)
 	}
 	var blocks []summaryBlock
 	var current strings.Builder
@@ -231,7 +241,14 @@ func parseDate(s string) time.Time {
 }
 
 func parseFeed(data []byte) (feed, error) {
+	return parseFeedProfile(data, "generic", "")
+}
+
+func parseFeedProfile(data []byte, profile, origin string) (feed, error) {
 	var result feed
+	if !validProfile(profile) {
+		return result, errors.New("unknown feed profile")
+	}
 	root, err := parseXML(data)
 	if err != nil {
 		return result, err
@@ -298,6 +315,7 @@ func parseFeed(data []byte) (feed, error) {
 	if channel == nil {
 		return result, errors.New("missing RSS channel")
 	}
+	result.Profile = selectProfile(profile, origin, space, items)
 	result.Title = plain(channel.value(space, "title"), 256)
 	if result.Title == "" {
 		result.Title = "RSS feed"
@@ -347,6 +365,7 @@ func parseFeed(data []byte) (feed, error) {
 				}
 			}
 		}
+		normalizeArticle(&a, result.Profile, space)
 		result.Articles = append(result.Articles, a)
 	}
 	if count > 0 && len(result.Articles) == 0 {
