@@ -2,8 +2,8 @@
 
 A Go CLI that reads one RSS feed, generates its own HTML, requests a PNG from
 an external webcappi service, and atomically writes an ARPRT Job output file.
-It displays headlines, optional summaries, categories, sources, bookmark counts
-and feed-supplied article dates.
+It displays headlines, optional summaries, categories, sources, bookmark counts,
+optional thumbnails and feed-supplied article dates.
 ARPRT is independent and unofficial, with no affiliation with or endorsement by
 TRMNL. This renderer has no published image or release yet.
 
@@ -46,7 +46,7 @@ feed-specific corrections.
 - Hatena uses the first nonempty dc:subject, dc:date and a nonnegative bookmark
   count (including `0 users`). Missing or invalid counts stay hidden. Descriptions
   never fall back to decorated content:encoded. A valid HTTP(S) hatena:imageurl is
-  retained as a candidate only.
+  used as an optional thumbnail candidate.
 - Livedoor removes a final standalone anchor whose text is exactly `記事を読む`
   after whitespace normalization. The same text within prose or before further
   content stays intact. Lists retain their item boundaries; `ざっくり言うと`
@@ -57,8 +57,40 @@ feed-specific corrections.
   title. Other hyphens and unmatched source suffixes remain. Missing source
   retains the original title and uses the normal feed-title fallback.
 
-Images are never downloaded or embedded. No thumbnails, custom templates,
-browser installation or runtime dependency installation are provided.
+Hatena image URLs and the first valid HTTP(S) image/* enclosure in generic or
+Livedoor feeds are optional thumbnail candidates. Google News does not select
+images. Description images, article pages and media extensions are never crawled.
+JPEG, PNG, GIF and WebP are decoded from their bytes, independently of the HTTP
+Content-Type. GIF and animated WebP use the first frame. SVG, audio and video
+are unsupported. Images are fitted within 96 × 72 without enlargement, composited
+onto white and re-encoded as JPEG data URLs. Aspect ratios are preserved.
+Missing, rejected or failed images leave article text intact and reserve no
+thumbnail space. `--images=false` disables image requests entirely.
+No custom templates, browser installation or runtime dependency installation are
+provided.
+
+Image requests use a separate client without an HTTP proxy or capture credentials.
+By default, only public unicast destinations are allowed: loopback, private, link-local and
+special-use ranges are rejected, including IPv4-mapped addresses. Every new
+connection checks all DNS answers and dials a validated IP directly; redirects
+also use this policy and are limited to five HTTP(S) hops without URL credentials.
+The explicit feed and webcappi endpoints may still be internal services.
+Set `--public-images-only=false` to disable destination IP filtering for image
+requests, including redirects, when using trusted feeds with internal images.
+HTTP(S)-only URLs, credential rejection, redirect limits, proxy/authentication
+isolation and all size, format and deadline limits still apply. Apply outbound
+network policy for additional operator restrictions.
+
+At most the configured display limit of image candidates is fetched, with two
+workers, five seconds per request, ten seconds for the entire image stage and the
+shared overall deadline. Image bodies are limited to 2 MiB after decompression;
+headers must declare positive dimensions totaling at most 4,000,000 pixels before
+pixel allocation. WebP animation canvas and frame dimensions are both bounded.
+Only generated data URLs cross into the template. All escaped text and template
+overhead are reserved before adding images to the 1 MiB HTML budget, in article
+order. Images that do not fit retry at half dimensions and lower JPEG quality,
+then are omitted if necessary. CSP permits data images and blocks external
+browser resources; webcappi does not fetch feed-supplied image URLs.
 
 Input bounds are 4 MiB after HTTP decompression, 64 XML levels and 50,000 XML
 elements. At most the first 200 ordered items are normalized. Each HTML field is
@@ -66,11 +98,12 @@ parsed from at most 65,536 Unicode code points. Titles are limited
 to 1,024 Unicode code points, feed names and sources to 256, categories to 128,
 and summaries to 6,000 across at most 32 blocks. HTML is bounded to 1 MiB.
 The default display limit is 8 articles, with a configurable maximum of 20.
-Headlines use up to two lines, summaries up to three lines in total, with at
+The feed title uses 16 px medium-weight text; article headlines use 23 px bold
+text. Headlines use up to two lines, summaries up to three lines in total, with at
 most three bullet items; missing summaries and metadata reserve no space. A fixed
-script waits for fonts, clamps summary blocks to the remaining line budget, and
-removes articles that do not fit, preserving order. It signals completion using
-`#rss-ready`. It drops the first article's summary and metadata if
+script waits for fonts and embedded image decoding, clamps summary blocks to the
+remaining line budget, and removes articles that do not fit, preserving order. It signals completion using
+`#rss-ready`. It drops the first article's image, then summary and metadata if
 necessary to prioritize its headline. Fonts must already exist in webcappi;
 no web fonts or other browser network resources are requested.
 
@@ -110,6 +143,8 @@ operator. Restrict outbound access accordingly.
 | `--title` | Optional feed display title override |
 | `--max-items` | `8`, accepted range 1–20 |
 | `--summary` | `true`; use `--summary=false` to hide summaries |
+| `--images` | `true`; use `--images=false` to disable image requests |
+| `--public-images-only` | `true`; use `--public-images-only=false` to allow internal image destinations |
 | `--timezone` | `Asia/Tokyo`, with timezone data embedded in the binary |
 
 `--profile` refers to feed normalization; webcappi always uses its default
@@ -185,10 +220,26 @@ preservation. All test temporary files go into the output mount. The shipped
 image contains no tests or fixtures. `IMAGE` can select another locally built
 image for both `image` and `container-check`.
 
-The tests verify software contracts using stub PNGs. They do not render Japanese
-text with Chromium or verify actual font selection, line layout, clipping or
-readability. Native Linux amd64 is the local container validation target;
-arm64 execution, live feeds, a real webcappi browser, Kubernetes Jobs/PVC
-collection and physical displays remain unverified. No public image availability
+Image tests cover candidates, public-address policy, DNS pinning, private redirects,
+size and decompression bounds, unsupported/corrupt images, extreme aspect ratios,
+transparency, animation first frames, two-worker concurrency, mixed failures and
+HTML budget fallback. An injected client permits local image HTTP stubs without
+relaxing the default production policy. The production CLI also confirms that
+private images are omitted by default, embedded with destination filtering disabled
+(including a redirect), and never requested with `--images=false`. Text and PNG
+output succeed in each case.
+
+Automated captures use stub PNGs and do not test Chromium layout. Separately,
+manual captures through a real webcappi browser on 2026-10-31 checked synthetic
+Japanese headlines, paragraphs, bullets, categories and thumbnails at 800 × 480
+and 480 × 800. All-image, mixed-image and no-image lists were visually inspected:
+headlines and summaries were clamped, images retained their space and articles
+outside the viewport were removed. These six screenshots establish layout for
+those synthetic cases, not comprehensive font coverage or acceptance of live
+feed content. A separate manual check captured the five live Google News, NHK,
+Hatena Bookmark, Yahoo! News and Livedoor feeds at 800 × 480; Google News was
+recaptured with the smaller feed title. These are point-in-time visual checks.
+Native Linux amd64 is the local container validation target; arm64 execution,
+Kubernetes Jobs/PVC collection and physical displays remain unverified. No public image availability
 or end-to-end controller acceptance is claimed. See
 [third-party notices](THIRD_PARTY_NOTICES.md) for dependency licenses.

@@ -120,12 +120,12 @@ type summaryBlock struct {
 	Bullet bool
 }
 type article struct {
-	ID, Title, URL, Source, Category string
-	ImageURL, SummaryLabel           string
-	BookmarkCount                    *uint64
-	Summary                          []summaryBlock
-	Date                             time.Time
-	Raw                              *xmlNode
+	ID, Title, URL, Source, Category  string
+	ImageURL, ImageData, SummaryLabel string
+	BookmarkCount                     *uint64
+	Summary                           []summaryBlock
+	Date                              time.Time
+	Raw                               *xmlNode
 }
 type feed struct {
 	Title    string

@@ -26,6 +26,8 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	title := flags.String("title", "", "Override feed display title")
 	maxItems := flags.Int("max-items", 8, "Maximum displayed articles (1-20)")
 	summary := flags.Bool("summary", true, "Display summaries; use --summary=false to disable")
+	images := flags.Bool("images", true, "Display optional thumbnails; use --images=false to disable")
+	publicImagesOnly := flags.Bool("public-images-only", true, "Restrict image destinations to public IPs; use --public-images-only=false to allow internal images")
 	timezone := flags.String("timezone", "Asia/Tokyo", "Article date display timezone")
 	profile := flags.String("profile", "auto", "Feed normalization profile: auto, generic, hatena, livedoor, google-news")
 	if err := flags.Parse(args); err != nil {
@@ -86,6 +88,11 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	f, err := parseFeedProfile(data, *profile, *feedURL)
 	if err != nil {
 		return err
+	}
+	if *images {
+		imageClient := newImageClient(*publicImagesOnly)
+		defer imageClient.CloseIdleConnections()
+		loadImages(ctx, imageClient, &f, *maxItems)
 	}
 	body, err := renderHTML(f, *title, *maxItems, *summary, location)
 	if err != nil {

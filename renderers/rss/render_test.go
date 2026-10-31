@@ -313,6 +313,7 @@ func TestProductionCLI(t *testing.T) {
 	}
 	checkCLI(t, binary)
 	checkProfilesCLI(t, binary)
+	checkImagesCLI(t, binary)
 }
 func checkCLI(t *testing.T, binary string) {
 	t.Helper()
