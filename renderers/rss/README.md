@@ -217,8 +217,8 @@ container loopback. The checker launches the real `/app/renderer`, tests default
 and separate custom Context/output paths, both target palettes and all four
 rotations, including corner positions, opacity, capture failures and output
 preservation. All test temporary files go into the output mount. The shipped
-image contains no tests or fixtures. `IMAGE` can select another locally built
-image for both `image` and `container-check`.
+image contains no tests or fixtures. Release guard tests run through the renderer
+Makefile on the host. `IMAGE` can select another locally built image for both `image` and `container-check`.
 
 Image tests cover candidates, public-address policy, DNS pinning, private redirects,
 size and decompression bounds, unsupported/corrupt images, extreme aspect ratios,
@@ -243,3 +243,47 @@ Native Linux amd64 is the local container validation target; arm64 execution,
 Kubernetes Jobs/PVC collection and physical displays remain unverified. No public image availability
 or end-to-end controller acceptance is claimed. See
 [third-party notices](THIRD_PARTY_NOTICES.md) for dependency licenses.
+
+## Screen configuration
+
+Build with `make -C renderers/rss image` and load `arprt-renderer-rss:dev` into
+your cluster using its local image-loading mechanism. [screen.yaml](screen.yaml)
+is a starting example with synthetic feed and webcappi endpoints: replace both
+before use. The example uses the local build because no RSS image is published.
+The planned registry is `ghcr.io/dayflower/arprt-renderer-rss`; after publication
+and anonymous-pull verification, pin its verified multi-platform digest.
+A matching 800 × 480 gray4 or spectra6 Device must select this Screen. Rotation
+comes from the Device's Render Context, rather than a renderer CLI option.
+
+The example asks ARPRT for `imageProcessing.dithering: none` to favor text.
+Palette conversion remains in the controller. Evaluate photos, overlays and
+physical readability separately. No overlay is enabled in the example.
+Ensure Job egress can reach the configured feed, webcappi and optional image
+hosts, including DNS and HTTPS. Operate webcappi separately with Japanese fonts;
+this repository does not deploy it. For capture authentication, mount a read-only
+token file using your deployment's supported Job configuration and pass
+`--webcappi-token-file`; never put token contents in Screen arguments.
+
+The default Context/output paths require no extra arguments. For custom paths,
+set `source.job.contextPath` and `source.job.imagePath` and pass the same paths
+with `--context` and `--output`. Merely changing the Screen paths does not change
+CLI defaults. Input mounts must be read-only and the output parent writable.
+
+## CI and independent releases
+
+[RSS checks](../../.github/workflows/check-rss.yaml) run renderer-scoped shared
+Ruff checks, fixed-module setup, Go checks and offline release guard tests.
+Separate native Linux amd64 and arm64 runners build the production image,
+check OCI version/revision labels and execute the offline container checker.
+[Normal CI](../../.github/workflows/ci.yaml) also runs shared checks and Picsum
+verification. Configuring both native jobs is not evidence that they have run;
+local validation currently covers Linux amd64 only.
+
+VERSION is independently set to `0.1.0`, an unreleased initial version.
+[RSS releases](../../.github/workflows/release-rss.yaml) accept annotated,
+canonical stable `rss/vMAJOR.MINOR.PATCH` tags matching VERSION on `origin/main`.
+They call only RSS verification, transfer the exact tested native image archives
+to publication, and refuse existing version/platform tags or GitHub releases.
+No `latest` tag is published. The index metadata and release notes record the
+immutable reference and source revision. See [release instructions](../../notes/RELEASE.md#publishing-rss)
+for setup, partial-publication recovery and public-availability verification.

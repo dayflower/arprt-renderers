@@ -26,3 +26,6 @@ jobs:
 
   picsum:
     uses: ./.github/workflows/check-picsum.yaml
+
+  rss:
+    uses: ./.github/workflows/check-rss.yaml

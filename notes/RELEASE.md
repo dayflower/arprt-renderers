@@ -86,3 +86,66 @@ checks. Update the READMEs and pin the verified digest in the Screen examples
 after public availability is confirmed. If release immutability is enabled,
 assets cannot be added after publication; record later verification in the
 editable release notes. No Helm publication is needed for the Job renderer.
+
+## Publishing RSS
+
+RSS is unreleased. Its independent [VERSION](../renderers/rss/VERSION) is `0.1.0`;
+this does not imply an available registry tag. Its planned package is
+`ghcr.io/dayflower/arprt-renderer-rss`, with canonical stable
+`rss/vMAJOR.MINOR.PATCH` annotated tags and its own `release-rss` concurrency group.
+Do not change Picsum or controller versions for an RSS release.
+
+Apply the initial setup above to `rss/v*` tag protection and the
+`arprt-renderer-rss` GHCR package, including repository linkage, Actions write
+access, and native amd64/arm64 runner availability. Set VERSION and review the
+RSS documents and Screen example on main. Inspect Codex-contributed commit
+messages for attribution before pushing. Run `make check`, build the RSS image,
+and run `make -C renderers/rss container-check`. Require both native jobs in
+[RSS checks](../.github/workflows/check-rss.yaml) to succeed; local amd64 execution
+cannot substitute for native arm64 validation.
+
+When publication is authorized, tag the reviewed main revision:
+
+```sh
+rss_version=0.1.0
+git tag -a "rss/v${rss_version}" -m "RSS ${rss_version}"
+git push origin "refs/tags/rss/v${rss_version}"
+```
+
+The [RSS release workflow](../.github/workflows/release-rss.yaml) verifies the
+annotated tag, VERSION, exact checkout and ancestry on origin/main. It calls only
+RSS checks, exports the exact tested native images and passes them to the publish
+job without rebuilding. The publish job checks architecture and OCI labels,
+checks every package-version page for the version and both platform tags, and
+rejects an existing GitHub release. Only explicit 404 responses permit absent
+initial resources; authentication, rate-limit, server and network errors stop
+publication. Package permissions must still be checked when a 404 may hide a
+resource.
+
+Publication creates `:<version>-amd64`, `:<version>-arm64`, then a multi-platform
+`:<version>` index, without `latest`. Release notes and `rss-index.json` record
+the immutable reference, source revision and platforms. They describe offline
+native validation, not live-feed, browser, cluster or physical-display acceptance.
+The same non-overwrite policy and partial-publication recovery described for
+Picsum apply: use a new version after a partial image push; if only release
+creation failed after complete publication, inspect the recorded digest and
+finish the release without rebuilding or repushing. Never remove tags to evade
+the guard. Limit GHCR write permissions and deploy using digests.
+
+Set the package visibility to Public and verify anonymous pulls with a fresh
+empty Docker config before advertising availability:
+
+```sh
+mkdir -p dist/rss-anonymous-docker
+DOCKER_CONFIG="$PWD/dist/rss-anonymous-docker" docker pull --platform linux/amd64 "ghcr.io/dayflower/arprt-renderer-rss:${rss_version}"
+DOCKER_CONFIG="$PWD/dist/rss-anonymous-docker" docker pull --platform linux/arm64 "ghcr.io/dayflower/arprt-renderer-rss:${rss_version}"
+```
+
+Also verify the release's digest reference and run the RSS container checker
+against that reference on each available native host. Record prepublication CI,
+anonymous pull checks and postpublication execution separately. Then update the
+root/renderer README status and replace the local image in
+[the RSS Screen example](../renderers/rss/screen.yaml) with the verified
+multi-platform digest. Keep its feed and webcappi endpoints synthetic in the
+repository. No RSS image publication, cluster deployment or physical validation
+is implied by adding these release tools.

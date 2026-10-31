@@ -1,8 +1,8 @@
 # Development
 
 Use uv, Make and Docker, plus the language toolchain needed by each renderer
-(Go 1.27.3 for Picsum, selected by its `go.mod`). Python 3 is also required for
-Picsum container/release tools. The root Makefile runs shared lint/format checks and
+(Go 1.27.3 for Picsum and RSS, selected by their independent `go.mod` files).
+Python 3 is also required for renderer container/release tools. The root Makefile runs shared lint/format checks and
 delegates renderer checks to their own Makefiles. Ruff and CI's uv are pinned in the root Makefile and workflow respectively.
 
 Run these commands from the repository root:
@@ -114,3 +114,42 @@ releasing another or changing the controller's version.
 Run shared lint checks on every PR; do not add a common SDK or release framework
 until multiple implementations need one. See [repository policy](../AGENTS.md) for
 language, Git operations and commit attribution.
+
+## RSS development and distribution
+
+RSS is an independent Go module under `renderers/rss/`. Root `setup` and `check`
+already discover it through its Makefile. Its pinned modules provide HTML/XML
+charset handling and image decoding/resampling; dependencies and their licenses
+are recorded in its README and third-party notices. Picsum uses no RSS modules.
+
+```sh
+make lint format-check RUFF_PATHS=renderers/rss
+make -C renderers/rss setup
+make -C renderers/rss check
+make -C renderers/rss image
+make -C renderers/rss container-check
+```
+
+RSS `check` includes Go formatting, vet, offline tests and Python release guards.
+The production image is scratch with a static binary, CA certificates and
+licenses; timezone data is embedded. Its Dockerfile-specific allowlist includes
+only Go sources, module metadata and licenses. Fixtures, Screen examples,
+release scripts and local capture outputs do not enter the build context.
+The test-export stage builds a separate static test executable; tests and tools
+are absent from the shipped runtime. Container checks run without external
+network access, with UID/GID 1000, read-only root, dropped capabilities and only
+the output parent writable, with no writable `/tmp` requirement.
+
+[RSS checks](../.github/workflows/check-rss.yaml) run source checks and native
+amd64/arm64 image builds and offline execution. Each native job checks image
+architecture and version/revision labels. Normal CI calls both renderer
+workflows plus shared lint. RSS releases call only RSS checks with image archive
+export enabled; the publish job loads those exact tested images without rebuilding.
+RSS has its own release guard, package, version and concurrency group.
+
+The local RSS container checks cover Linux amd64. Native arm64 execution must be
+confirmed by the arm64 runner; workflow configuration alone is not a passing run.
+Offline stub captures verify the software contract, not Chromium layout. See the
+[RSS validation record](../renderers/rss/README.md#offline-validation) for the
+separate point-in-time browser checks. Kubernetes scheduling, PVC collection and
+physical gray4/Spectra 6 displays remain unverified. RSS is not yet published.
