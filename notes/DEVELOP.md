@@ -149,7 +149,13 @@ RSS has its own release guard, package, version and concurrency group.
 
 The local RSS container checks cover Linux amd64. Native arm64 execution must be
 confirmed by the arm64 runner; workflow configuration alone is not a passing run.
-Offline stub captures verify the software contract, not Chromium layout. See the
-[RSS validation record](../renderers/rss/README.md#offline-validation) for the
-separate point-in-time browser checks. Kubernetes scheduling, PVC collection and
-physical gray4/Spectra 6 displays remain unverified. RSS is not yet published.
+Offline stub captures verify the software contract, not Chromium layout. The
+[RSS validation record](../renderers/rss/VALIDATION.md) separately records live-feed
+captures in both orientations and an isolated native amd64 Kubernetes run using
+the real RSS image and webcappi. That run verified Job execution, PVC collection,
+Screen updates and preservation of the last successful image after a failed
+render. A subsequent physical check displayed the live Hatena Bookmark feed on
+both targets with existing rotation and overlay settings: the user reported
+readable gray4 text and rougher Spectra 6 text. This narrow check does not establish
+acceptance of other feeds, rotations, photos or overlays. Broader production-cluster
+behavior and native arm64 execution remain unverified. RSS is not yet published.

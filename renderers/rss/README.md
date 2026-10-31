@@ -236,13 +236,14 @@ and 480 × 800. All-image, mixed-image and no-image lists were visually inspecte
 headlines and summaries were clamped, images retained their space and articles
 outside the viewport were removed. These six screenshots establish layout for
 those synthetic cases, not comprehensive font coverage or acceptance of live
-feed content. A separate manual check captured the five live Google News, NHK,
-Hatena Bookmark, Yahoo! News and Livedoor feeds at 800 × 480; Google News was
-recaptured with the smaller feed title. These are point-in-time visual checks.
-Native Linux amd64 is the local container validation target; arm64 execution,
-Kubernetes Jobs/PVC collection and physical displays remain unverified. No public image availability
-or end-to-end controller acceptance is claimed. See
-[third-party notices](THIRD_PARTY_NOTICES.md) for dependency licenses.
+feed content. A subsequent acceptance run captured the five live Google News,
+NHK, Hatena Bookmark, Yahoo! News and Livedoor feeds through the real CLI at both
+logical viewport sizes. All ten captures succeeded and were visually inspected; no layout
+correction was needed. These are point-in-time visual checks. See the
+[validation record](VALIDATION.md) for observed feed behavior, software and cluster
+verification, and remaining release and physical-display checks. No public image
+availability is claimed. See [third-party notices](THIRD_PARTY_NOTICES.md) for
+dependency licenses.
 
 ## Screen configuration
 
