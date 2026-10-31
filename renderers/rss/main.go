@@ -27,7 +27,7 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	maxItems := flags.Int("max-items", 8, "Maximum displayed articles (1-20)")
 	summary := flags.Bool("summary", true, "Display summaries; use --summary=false to disable")
 	timezone := flags.String("timezone", "Asia/Tokyo", "Article date display timezone")
-	profile := flags.String("profile", "generic", "Feed normalization profile: generic (separate from webcappi browser profiles)")
+	profile := flags.String("profile", "auto", "Feed normalization profile: auto, generic, hatena, livedoor, google-news")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -46,8 +46,8 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	if *maxItems < 1 || *maxItems > 20 {
 		return errors.New("max-items must be between 1 and 20")
 	}
-	if *profile != "generic" {
-		return errors.New("only the generic feed profile is supported")
+	if !validProfile(*profile) {
+		return errors.New("unknown feed profile")
 	}
 	location, err := time.LoadLocation(*timezone)
 	if err != nil {
@@ -83,7 +83,7 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	if err != nil {
 		return fmt.Errorf("feed input: %w", err)
 	}
-	f, err := parseFeed(data)
+	f, err := parseFeedProfile(data, *profile, *feedURL)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	if err := writeOutput(ctx, *output, data); err != nil {
 		return err
 	}
-	fmt.Fprintf(stdout, "Rendered RSS: %d parsed articles, generic profile, 800x480 RGB, %d bytes\n", len(f.Articles), len(data))
+	fmt.Fprintf(stdout, "Rendered RSS: %d parsed articles, %s profile, 800x480 RGB, %d bytes\n", len(f.Articles), f.Profile, len(data))
 	return nil
 }
 func main() {

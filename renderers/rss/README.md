@@ -2,7 +2,8 @@
 
 A Go CLI that reads one RSS feed, generates its own HTML, requests a PNG from
 an external webcappi service, and atomically writes an ARPRT Job output file.
-It displays headlines, optional summaries, categories, sources and article dates.
+It displays headlines, optional summaries, categories, sources, bookmark counts
+and feed-supplied article dates.
 ARPRT is independent and unofficial, with no affiliation with or endorsement by
 TRMNL. This renderer has no published image or release yet.
 
@@ -24,7 +25,8 @@ the parsing limit fails.
 
 Summaries can be absent or empty. HTML is parsed into text paragraphs and list
 items; script, style, embedded content and feed attributes are discarded.
-`content:encoded` is used only when description is absent. Entities are decoded
+`content:encoded` is used only when description is absent in generic and
+Livedoor processing. Hatena uses description only; Google News hides summaries. Entities are decoded
 once by the HTML parser after XML decoding. Plain descriptions retain line
 boundaries. Titles, summaries and metadata are escaped through `html/template`.
 Dates use pubDate or, when absent, dc:date. Invalid dates are hidden. Feed title
@@ -32,11 +34,31 @@ falls back to `RSS feed`; article source falls back to the feed title and is
 hidden when it duplicates the display title. Article URLs are retained without
 tracking-parameter rewriting; article pages are never fetched.
 
-Only generic normalization is available. Feed-specific handling for Google News,
-Hatena and Livedoor is not implemented. Their decorated summaries therefore may
-need `--summary=false`. Images are never downloaded or embedded. No thumbnails,
-bookmark counts, feed auto-detection, custom templates, browser installation or
-runtime dependency installation are provided.
+The default `auto` profile uses exact known feed hosts with RSS structure:
+`news.google.com` with RSS 2.0 source elements, `news.livedoor.com` with RSS 2.0
+descriptions, and `b.hatena.ne.jp` with RSS 1.0/RDF. Hatena item extensions in the
+`http://www.hatena.ne.jp/info/xmlns#` namespace also identify local or mirrored
+feeds. Unknown feeds use `generic`; titles and partial host matches never select
+a profile. NHK and Yahoo! use generic processing. Local inputs and mirrors can
+select `hatena`, `livedoor` or `google-news` explicitly. `generic` disables all
+feed-specific corrections.
+
+- Hatena uses the first nonempty dc:subject, dc:date and a nonnegative bookmark
+  count (including `0 users`). Missing or invalid counts stay hidden. Descriptions
+  never fall back to decorated content:encoded. A valid HTTP(S) hatena:imageurl is
+  retained as a candidate only.
+- Livedoor removes a final standalone anchor whose text is exactly `記事を読む`
+  after whitespace normalization. The same text within prose or before further
+  content stays intact. Lists retain their item boundaries; `ざっくり言うと`
+  becomes a small label when it accompanies a list, without repeating it in the
+  summary. Other summary text is retained.
+- Google News hides description and content:encoded related stories, displays
+  source separately, and strips only an exact trailing ` - {source}` from the
+  title. Other hyphens and unmatched source suffixes remain. Missing source
+  retains the original title and uses the normal feed-title fallback.
+
+Images are never downloaded or embedded. No thumbnails, custom templates,
+browser installation or runtime dependency installation are provided.
 
 Input bounds are 4 MiB after HTTP decompression, 64 XML levels and 50,000 XML
 elements. At most the first 200 ordered items are normalized. Each HTML field is
@@ -44,9 +66,11 @@ parsed from at most 65,536 Unicode code points. Titles are limited
 to 1,024 Unicode code points, feed names and sources to 256, categories to 128,
 and summaries to 6,000 across at most 32 blocks. HTML is bounded to 1 MiB.
 The default display limit is 8 articles, with a configurable maximum of 20.
-Headlines use up to two lines, summaries up to three lines; missing summaries
-reserve no space. A fixed script waits for fonts and removes articles that do
-not fit, preserving order. It drops the first article's summary and metadata if
+Headlines use up to two lines, summaries up to three lines in total, with at
+most three bullet items; missing summaries and metadata reserve no space. A fixed
+script waits for fonts, clamps summary blocks to the remaining line budget, and
+removes articles that do not fit, preserving order. It signals completion using
+`#rss-ready`. It drops the first article's summary and metadata if
 necessary to prioritize its headline. Fonts must already exist in webcappi;
 no web fonts or other browser network resources are requested.
 
@@ -82,7 +106,7 @@ operator. Restrict outbound access accordingly.
 | `--input` | Read-only local RSS file, exclusive with `--feed-url` |
 | `--webcappi-url` | Required base URL |
 | `--webcappi-token-file` | Optional read-only Bearer token file, at most 8 KiB |
-| `--profile` | `generic`, the only supported feed normalization profile |
+| `--profile` | `auto`; also `generic`, `hatena`, `livedoor`, `google-news` |
 | `--title` | Optional feed display title override |
 | `--max-items` | `8`, accepted range 1–20 |
 | `--summary` | `true`; use `--summary=false` to hide summaries |
@@ -150,7 +174,10 @@ make -C renderers/rss container-check
 The checker builds a separate static test binary with the pinned Dockerfile
 and mounts it read-only into the production image. Test fixtures are synthetic.
 Local HTTP stubs provide RSS and synthetic asymmetric PNGs; tests never contact
-external feeds or webcappi. With the container network disabled, stubs use only
+external feeds or webcappi. Synthetic cases cover all five feed structures,
+namespace prefix changes, metadata omissions, exact suffix/CTA boundaries and
+mixed summaries. The real CLI also verifies each profile through capture-request
+HTML inspection. With the container network disabled, stubs use only
 container loopback. The checker launches the real `/app/renderer`, tests default
 and separate custom Context/output paths, both target palettes and all four
 rotations, including corner positions, opacity, capture failures and output
