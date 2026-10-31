@@ -1,0 +1,9 @@
+**
+!LICENSE
+!renderers/
+!renderers/rss/
+!renderers/rss/Dockerfile
+!renderers/rss/go.mod
+!renderers/rss/go.sum
+!renderers/rss/*.go
+!renderers/rss/THIRD_PARTY_NOTICES.md

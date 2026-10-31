@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel><title>合成ニュース</title>
+<item><guid>first</guid><title>見出しだけの記事</title><link>https://news.example.com/first?tracking=keep</link><pubDate>Sat, 31 Oct 2026 02:00:00 +0000</pubDate></item>
+<item><guid>second</guid><title>文章のある記事 &amp; 解説</title><description><![CDATA[<p>合成した日本語の要約です。<br>配信された改行と省略…</p><script>bad-script</script><style>bad-style</style><img src="https://image.example.com/never-fetch.png" onerror="bad-handler()">]]></description><pubDate>Sat, 31 Oct 2026 10:00:00 +0900</pubDate><category>科学</category></item>
+<item><guid>second</guid><title>Duplicate identifier</title></item>
+<item><title>   </title><description>Skipped invalid item.</description></item>
+<item><title>Fallback excerpt</title><content:encoded><![CDATA[<p>Fallback &amp; text.</p><ul><li>First point</li><li>Second point</li></ul>]]></content:encoded><dc:date>2026-10-30T16:00:00Z</dc:date></item>
+<item><title>Same title</title><description/></item><item><title>Same title</title><pubDate>invalid</pubDate></item>
+</channel></rss>
