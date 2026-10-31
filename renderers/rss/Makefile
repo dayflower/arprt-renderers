@@ -19,6 +19,7 @@ check:
 	test -z "$$($(GOFMT) -l *.go)"
 	$(GO) vet ./...
 	$(GO) test -mod=readonly ./...
+	$(PYTHON) -m unittest -v test_release
 
 image:
 	docker build --provenance=false --build-arg VERSION=$(VERSION) --build-arg REVISION=$(REVISION) -t $(IMAGE) -f Dockerfile ../..

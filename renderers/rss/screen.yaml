@@ -1,0 +1,26 @@
+apiVersion: arprt.dayflower.github.io/v1alpha1
+kind: ArprtScreen
+metadata:
+  name: rss
+spec:
+  refreshInterval: 15m
+  imageProcessing:
+    dithering: none
+  source:
+    job:
+      renderer:
+        # Build locally and load into your cluster; no RSS image is published yet.
+        # After publication, replace this with the verified multi-platform digest.
+        image: arprt-renderer-rss:dev
+        args:
+          - --feed-url
+          - https://news.example.com/feed.xml
+          - --webcappi-url
+          - https://webcappi.example.com
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 192Mi
