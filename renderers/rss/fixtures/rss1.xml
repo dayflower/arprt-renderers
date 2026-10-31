@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<r:RDF xmlns:r="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://purl.org/rss/1.0/" xmlns:d="http://purl.org/dc/elements/1.1/" xmlns:tax="http://purl.org/rss/1.0/modules/taxonomy/">
+<channel r:about="https://feed.example.com/rss"><title>合成RDF</title><items><r:Seq><r:li r:resource="urn:second"/><r:li r:resource="urn:missing"/><r:li r:resource="urn:second"/><r:li r:resource="urn:first"/></r:Seq></items><tax:topics><r:Seq><r:li r:resource="urn:third"/></r:Seq></tax:topics></channel>
+<item r:about="urn:first"><title>First document item</title><description>最初の要約。</description><d:date>2026-10-31T10:00:00+09:00</d:date></item>
+<item r:about="urn:second"><title>Second document item</title><link>https://example.com/second</link></item>
+<item r:about="urn:third"><title>Unreferenced item</title></item>
+</r:RDF>
