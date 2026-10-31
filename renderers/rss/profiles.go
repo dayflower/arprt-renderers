@@ -1,6 +1,7 @@
 package main
 
 import (
+	"mime"
 	"net/url"
 	"strconv"
 	"strings"
@@ -51,6 +52,19 @@ func selectProfile(profile, origin, space string, items []*xmlNode) string {
 
 func normalizeArticle(a *article, profile, space string) {
 	n := a.Raw
+	if profile == "generic" || profile == "livedoor" {
+		for _, c := range n.Children {
+			if c.Name.Space == space && c.Name.Local == "enclosure" {
+				media, _, err := mime.ParseMediaType(c.attr("", "type"))
+				if err == nil && strings.HasPrefix(media, "image/") {
+					if candidate := httpURL(c.attr("", "url")); candidate != "" {
+						a.ImageURL = candidate
+						break
+					}
+				}
+			}
+		}
+	}
 	switch profile {
 	case "hatena":
 		a.Summary = summaryHTML(n.value(space, "description"))

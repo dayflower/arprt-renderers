@@ -2,10 +2,11 @@
 
 The RSS renderer uses Go's standard library and these pinned modules:
 
+- `golang.org/x/image v0.47.0`: WebP decoding and thumbnail resampling.
 - `golang.org/x/net v0.62.0`: HTML parsing and XML charset selection.
 - `golang.org/x/text v0.43.0`: charset conversion, including Shift_JIS and EUC-JP.
 
-Both modules use the following BSD 3-Clause license. Go's license is also
+These modules use the following BSD 3-Clause license. Go's license is also
 included separately in the container image. The repository MIT license applies
 to the renderer implementation and synthetic fixtures.
 
