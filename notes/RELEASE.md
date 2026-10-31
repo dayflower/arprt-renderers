@@ -102,7 +102,10 @@ RSS documents and Screen example on main. Inspect Codex-contributed commit
 messages for attribution before pushing. Run `make check`, build the RSS image,
 and run `make -C renderers/rss container-check`. Require both native jobs in
 [RSS checks](../.github/workflows/check-rss.yaml) to succeed; local amd64 execution
-cannot substitute for native arm64 validation.
+cannot substitute for native arm64 validation. The
+[RSS validation record](../renderers/rss/VALIDATION.md) records the separate
+browser and disposable-cluster acceptance scope; it does not replace release
+checks against the revision intended for publication.
 
 When publication is authorized, tag the reviewed main revision:
 
