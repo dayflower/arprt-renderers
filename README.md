@@ -11,7 +11,7 @@ and of one another. No shared SDK is required.
 
 | Renderer | Execution | Image | Release tags | Status |
 | --- | --- | --- | --- | --- |
-| [RSS](renderers/rss/README.md) | Kubernetes Job CLI with external webcappi | `ghcr.io/dayflower/arprt-renderer-rss` (planned) | `rss/vMAJOR.MINOR.PATCH` | Unreleased; local build only |
+| [RSS](renderers/rss/README.md) | Kubernetes Job CLI with external webcappi | `ghcr.io/dayflower/arprt-renderer-rss` | `rss/vMAJOR.MINOR.PATCH` | Released [0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.1.0) |
 | [Picsum](renderers/picsum/README.md) | Kubernetes Job CLI | `ghcr.io/dayflower/arprt-renderer-picsum` | `picsum/vMAJOR.MINOR.PATCH` | Released [0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.2.0) |
 
 Picsum 0.2.0 is available for Linux amd64 and arm64 as
@@ -34,8 +34,10 @@ RSS reads RSS 2.0 and RSS 1.0/RDF, normalizes feed metadata and optional images,
 and sends generated HTML to a separately operated webcappi service for capture.
 Its scratch runtime contains a static Go binary, CA certificates and licenses;
 timezone data is embedded. No browser or fonts are installed in the renderer.
-See [RSS usage and local Screen example](renderers/rss/README.md) for setup,
-network limits and validation scope. No RSS image or release is published yet.
+RSS 0.1.0 is available for Linux amd64 and arm64 as
+`ghcr.io/dayflower/arprt-renderer-rss:0.1.0`. Its Screen example pins the verified
+multi-platform digest. See [RSS usage and Screen example](renderers/rss/README.md)
+for setup, network limits and validation scope.
 
 See [Picsum usage](renderers/picsum/README.md) for local/offline rendering and Screen usage;
 [DEVELOP](notes/DEVELOP.md) for development and CI;

@@ -80,7 +80,8 @@ user confirmed that the RSS screen appeared on both devices and reported:
 This establishes basic physical RSS display on both targets for that feed and
 configuration. It is user-reported visual evidence, not a controlled comparison.
 The contribution of palette conversion, dithering, browser antialiasing or the
-panel itself was not isolated; Spectra 6 text quality remains an open issue.
+panel itself was not isolated. The Spectra 6 result is a display-quality
+observation, not an attributed renderer defect or a release blocker.
 Thumbnail quality, metadata completeness and overlay overlap were not separately
 assessed. The other four live feeds and rotated layouts were not checked on
 physical devices.
@@ -91,8 +92,9 @@ No real device identities, credentials or private endpoints are recorded here.
 
 ## Release readiness
 
-The initial independent version remains `0.1.0`, unreleased. The implementation
-and synthetic fixtures use the repository MIT license. The production image
+At the time of the acceptance checks above, the initial independent version
+was `0.1.0` and unreleased. Publication is recorded separately below. The
+implementation and synthetic fixtures use the repository MIT license. The production image
 includes that license, Go's license and notices for the fixed Go modules.
 The Dockerfile allowlist excludes live captures, news snapshots, credentials and
 Screen configurations from the build context.
@@ -116,7 +118,39 @@ Native arm64 execution and GitHub Actions execution were not performed in this
 local acceptance run. No release tag was created, and no RSS image or release
 was published.
 Physical observation is limited to the Hatena Bookmark run above: gray4 text
-was reported as readable, while Spectra 6 text quality remains an open issue.
+was reported as readable, while Spectra 6 text was reported as rougher.
 Photo quality, alternate dithering, overlay placement, other feeds and physical
 rotation comparisons remain unverified. Software checks and browser captures
 do not expand that physical-display evidence.
+
+## Public RSS 0.1.0 verification: 2026-10-31
+
+[RSS 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.1.0)
+was published from source `8c3794fb38abb387fd6d3f4f9009cbd07238e556`.
+The [release workflow](https://github.com/dayflower/arprt-renderers/actions/runs/41185957574)
+passed source checks and native Linux amd64/arm64 builds, offline unit tests
+and production CLI checks under Job security restrictions. Publication loaded
+the exact tested image archives without rebuilding.
+
+The verified immutable multi-platform reference is:
+
+```
+ghcr.io/dayflower/arprt-renderer-rss@sha256:5a21c46f62cb2c79a39b2e02327ca3954203470048ba0389b6252cfc9fc2c80d
+```
+
+An empty Docker configuration successfully pulled both the `0.1.0` tag and
+that digest for Linux amd64 and arm64. Anonymous registry requests also verified
+both platform tags, index/manifest digests and OCI version/revision labels.
+Published image config digests matched the downloaded CI-tested archives:
+
+| Platform | Published and tested config digest |
+| --- | --- |
+| linux/amd64 | `sha256:87c15eaf723350ba93d07d54039bbd5f23a74c84f46b9d765f2158a749eb79d6` |
+| linux/arm64 | `sha256:e59977c253b896dff9a2b99ddabd162275db1dc83fb6f86f1aae61635956af45` |
+
+The public amd64 digest passed `make -C renderers/rss container-check` after
+publication. This is separate from native prepublication CI. Postpublication
+native arm64 execution was not performed; anonymous arm64 pulls establish
+availability, and native arm64 execution was checked before publication.
+The earlier browser, cluster and physical-display observations retain their
+stated scope and do not constitute new end-to-end tests of the published image.
