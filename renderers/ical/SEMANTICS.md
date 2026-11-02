@@ -2,7 +2,8 @@
 
 Reviewed on 2026-11-02. This document fixes the behavior required before any
 HTML integration. The probe demonstrates the difficult interpretation paths;
-it is deliberately not the complete file/network/semantic validation pipeline.
+file/network validation and day normalization are implemented separately from
+the probe, behind the all-or-nothing `Prepare` integration boundary.
 
 ## Baselines
 
@@ -103,7 +104,7 @@ all candidates, not just the final visible set. An orphan ordinary detached even
 is a standalone occurrence; an orphan THISANDFUTURE is invalid without a master.
 Do not feed RANGE directly to the upstream Expander and assume it propagates.
 
-The full validation layer must enforce RFC value types and allowed property
+The validation layer enforces RFC value types and allowed property
 cardinality, DTEND/DURATION exclusivity, valid positive spans (except timed
 instantaneous events), RID/master type consistency, unique zone definitions,
 legal RRULE forms and unknown important recurrence/date semantics. Validate
@@ -114,11 +115,13 @@ Ordinary non-display fields such as LOCATION/DESCRIPTION/ATTACH/URL and VTODO
 are not interpreted or fetched. This fixes rejection policy without restricting
 the required RRULE/RDATE/EXDATE/VTIMEZONE/THISANDFUTURE feature set.
 
-The probe implements revision/range supplementation and basic validation; it
-does not implement that entire validation layer or the full parameter/string
-budgets. Production work must preserve these decisions and add those validators
-before accepting network input or integrating HTML. There is no undecided
-feature subset delegated to layout work.
+The worker implements revision/range supplementation and preflights all rules
+and structural budgets before typed value validation, zone compilation and
+expansion. `validate.go` enforces cardinality, value forms, positive durations,
+master/RID type consistency and required timezone observance fields. Unknown
+VEVENT properties are rejected conservatively, including vendor extensions.
+These decisions also apply to network input; no recurrence feature subset is
+delegated to layout work.
 
 ## Normalization and display boundary
 

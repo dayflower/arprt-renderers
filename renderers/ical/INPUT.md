@@ -19,8 +19,9 @@ are forbidden. No host-local timezone fallback is allowed.
 
 File paths are clean absolute POSIX paths, at most 512 bytes, without NUL, `.`
 or `..` components. Follow symlinks, including Kubernetes projected-volume
-symlinks. Read each file once into bounded memory before starting HTTP; do not
-reopen during retries. This is an execution snapshot, not a transaction across
+symlinks, but require regular files; FIFOs and devices are rejected without
+waiting for a producer. Read each file once into bounded memory before starting
+HTTP; do not reopen during retries. This is an execution snapshot, not a transaction across
 files. Use versioned ConfigMaps/Secrets and change Screen references when a
 consistent multi-file update is required.
 
@@ -51,8 +52,8 @@ are preserved, without normalization or trimming. Encode the UTF-8 bytes of
 Bearer files contain the RFC 6750 token alphabet `[A-Za-z0-9._~+/-]+={0,}` and
 optionally one terminal LF or CRLF. Empty tokens, spaces, embedded newlines,
 extra terminal newlines and other characters are rejected. URL files and bearer
-files use the same single-terminator rule. Test these rules when implementing
-the file reader; the current probe does not read credential files.
+files use the same single-terminator rule. The input reader enforces these rules
+before any request. The standalone semantics probe does not read credentials or perform HTTP.
 
 ## Deadlines and bounds
 
@@ -84,17 +85,25 @@ whole-render failure, never a truncated success. Display omission is separate.
 | Generated UTF-8 HTML | 1 MiB |
 | Capture PNG | 32 MiB, exact logical dimensions before allocation |
 
-These are application bounds, not a claim of hard OS memory isolation. The probe
-already bounds body/line/depth/components/window/candidate count/result and uses
-the killable worker. The full input validator must enforce the remaining property,
-string, rule-part and per-run budgets before integration. Its preflight must also
-inspect VTIMEZONE rules: timezone compilation is computation, not a free lookup.
-The supervisor owns the deadline across **all sources**; do not grant each one a
-fresh five seconds. Count rules with an old DTSTART and impossible/sparse rules
-can do significant work before yielding; a result count alone is insufficient.
-Keep synchronous parsing, zone compilation and expansion inside the worker and
-kill/reap that process on timeout or signal. Never leave a computing goroutine.
-Consume bounded IPC completely before accepting results; any failure discards all.
+These are application bounds, not a claim of hard OS memory isolation. Input
+loading enforces file/string/source limits. Fetching bounds decompressed bodies,
+parallelism and deadlines. The semantic worker checks component/property/parameter,
+retained text, date-list and rule budgets before revision selection. Every rule,
+including unreferenced VTIMEZONE rules, is preflighted before any timezone
+compilation. Typed accessors validate dates, spans, recurrence sets and zones,
+including discarded revisions and out-of-window events. Unknown event semantics
+are fatal; ordinary standard non-display fields and VTODO are not fetched or
+rendered. Unknown VEVENT properties are conservatively rejected as
+`unsupported_semantics`, including vendor extensions whose meaning is unknown.
+
+The supervisor owns the deadline across **all sources**; no source receives a
+fresh five seconds. Old COUNT rules and impossible/sparse rules may compute
+before yielding; result count alone is insufficient. Synchronous parsing, zone
+compilation and expansion run only inside a killable worker. The supervisor
+kills and reaps it on timeout or cancellation, consumes bounded IPC completely,
+and discards all results on failure. Day conversion checks the same stage
+deadline before returning a model. HTML/capture/output limits apply when those
+components are connected.
 
 Fetch has no automatic retries. Capture may retry 503/504 once, within its shared
 deadline, with integer Retry-After capped at two seconds (otherwise one second).
@@ -120,6 +129,8 @@ before validation. Do not return partial models on any error.
 | capture | `transport`, `http_status`, `invalid_png`, `resource_limit`, `deadline` |
 | output | `output_write`, `cancelled` |
 
-The experiment implements only semantic classes and maps parser/value errors to
-`invalid_calendar`; production validation must distinguish resource and unsupported
-cases before invoking the library. All are fatal; an empty valid calendar succeeds.
+Input/fetch orchestration and the semantic worker expose only these closed
+classes, validated source IDs and HTTP status. Unknown recurrence/date semantics
+use `unsupported_semantics`; validation failures use `invalid_calendar` and
+explicit budget failures use `resource_limit`. All are fatal; an empty valid
+calendar succeeds. Parser recovery is never accepted as complete success.

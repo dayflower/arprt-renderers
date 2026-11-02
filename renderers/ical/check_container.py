@@ -3,6 +3,7 @@
 import argparse
 import json
 import subprocess
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -11,12 +12,22 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--image", required=True)
     args = parser.parse_args()
+    with tempfile.TemporaryDirectory(prefix="ical-output-") as output:
+        Path(output).chmod(0o777)
+        check(args.image, output)
+
+
+def check(image, output):
     prefix = [
         "docker",
         "run",
         "--rm",
         "--network",
         "none",
+        "--mount",
+        f"type=bind,source={output},target=/output",
+        "--env",
+        "TMPDIR=/output",
         "--read-only",
         "--user",
         "1000:1000",
@@ -25,7 +36,7 @@ def main():
         "--security-opt",
         "no-new-privileges",
     ]
-    subprocess.run([*prefix, args.image], check=True, timeout=60)
+    subprocess.run([*prefix, image], check=True, timeout=60)
     directory = Path(__file__).parent / "fixtures"
     cases = json.loads((directory / "cases.json").read_text(encoding="utf-8"))
     for name in ("range-moved-in", "custom-zone-dst", "unknown-zone"):
@@ -37,7 +48,7 @@ def main():
             "To": case["To"],
         }
         result = subprocess.run(
-            [*prefix, "-i", "--entrypoint", "/app/ical-probe", args.image],
+            [*prefix, "-i", "--entrypoint", "/app/ical-probe", image],
             input=json.dumps(request),
             text=True,
             capture_output=True,

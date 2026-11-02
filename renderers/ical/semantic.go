@@ -1,5 +1,4 @@
-// Package ical contains the executable semantics experiment for the ARPRT
-// iCalendar renderer. It is not yet a renderer or a general RFC validator.
+// Package ical implements bounded input, fetching and normalization for ARPRT.
 package ical
 
 import (
@@ -14,6 +13,7 @@ import (
 	"strings"
 	"time"
 	_ "time/tzdata"
+	"unicode/utf8"
 
 	ical "github.com/aanelson/iCalendar"
 	"github.com/aanelson/iCalendar/civil"
@@ -45,6 +45,7 @@ type Request struct {
 	Calendar string
 	Timezone string
 	From, To time.Time
+	Holiday  bool
 }
 
 // Instance keeps civil DATE values separate from instants. Source metadata is
@@ -67,6 +68,9 @@ func Supervise(ctx context.Context, command []string, req Request) ([]Instance, 
 	defer cancel()
 	if len(req.Calendar) > MaxBody {
 		return nil, Limit
+	}
+	if !utf8.ValidString(req.Calendar) {
+		return nil, Invalid
 	}
 	data, err := json.Marshal(req)
 	if err != nil {
@@ -93,7 +97,7 @@ func Supervise(ctx context.Context, command []string, req Request) ([]Instance, 
 	}
 	if reply.Error != "" {
 		switch reply.Error {
-		case Invalid, Limit, Deadline:
+		case Invalid, Unsupported, Limit, Deadline:
 			return nil, reply.Error
 		}
 		return nil, Worker
@@ -174,12 +178,23 @@ func expand(req Request) ([]Instance, error) {
 	if len(req.Calendar) > MaxBody {
 		return nil, Limit
 	}
+	if !utf8.ValidString(req.Calendar) {
+		return nil, Invalid
+	}
+	for _, r := range req.Calendar {
+		if (r < 32 && r != 9 && r != 10 && r != 13) || r == 127 {
+			return nil, Invalid
+		}
+	}
 	if !req.From.Before(req.To) || req.To.Sub(req.From) > 43*24*time.Hour {
 		return nil, Invalid
 	}
 	loc, err := time.LoadLocation(req.Timezone)
 	if err != nil || req.Timezone == "Local" || req.Timezone == "" {
 		return nil, Invalid
+	}
+	if req.To.After(req.From.In(loc).AddDate(0, 0, 42)) {
+		return nil, Limit
 	}
 	d := ical.NewDecoder(strings.NewReader(req.Calendar))
 	d.MaxLineLength, d.MaxDepth = MaxLine, 16
@@ -213,6 +228,9 @@ func expand(req Request) ([]Instance, error) {
 	}
 	if !count(cal.Component) {
 		return nil, Limit
+	}
+	if err := validateCalendar(cal, req.Holiday, loc); err != nil {
+		return nil, err
 	}
 	groups := map[string]map[string]*ical.Component{}
 	var zones []*ical.Component

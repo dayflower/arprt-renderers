@@ -11,7 +11,7 @@ setup:
 	$(MAKE) -C experiments/compare setup
 
 check:
-	test -z "$$($(GOFMT) -l semantic.go semantic_test.go cmd/ical-probe/main.go experiments/compare/compare_test.go)"
+	test -z "$$($(GOFMT) -l *.go cmd/ical-probe/main.go experiments/compare/compare_test.go)"
 	$(GO) vet ./...
 	$(GO) test -mod=readonly ./...
 	$(MAKE) -C experiments/compare check

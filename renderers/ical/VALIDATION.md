@@ -37,3 +37,37 @@ semantic validation/budget layer; day/holiday normalization; HTML/browser fonts
 and layout; capture, PNG rotation and atomic output; Kubernetes mounts, Jobs/PVC
 collection and Secret updates; live subscriptions; physical displays. These
 results establish the semantics experiment and its process boundary only.
+
+## 2026-11-02: file, fetch and day-model integration on Linux amd64
+
+The offline suite now also covers strict configuration JSON, projected-volume
+symlinks, URL and Basic/Bearer file snapshots, preserved Basic UTF-8/whitespace,
+invalid credentials, source limits, and safe diagnostics. Loopback HTTP/TLS stubs
+exercise mixed authentication and unauthenticated holiday sources, no shared
+cookies, three concurrent fetches, same-origin redirects, cross-origin credential
+protection, HTTPS downgrade rejection, redirect limits, decompressed body bounds,
+status errors and cancellation. Invalid input prevents every HTTP request; a
+failed source or semantic stage returns no partial model.
+
+Day-model tests assert four-, five- and six-week month grids, Monday/Sunday week
+starts, seven civil days across both DST transitions, exclusive all-day ends,
+clipped multi-day intervals, ongoing/finished/instant boundaries, source ordering,
+holiday-name deduplication and empty days. The existing 31 semantic fixtures
+still pass. Additional worker tests reject invalid out-of-window events, malformed
+or unreferenced zones, unsupported semantics, duplicate rule entries, incorrect
+value types, invalid UTF-8 and property/parameter/text bounds before publishing
+a model. Forced stalled workers are cancelled and reaped; all sources share the
+same normalization deadline.
+
+Verification commands: `make check`, `make -C renderers/ical image`, then
+`make -C renderers/ical container-check`. The verification-only image contains
+static binaries in scratch. Container tests use network none, loopback stubs,
+read-only root, UID/GID 1000, dropped capabilities and no privilege escalation.
+Only a disposable `/output` parent is writable for fixtures, with `TMPDIR` there;
+no writable `/tmp` is needed. The real standalone probe is checked as before.
+The image is local and unpublished; it is not a production renderer image.
+
+Not verified: native arm64 execution, real ConfigMap/Secret mount updates,
+Kubernetes Jobs/PVC collection, live subscriptions, browser layout/fonts,
+webcappi capture, PNG rotation/atomic replacement, and physical displays.
+These remain separate integration/acceptance work.
