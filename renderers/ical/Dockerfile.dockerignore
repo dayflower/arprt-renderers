@@ -4,8 +4,7 @@
 !renderers/ical/
 !renderers/ical/go.mod
 !renderers/ical/go.sum
-!renderers/ical/semantic.go
-!renderers/ical/semantic_test.go
+!renderers/ical/*.go
 !renderers/ical/fixtures/
 !renderers/ical/fixtures/**
 !renderers/ical/cmd/

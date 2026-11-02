@@ -3,7 +3,7 @@ WORKDIR /src
 ENV CGO_ENABLED=0 GOTOOLCHAIN=local
 COPY renderers/ical/go.mod renderers/ical/go.sum ./
 RUN go mod download && go mod verify
-COPY renderers/ical/semantic.go renderers/ical/semantic_test.go ./
+COPY renderers/ical/*.go ./
 COPY renderers/ical/fixtures ./fixtures
 COPY renderers/ical/cmd ./cmd
 RUN CGO_ENABLED=0 go test -mod=readonly -c -o /out/semantics.test .

@@ -62,7 +62,7 @@ func TestFixtures(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			instances, err := run(t, Request{string(data), tc.Timezone, from, to})
+			instances, err := run(t, Request{Calendar: string(data), Timezone: tc.Timezone, From: from, To: to})
 			if tc.Error != "" {
 				if !errors.Is(err, tc.Error) {
 					t.Fatalf("got %v, want %v", err, tc.Error)
@@ -132,7 +132,7 @@ func TestStructuralBounds(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			body := "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//ARPRT//Bound test//EN\r\n" + tc.Body + "END:VCALENDAR\r\n"
 			from := time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC)
-			_, err := run(t, Request{body, "Asia/Tokyo", from, from.AddDate(0, 0, 7)})
+			_, err := run(t, Request{Calendar: body, Timezone: "Asia/Tokyo", From: from, To: from.AddDate(0, 0, 7)})
 			if !errors.Is(err, tc.Want) {
 				t.Fatal(err)
 			}
