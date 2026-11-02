@@ -1,7 +1,7 @@
 # Development
 
 Use uv, Make and Docker, plus the language toolchain needed by each renderer
-(Go 1.27.3 for Picsum and RSS, selected by their independent `go.mod` files).
+(Go 1.27.3 for Picsum, RSS and iCalendar, selected by their independent `go.mod` files).
 Python 3 is also required for renderer container/release tools. The root Makefile runs shared lint/format checks and
 delegates renderer checks to their own Makefiles. Ruff and CI's uv are pinned in the root Makefile and workflow respectively.
 
@@ -142,7 +142,7 @@ the output parent writable, with no writable `/tmp` requirement.
 
 [RSS checks](../.github/workflows/check-rss.yaml) run source checks and native
 amd64/arm64 image builds and offline execution. Each native job checks image
-architecture and version/revision labels. Normal CI calls both renderer
+architecture and version/revision labels. Normal CI calls all renderer
 workflows plus shared lint. RSS releases call only RSS checks with image archive
 export enabled; the publish job loads those exact tested images without rebuilding.
 RSS has its own release guard, package, version and concurrency group.
@@ -161,3 +161,34 @@ acceptance of other feeds, rotations, photos or overlays. Broader production-clu
 behavior remains unverified. RSS 0.1.0 passed native amd64 and arm64 release checks,
 anonymous tag/digest pulls on both platforms, and postpublication amd64 container
 checks. Postpublication native arm64 execution was not performed.
+
+## iCalendar development and distribution
+
+iCalendar owns its Go module, comparison experiment, VERSION, image, synthetic
+fixtures and release helpers under `renderers/ical/`. Root setup/check discovers
+its Makefile. Go 1.27.3 is pinned independently in both its main and comparison
+modules; source CI caches both dependency sets.
+
+```sh
+make lint format-check RUFF_PATHS=renderers/ical
+make -C renderers/ical setup
+make -C renderers/ical check
+make -C renderers/ical image VERSION=0.1.0 REVISION=your-source-revision
+make -C renderers/ical container-check
+```
+
+`check` covers Go formatting, vet, offline semantic/input/capture/output tests,
+dependency comparison and Python release guards. `image` accepts IMAGE, VERSION
+and REVISION. The static scratch runtime includes CA certificates, embedded
+timezone data and licenses; no browser or test tools ship in it. Container checks
+export a separate static test executable and run it in the exact production image
+with network none, UID/GID 1000, read-only root, dropped capabilities and only the
+output parent writable. Dependencies are never installed at runtime.
+
+[iCalendar checks](../.github/workflows/check-ical.yaml) run scoped lint/source
+checks and native amd64/arm64 image execution. Normal CI calls them alongside
+Picsum/RSS checks. The independent release calls only iCalendar checks, exporting
+the tested native images for publication without rebuilding. Browser/layout,
+cluster file mounts/Secret updates, physical-display readability and live-source
+compatibility have separate scopes in the [validation record](../renderers/ical/VALIDATION.md).
+No stub capture or cross-build substitutes for those acceptance checks.

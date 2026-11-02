@@ -2,6 +2,8 @@ GO ?= go
 GOFMT ?= gofmt
 PYTHON ?= python3
 IMAGE ?= arprt-renderer-ical:dev
+VERSION ?= dev
+REVISION ?= unknown
 
 .PHONY: setup check build image container-check
 
@@ -15,6 +17,7 @@ check:
 	$(GO) vet ./...
 	$(GO) test -mod=readonly ./...
 	$(MAKE) -C experiments/compare check
+	$(PYTHON) -m unittest -v test_release
 
 build:
 	mkdir -p dist
@@ -22,7 +25,7 @@ build:
 	CGO_ENABLED=0 $(GO) build -mod=readonly -trimpath -o dist/renderer ./cmd/renderer
 
 image:
-	docker build --provenance=false -t $(IMAGE) -f Dockerfile ../..
+	docker build --provenance=false --build-arg VERSION=$(VERSION) --build-arg REVISION=$(REVISION) -t $(IMAGE) -f Dockerfile ../..
 
 container-check:
 	$(PYTHON) check_container.py --image $(IMAGE)

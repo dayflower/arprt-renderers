@@ -156,3 +156,49 @@ root/renderer README status and replace the local image in
 multi-platform digest. Keep its feed and webcappi endpoints synthetic in the
 repository. Publishing a renderer does not deploy it or change existing
 Device assignments.
+
+## Publishing iCalendar
+
+iCalendar is unpublished. Its independent [VERSION](../renderers/ical/VERSION)
+is 0.1.0; no availability or public digest is claimed. Its package is
+`ghcr.io/dayflower/arprt-renderer-ical`, tags are canonical stable
+`ical/vMAJOR.MINOR.PATCH`, and releases serialize in `release-ical`.
+Do not change another renderer or controller version for an iCalendar release.
+
+Before the first authorized publication, apply the initial setup above to
+`ical/v*` protection and the iCalendar GHCR package. Confirm native amd64/arm64
+runners and Actions package/release permissions. Review VERSION, README, notices,
+Screen examples and [validation evidence](../renderers/ical/VALIDATION.md) on main.
+Run `make check`, build the iCalendar image and run its container checker. Require
+both native jobs of [iCalendar checks](../.github/workflows/check-ical.yaml) to
+succeed for the intended source revision. Local amd64 success cannot substitute
+for native arm64. Inspect all Codex-contributed commit messages for attribution
+before pushing.
+
+Only on an explicit publication request, create and push an annotated
+`ical/v<version>` tag on the reviewed main commit matching VERSION.
+The [release workflow](../.github/workflows/release-ical.yaml) verifies tag type,
+canonical version, VERSION, exact checkout and ancestry on origin/main. It calls
+only iCalendar checks with archive export. The publish job loads the exact tested
+images, verifies architecture and OCI labels, and never rebuilds. It rejects an
+existing GitHub release or any version/amd64/arm64 tag across all GHCR pages.
+Only explicit HTTP 404 allows an absent first-publication resource; other API
+failures stop publication. Check permissions separately when a 404 may hide a
+resource.
+
+Publication creates versioned amd64/arm64 tags and a multi-platform version
+index, with no `latest`. `ical-index.json` and release notes record the immutable
+reference, source revision and native offline verification. Browser, cluster,
+physical-display and live-subscription acceptance are not run by this workflow.
+Use a new version after any partial image push; never delete tags to bypass a
+guard. If only release creation failed after complete publication, inspect the
+digest and finish the release without rebuilding or repushing.
+
+Set the package Public and verify anonymous version/digest pulls on both
+platforms using a fresh empty Docker config. Run
+`make -C renderers/ical container-check IMAGE=<digest-reference>` on each
+available native host. Record prepublication native checks, anonymous pulls and
+postpublication execution separately. Only then advertise availability and pin
+the verified index digest in [screen.yaml](../renderers/ical/screen.yaml), keeping
+all source URLs, credentials and device identities synthetic. No Helm release is
+required and publication does not deploy the renderer.

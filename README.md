@@ -12,6 +12,7 @@ and of one another. No shared SDK is required.
 | Renderer | Execution | Image | Release tags | Status |
 | --- | --- | --- | --- | --- |
 | [RSS](renderers/rss/README.md) | Kubernetes Job CLI with external webcappi | `ghcr.io/dayflower/arprt-renderer-rss` | `rss/vMAJOR.MINOR.PATCH` | Released [0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.1.0) |
+| [iCalendar](renderers/ical/README.md) | Kubernetes Job CLI with external webcappi | `ghcr.io/dayflower/arprt-renderer-ical` (planned) | `ical/vMAJOR.MINOR.PATCH` | Unpublished; [validation](renderers/ical/VALIDATION.md) |
 | [Picsum](renderers/picsum/README.md) | Kubernetes Job CLI | `ghcr.io/dayflower/arprt-renderer-picsum` | `picsum/vMAJOR.MINOR.PATCH` | Released [0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.2.0) |
 
 Picsum 0.2.0 is available for Linux amd64 and arm64 as
@@ -38,6 +39,12 @@ RSS 0.1.0 is available for Linux amd64 and arm64 as
 `ghcr.io/dayflower/arprt-renderer-rss:0.1.0`. Its Screen example pins the verified
 multi-platform digest. See [RSS usage and Screen example](renderers/rss/README.md)
 for setup, network limits and validation scope.
+
+iCalendar reads file-mounted configuration and independent calendar credentials,
+resolves recurring events and holidays, and captures month/agenda HTML using
+external webcappi. Its independent VERSION is 0.1.0; this is a release candidate
+source version, not a published image. See [iCalendar usage](renderers/ical/README.md)
+and its validation record before deployment.
 
 See [Picsum usage](renderers/picsum/README.md) for local/offline rendering and Screen usage;
 [DEVELOP](notes/DEVELOP.md) for development and CI;

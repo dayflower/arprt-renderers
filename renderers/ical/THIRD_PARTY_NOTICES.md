@@ -11,7 +11,8 @@ toolchain. Its Go license is copied into the production image. ARPRT source
 retains the repository's MIT license.
 
 The separate `experiments/compare` module uses these candidates only
-on the development host; none is linked into the probe or renderer image:
+on the development host; none is linked into the probe or production renderer image.
+The comparison module runs in source CI only, including during release verification:
 
 - github.com/arran4/golang-ical v0.3.8, Apache-2.0.
 - github.com/emersion/go-ical v0.0.0-20250609112844-439c63cef608, MIT, copyright 2020 Simon Ser.

@@ -29,3 +29,6 @@ jobs:
 
   rss:
     uses: ./.github/workflows/check-rss.yaml
+
+  ical:
+    uses: ./.github/workflows/check-ical.yaml
