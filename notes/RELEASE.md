@@ -159,8 +159,11 @@ Device assignments.
 
 ## Publishing iCalendar
 
-iCalendar is unpublished. Its independent [VERSION](../renderers/ical/VERSION)
-is 0.1.0; no availability or public digest is claimed. Its package is
+[iCalendar 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.1.0)
+is published and anonymously pullable for Linux amd64 and arm64. Its release
+notes record the immutable reference, source revision and validation scope.
+Its independent [VERSION](../renderers/ical/VERSION) is 0.1.0. Choose an
+unpublished version for subsequent releases. Its package is
 `ghcr.io/dayflower/arprt-renderer-ical`, tags are canonical stable
 `ical/vMAJOR.MINOR.PATCH`, and releases serialize in `release-ical`.
 Do not change another renderer or controller version for an iCalendar release.

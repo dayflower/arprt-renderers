@@ -4,8 +4,11 @@ An independent Go Job renderer for ARPRT, an unofficial Kubernetes controller
 for TRMNL BYOS. Neither project is affiliated with or endorsed by TRMNL.
 The renderer fetches configured iCalendar sources, resolves calendar semantics,
 and sends escaped HTML with English interface labels and Unicode event text to a separately operated webcappi for capture.
-The image is local and unpublished. The independent [VERSION](VERSION) is 0.1.0;
-CI and guarded release workflows are prepared, but no tag/image has been published.
+[iCalendar 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.1.0)
+is available for Linux amd64 and arm64 as
+`ghcr.io/dayflower/arprt-renderer-ical:0.1.0`. The immutable multi-platform reference is
+`ghcr.io/dayflower/arprt-renderer-ical@sha256:077ee2b4423d0420dda649436637f1f6d601038009d22ba4c372561a337c7a4c`.
+The independent [VERSION](VERSION) is 0.1.0; the Screen example pins this digest.
 
 ```sh
 make -C renderers/ical setup
@@ -122,8 +125,9 @@ orientations. Review the resulting PNGs; successful stub captures alone do not
 prove fonts or layout. Ordinary tests remain offline and synthetic.
 
 [screen.yaml](screen.yaml) provides synthetic ConfigMap, URL Secret, Basic,
-Bearer and independent capture-token mounts. Replace placeholders and load the
-local image on test nodes before applying it in the controller namespace.
+Bearer and independent capture-token mounts. Replace placeholders before
+applying it in the controller namespace. The example uses the verified public
+image digest.
 Input directories must be disjoint from each other and the Context/output
 mounts. Default permissions must allow UID/GID/fsGroup 1000 to read every file.
 Use versioned objects and update Screen references for consistent multi-file
@@ -157,6 +161,8 @@ live subscriptions, a browser, a cluster or a physical display.
 
 Follow [the release guide](../../notes/RELEASE.md#publishing-icalendar) only when
 publication is requested. Verify anonymous pulls and postpublication execution
-separately, then pin the verified index digest in the Screen example. There is
-no published digest to pin yet. Renderer releases do not deploy Screens or alter
-Device assignments.
+separately, then pin the verified index digest in the Screen example. For 0.1.0,
+both platforms passed native prepublication checks and anonymous tag/digest pulls;
+the public amd64 image also passed postpublication container checks.
+Postpublication native arm64 execution was not performed. Renderer releases do
+not deploy Screens or alter Device assignments.

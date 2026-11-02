@@ -192,3 +192,11 @@ the tested native images for publication without rebuilding. Browser/layout,
 cluster file mounts/Secret updates, physical-display readability and live-source
 compatibility have separate scopes in the [validation record](../renderers/ical/VALIDATION.md).
 No stub capture or cross-build substitutes for those acceptance checks.
+
+iCalendar 0.1.0 passed native Linux amd64 and arm64 release builds and offline
+container execution at source revision
+`fa4967af5ae50cf517f47b73b6749c6fa252c978`. Anonymous version/digest pulls passed
+on both platforms, and the public amd64 digest passed postpublication container
+checks. Postpublication native arm64 execution was not performed. See the
+[iCalendar validation record](../renderers/ical/VALIDATION.md#2026-11-02-icalendar-010-publication)
+for the immutable reference and separate acceptance scope.
