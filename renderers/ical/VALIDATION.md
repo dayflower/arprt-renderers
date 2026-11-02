@@ -298,3 +298,36 @@ Those layout cases have separate earlier browser/offline evidence. Live
 subscriptions, provider interoperability and native arm64 remain unverified.
 No release tag, GHCR image or GitHub release was created; the local-cluster test
 image is not a published distribution artifact.
+
+## 2026-11-02: iCalendar 0.1.0 publication
+
+[iCalendar 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.1.0)
+was published from annotated tag `ical/v0.1.0`, source revision
+`fa4967af5ae50cf517f47b73b6749c6fa252c978`.
+The [release workflow](https://github.com/dayflower/arprt-renderers/actions/runs/41452941481)
+passed source checks and native Linux amd64/arm64 builds, offline unit tests
+and production CLI checks under Job security restrictions. It published those
+exact tested image archives without rebuilding. An earlier main arm64 build
+failed while downloading a module from the Go proxy; the tagged release's
+native arm64 build and execution both succeeded.
+
+The public image is `ghcr.io/dayflower/arprt-renderer-ical:0.1.0`; its immutable
+multi-platform reference is
+`ghcr.io/dayflower/arprt-renderer-ical@sha256:077ee2b4423d0420dda649436637f1f6d601038009d22ba4c372561a337c7a4c`.
+Anonymous version-tag and index-digest pulls succeeded for both Linux amd64 and
+arm64 using a fresh empty Docker config. The public amd64 image's OCI version
+and revision labels matched 0.1.0 and the source revision above.
+
+Local `make check`, the version/revision-labeled image build and its container
+checker passed before tagging. After publication,
+`make -C renderers/ical container-check IMAGE=<immutable-reference>` passed on
+native Linux amd64, including offline tests and the production CLI's default
+and custom paths, both palettes, all rotations and failure/cancellation behavior.
+No postpublication native arm64 execution was performed; its anonymous pulls
+verify availability, while native execution evidence comes from release CI.
+
+The earlier browser, isolated Kubernetes and user-observed physical-display
+acceptance records remain separate evidence for the same renderer implementation.
+This publication did not repeat those acceptance checks, deploy a Screen or
+change Device assignments. Live calendar subscriptions/provider compatibility
+and the broader physical cases listed above remain unverified.
