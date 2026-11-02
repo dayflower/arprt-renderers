@@ -5,7 +5,7 @@
 Configuration is UTF-8 JSON following [config.schema.json](config.schema.json).
 Unknown keys, duplicate keys at every depth, nulls, trailing JSON, unknown
 versions and invalid values fail before any HTTP request. Defaults apply only
-to absent keys. The title defaults to `カレンダー`, view to `month`, timezone to
+to absent keys. The title defaults to `Calendar`, view to `month`, timezone to
 `Asia/Tokyo`, week start to `sunday`; absent source arrays mean empty arrays.
 
 There must be 1–10 sources across both arrays, with globally unique IDs. Source
@@ -102,14 +102,13 @@ before yielding; result count alone is insufficient. Synchronous parsing, zone
 compilation and expansion run only inside a killable worker. The supervisor
 kills and reaps it on timeout or cancellation, consumes bounded IPC completely,
 and discards all results on failure. Day conversion checks the same stage
-deadline before returning a model. HTML/capture/output limits apply when those
-components are connected.
+deadline before returning a model. HTML/capture/output limits are enforced by the Job renderer.
 
 Fetch has no automatic retries. Capture may retry 503/504 once, within its shared
 deadline, with integer Retry-After capped at two seconds (otherwise one second).
 No capture redirects, 4xx retry or transport-error retry. No runtime dependency
 installation, persistent cache, renderer state or writable scratch outside the
-output parent. Future PNG replacement uses a sibling temporary file and happens
+output parent. PNG replacement uses a sibling temporary file and happens
 only after complete capture/PNG validation, a successful close and cancellation
 check; failure retains the existing output and cleans temporary files.
 

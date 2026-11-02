@@ -1,0 +1,40 @@
+[
+  {
+    "name": "empty",
+    "events": 0,
+    "holidays": 0,
+    "sources": 1
+  },
+  {
+    "name": "dense",
+    "events": 80,
+    "holidays": 4,
+    "sources": 10
+  },
+  {
+    "name": "long",
+    "events": 3,
+    "holidays": 2,
+    "sources": 10
+  },
+  {
+    "name": "four-week",
+    "events": 3,
+    "holidays": 1,
+    "sources": 10,
+    "month": 2
+  },
+  {
+    "name": "six-week",
+    "events": 80,
+    "holidays": 4,
+    "sources": 10,
+    "month": 8
+  },
+  {
+    "name": "sample",
+    "events": 3,
+    "holidays": 1,
+    "sources": 2
+  }
+]

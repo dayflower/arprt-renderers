@@ -80,7 +80,7 @@ not last 24 hours. These are fixed expected values, not platform defaults.
 | Revisions | Renderer picks highest SEQUENCE, then latest UTC DTSTAMP, then later input position, separately per source/UID/original RECURRENCE-ID | `revisions`, `timestamp` |
 | Cancellation | Winning cancelled master suppresses entire UID; cancelled override suppresses that original; cancelled range suppresses following originals until a later range/exact override | `cancelled`, `range-cancelled` |
 | THISANDFUTURE | Renderer applies wall-clock start difference and replacement duration from its original RID forward; later range replaces it, exact instance takes precedence | `range`, `range-date`, `range-dst`, `range-moved-in`, `range-replaced` |
-| Missing summary and TEXT | Library unescaping; renderer default `名称未設定`; template must HTML-escape text | `floating`, remaining fixtures' missing summaries |
+| Missing summary and TEXT | Library unescaping; renderer default `Untitled`; template must HTML-escape text | `floating`, remaining fixtures' missing summaries |
 | Old/dense/impossible rules | Candidate bound plus hard process deadline; no silent truncation | `old-unbounded`, `old-count`, `dense`, `impossible`, supervisor tests |
 
 The renderer groups by source before UID; never merge ordinary events from

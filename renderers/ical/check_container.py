@@ -1,88 +1,86 @@
-"""Run the semantics verifier and real probe under offline Job restrictions."""
+#!/usr/bin/env python3
+"""Run offline tests and the shipped ICAL CLI under ARPRT Job restrictions."""
 
 import argparse
-import json
 import subprocess
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
 
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--image", required=True)
-    args = parser.parse_args()
-    with tempfile.TemporaryDirectory(prefix="ical-output-") as output:
-        Path(output).chmod(0o777)
-        check(args.image, output)
+ICAL = Path(__file__).resolve().parent
 
 
-def check(image, output):
-    prefix = [
-        "docker",
-        "run",
-        "--rm",
-        "--network",
-        "none",
-        "--mount",
-        f"type=bind,source={output},target=/output",
-        "--env",
-        "TMPDIR=/output",
-        "--read-only",
-        "--user",
-        "1000:1000",
-        "--cap-drop",
-        "ALL",
-        "--security-opt",
-        "no-new-privileges",
-    ]
-    subprocess.run([*prefix, image], check=True, timeout=60)
-    directory = Path(__file__).parent / "fixtures"
-    cases = json.loads((directory / "cases.json").read_text(encoding="utf-8"))
-    for name in ("range-moved-in", "custom-zone-dst", "unknown-zone"):
-        case = next(item for item in cases if item["Name"] == name)
-        request = {
-            "Calendar": (directory / f"{name}.ics").read_text(encoding="utf-8"),
-            "Timezone": case["Timezone"],
-            "From": case["From"],
-            "To": case["To"],
-        }
-        result = subprocess.run(
-            [*prefix, "-i", "--entrypoint", "/app/ical-probe", image],
-            input=json.dumps(request),
-            text=True,
-            capture_output=True,
-            timeout=15,
-            check=False,
+def check(image):
+    platform = subprocess.check_output(
+        ["docker", "image", "inspect", "--format", "{{.Os}}/{{.Architecture}}", image],
+        text=True,
+    ).strip()
+    assert platform in ("linux/amd64", "linux/arm64")
+    with tempfile.TemporaryDirectory(prefix="ical-check-") as directory:
+        root = Path(directory)
+        root.chmod(0o755)
+        inputs, output = root / "inputs", root / "output"
+        inputs.mkdir()
+        output.mkdir(mode=0o777)
+        output.chmod(0o777)
+        subprocess.run(
+            [
+                "docker",
+                "build",
+                "--platform",
+                platform,
+                "--target",
+                "test-export",
+                "--output",
+                f"type=local,dest={inputs}",
+                "-f",
+                str(ICAL / "Dockerfile"),
+                str(ICAL.parents[1]),
+            ],
+            check=True,
         )
-        if "Error" in case:
-            if result.returncode != 1 or result.stderr != case["Error"] + "\n":
-                raise RuntimeError("probe did not return its safe error class")
-            if result.stdout:
-                raise RuntimeError("failed probe returned partial output")
-            continue
-        if result.returncode != 0 or result.stderr:
-            raise RuntimeError("probe failed inside the restricted image")
-        rows = []
-        for item in json.loads(result.stdout):
-            # Compare instants independently of the preserved source offset.
-            start = datetime.fromisoformat(item["Start"]).astimezone(timezone.utc)
-            end = datetime.fromisoformat(item["End"]).astimezone(timezone.utc)
-            rows.append(
-                "|".join(
-                    [
-                        item["UID"],
-                        item["RecurrenceID"],
-                        item["Summary"],
-                        start.isoformat().replace("+00:00", "Z"),
-                        end.isoformat().replace("+00:00", "Z"),
-                    ]
-                )
-            )
-        if rows != case["Want"]:
-            raise RuntimeError("probe returned incorrect moved/timezone instances")
-    print("Restricted semantics tests and real probe checks passed.")
+        # Test HTTP servers listen only on this container's loopback interface.
+        # The test binary launches /app/renderer, including its default paths.
+        subprocess.run(
+            [
+                "docker",
+                "run",
+                "--rm",
+                "--network=none",
+                "--read-only",
+                "--user=1000:1000",
+                "--cap-drop=ALL",
+                "--security-opt=no-new-privileges",
+                "--ipc=none",
+                "--pids-limit=64",
+                "--memory=192m",
+                "--cpus=0.5",
+                "--env=TMPDIR=/arprt",
+                "--env=ICAL_CLI=/app/renderer",
+                "--mount",
+                f"type=bind,src={output},dst=/arprt",
+                "--mount",
+                f"type=bind,src={ICAL / 'fixtures/render-context-v1.json'},dst=/arprt/context.json,readonly",
+                "--mount",
+                f"type=bind,src={ICAL / 'fixtures'},dst=/app/fixtures,readonly",
+                "--mount",
+                f"type=bind,src={ICAL / 'fixtures/render-context-v1.json'},dst=/input/context.json,readonly",
+                "--mount",
+                f"type=bind,src={inputs},dst=/tests,readonly",
+                "--entrypoint=/tests/renderer.test",
+                image,
+                "-test.v",
+                "-test.timeout=180s",
+            ],
+            check=True,
+        )
+        assert (output / "output.png").stat().st_uid == 1000
+        assert not list(output.rglob(".ical-*.tmp"))
+    print(
+        "PASS: offline tests and production CLI, default/custom paths, palettes and rotations"
+    )
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--image", required=True)
+    check(parser.parse_args().image)

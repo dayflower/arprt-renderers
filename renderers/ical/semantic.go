@@ -471,7 +471,7 @@ func overlaps(start, end ical.DateTime, loc *time.Location, from, to time.Time) 
 func instance(c *ical.Component, rid, start, end ical.DateTime, loc *time.Location) Instance {
 	summary := text(c, "SUMMARY")
 	if summary == "" {
-		summary = "名称未設定"
+		summary = "Untitled"
 	}
 	i := Instance{UID: text(c, "UID"), RecurrenceID: key(rid, loc), Summary: summary, Start: start.In(loc), End: end.In(loc), AllDay: start.IsDate}
 	if start.IsDate {
