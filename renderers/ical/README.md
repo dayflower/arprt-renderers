@@ -4,7 +4,8 @@ An independent Go Job renderer for ARPRT, an unofficial Kubernetes controller
 for TRMNL BYOS. Neither project is affiliated with or endorsed by TRMNL.
 The renderer fetches configured iCalendar sources, resolves calendar semantics,
 and sends escaped HTML with English interface labels and Unicode event text to a separately operated webcappi for capture.
-The image is local and unpublished; CI and release integration follow in phase 4.
+The image is local and unpublished. The independent [VERSION](VERSION) is 0.1.0;
+CI and guarded release workflows are prepared, but no tag/image has been published.
 
 ```sh
 make -C renderers/ical setup
@@ -127,10 +128,35 @@ Input directories must be disjoint from each other and the Context/output
 mounts. Default permissions must allow UID/GID/fsGroup 1000 to read every file.
 Use versioned objects and update Screen references for consistent multi-file
 changes. Secret content changes alone do not trigger an immediate render; a
-newly created Job reads current mounted contents. Real cluster mount/update
-acceptance belongs to phase 4.
+newly created Job reads current mounted contents. See the validation record for
+actual cluster mount/update acceptance; content updates do not establish an atomic snapshot across multiple files.
 
 The standalone `dist/ical-probe` still reads a private semantics request on
 stdin and emits normalized instances. It performs no HTTP/capture/output work.
 See [third-party notices](THIRD_PARTY_NOTICES.md) and
 [validation scope](VALIDATION.md) for evidence and remaining limitations.
+
+## CI and distribution
+
+Normal CI calls [iCalendar checks](../../.github/workflows/check-ical.yaml), with
+source checks and native Linux amd64/arm64 image builds and offline execution.
+The source job also runs the isolated comparison module and release guard tests.
+Native jobs assert architecture and OCI version/revision labels before testing.
+A configured arm64 runner is not evidence of a successful arm64 execution;
+consult [VALIDATION.md](VALIDATION.md) for completed runs and pending acceptance.
+
+The [release workflow](../../.github/workflows/release-ical.yaml) accepts only
+annotated stable `ical/vMAJOR.MINOR.PATCH` tags matching VERSION on origin/main.
+It calls only iCalendar checks, then publishes the exact tested native image
+archives without rebuilding. Publication uses independent
+`ghcr.io/dayflower/arprt-renderer-ical` version/platform tags and no `latest`.
+Existing version/platform tags or a GitHub release block publication; partial
+publication requires a new version. The release record includes the immutable
+index digest and exact source revision. Neither CI nor release automation tests
+live subscriptions, a browser, a cluster or a physical display.
+
+Follow [the release guide](../../notes/RELEASE.md#publishing-icalendar) only when
+publication is requested. Verify anonymous pulls and postpublication execution
+separately, then pin the verified index digest in the Screen example. There is
+no published digest to pin yet. Renderer releases do not deploy Screens or alter
+Device assignments.

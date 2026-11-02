@@ -1,4 +1,4 @@
-# Semantics validation record
+# iCalendar validation record
 
 ## 2026-11-02: local Linux amd64
 
@@ -191,3 +191,110 @@ are aligned side by side without overlap in landscape and flow vertically in
 portrait, alongside row containment, exact omission totals and 16px minimum text.
 The previously recorded browser sandbox and native arm64/cluster/physical-display
 limitations remain.
+
+## 2026-11-02: phase 4 CI, distribution and acceptance
+
+The following results apply to the phase 4 working tree, not a published release.
+The local production image was built with VERSION=0.1.0 and the deliberately
+non-release REVISION label `phase4-local`; its architecture was inspected as
+`linux/amd64`. Release CI supplies the exact tagged source revision instead.
+
+### CI and release preparation
+
+- Passed `make check`, including nine new offline release guard/notes tests.
+  They cover canonical renderer-specific tags, VERSION/annotated-tag/main
+  ancestry/exact-checkout guards, paginated package lookups, partial publication,
+  existing releases, fail-closed API errors and index digest/platform validation.
+- Built the production image, verified version/revision labels, and passed
+  `make -C renderers/ical container-check` under the existing network-none Job
+  restrictions. Both palettes, rotations, paths and failure/cancellation tests
+  remain in this offline suite.
+- Passed actionlint for normal CI and both new iCalendar workflows.
+  Normal CI now calls iCalendar checks with native amd64/arm64 runners.
+  The release calls only those checks and publishes their exported native images
+  without rebuilding. VERSION, package, tag prefix and concurrency are independent.
+- These are local amd64 results and workflow configuration. No GitHub Actions
+  run or native arm64 execution of this working tree was performed. Both native
+  jobs must pass for the reviewed revision before publication; cross-compilation
+  or successful amd64 execution would not satisfy the arm64 requirement.
+
+### Disposable native amd64 Kubernetes acceptance
+
+A dedicated kind cluster and kubeconfig used the cached node image
+`kindest/node@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed`.
+The controller was built from ARPRT
+`bcdeda4fcc4e718704976c25bfe9044181303f05` and installed with its local production
+controller/CRD charts. A synthetic Device made authenticated BYOS requests; no
+physical device identities or credentials were used in this cluster.
+
+The calendar service used Python's standard-library HTTPS server with an
+acceptance-only self-signed certificate and fixed synthetic Basic/Bearer checks.
+Its CA was mounted read-only over the renderer trust directory for this test;
+production keeps the image's public CA bundle. No TLS verification was disabled
+in the renderer. An unauthenticated all-day holiday endpoint checked that no
+Authorization header arrived. Capture used real `webcappi:font-cdp-fix`, revision
+`40136ce4a0e6bd9473f931786474449414855838`, with an independent synthetic capture
+Bearer token and installed Noto CJK fonts. It used `sandbox: false` for the host
+limitation already described above; this does not validate a production browser
+sandbox. Browser capture and synthetic source services run separately from the
+restricted renderer Job.
+
+Passed, in order:
+
+1. Mounted configuration ConfigMap, URL/Basic/Bearer/capture Secrets and test CA
+   as six disjoint read-only volumes. Requested mode 0400 remained readable with
+   effective UID/GID/fsGroup 1000. The controller-created Job had read-only root,
+   all capabilities dropped, no privilege escalation/service-account token and
+   exactly one writable output mount.
+2. Fetched two authenticated normal calendars and one holiday calendar; captured
+   real agenda HTML; completed the Job; collected its PNG from the PVC; delivered
+   an authenticated 800x480 gray4 PNG.
+3. Updated URL, Basic password and Bearer token Secret contents in place.
+   The latest attempt and Job count remained unchanged during an eight-second
+   observation. This is a bounded observation, not a guarantee of scheduling
+   latency or an atomic multi-file update.
+4. Changed the Screen refreshInterval to create the next Job. It successfully
+   read the new URL/password/token. The resulting PNG visibly contained
+   `Work v2` and `Family v2` instead of their v1 labels, and its SHA-256 changed
+   from `fd16d5a45422e4a8460105d54c4506294bf2fa2fcd5bc10c33982310ef28e4e2`
+   to `3f826945aeff684be54d1b039d89c9176095782754f7623a92b8ad8ba33b1e97`.
+   Secret content changes alone are not documented as immediate render triggers;
+   versioned objects/Screen reference updates remain the consistency recommendation.
+5. Replaced the Bearer token with an invalid synthetic value and changed the
+   Screen spec again. The renderer Job failed with JobFailed. The latest
+   successful attempt and delivered PNG hash remained the v2 values.
+6. Referenced a required missing URL Secret. Kubernetes reported FailedMount
+   before renderer startup; the last successful delivered PNG remained unchanged.
+   This is distinct from a running renderer rejecting authentication.
+7. Removed the test namespace, Helm releases and test-owned CRDs, then deleted
+   the dedicated kind cluster. The operator's selected cluster was not used by
+   this isolated suite.
+
+These results verify file input, mount permissions, next-Job updates, capture,
+collection and failure preservation on native amd64. They do not test a real
+calendar provider, production-scale scheduling or native arm64 Kubernetes.
+
+### Physical display acceptance
+
+The user identified available TRMNL OG and E1002 devices in the local cluster.
+Temporary synthetic Screens used the same renderer binary, existing capture
+service, `dithering: none`, 800x480 and rotation 0. The OG received month/gray4;
+the E1002 received agenda/spectra6. Japanese and English all-day appointments
+covered today and several following days. Both Screens became ImageReady.
+Only temporary Screen assignments were changed; existing playlist references
+were saved and restored after review. Temporary Screens, ConfigMaps, source Pod
+and Service were then removed. Device names, hardware IDs, private endpoints
+and real authentication data are intentionally omitted from this record.
+
+The user reported no visibility problems on either display. This is user-observed
+physical acceptance of those two synthetic layouts, not inferred from PNGs or
+controller status. The user suggested making more use of color on the E1002;
+that remains a possible future improvement. The accepted layout retains the
+previous black/white distinctions, including on color displays.
+
+Not verified physically: OG agenda, E1002 month, portrait/other rotations, timed
+appointment details, dense overflow, long holiday names or other calendars.
+Those layout cases have separate earlier browser/offline evidence. Live
+subscriptions, provider interoperability and native arm64 remain unverified.
+No release tag, GHCR image or GitHub release was created; the local-cluster test
+image is not a published distribution artifact.
