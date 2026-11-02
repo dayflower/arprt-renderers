@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ARPRT iCalendar configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "properties": {
+    "version": {"const": 1},
+    "title": {"type": "string", "minLength": 1, "maxLength": 256, "default": "カレンダー"},
+    "view": {"enum": ["month", "agenda"], "default": "month"},
+    "timezone": {"type": "string", "minLength": 1, "maxLength": 128, "default": "Asia/Tokyo"},
+    "weekStartsOn": {"enum": ["sunday", "monday"], "default": "sunday"},
+    "calendars": {"type": "array", "maxItems": 10, "items": {"$ref": "#/$defs/source"}},
+    "holidayCalendars": {"type": "array", "maxItems": 10, "items": {"$ref": "#/$defs/source"}}
+  },
+  "anyOf": [
+    {"required": ["calendars"], "properties": {"calendars": {"minItems": 1}}},
+    {"required": ["holidayCalendars"], "properties": {"holidayCalendars": {"minItems": 1}}}
+  ],
+  "$defs": {
+    "path": {"type": "string", "minLength": 2, "maxLength": 512, "pattern": "^/[^\\u0000]+$"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": {"type": "string", "maxLength": 63, "pattern": "^[a-z][a-z0-9-]{0,62}$"},
+        "name": {"type": "string", "minLength": 1, "maxLength": 128},
+        "url": {"type": "string", "minLength": 1, "maxLength": 8192},
+        "urlFile": {"$ref": "#/$defs/path"},
+        "auth": {
+          "type": "object", "additionalProperties": false,
+          "required": ["type", "credentialsFile"],
+          "properties": {
+            "type": {"enum": ["basic", "bearer"]},
+            "credentialsFile": {"$ref": "#/$defs/path"}
+          }
+        }
+      },
+      "oneOf": [
+        {"required": ["url"], "not": {"required": ["urlFile"]}},
+        {"required": ["urlFile"], "not": {"required": ["url"]}}
+      ]
+    }
+  }
+}
