@@ -208,7 +208,7 @@ func LoadInput(filename string) (*Input, error) {
 	if err != nil {
 		return nil, diagnostic("", "input", "input_read")
 	}
-	c := configFile{Title: "カレンダー", View: "month", Timezone: "Asia/Tokyo", WeekStartsOn: "sunday"}
+	c := configFile{Title: "Calendar", View: "month", Timezone: "Asia/Tokyo", WeekStartsOn: "sunday"}
 	if strictJSON(data, &c) != nil || c.Version != 1 || !validText(c.Title, 256) || (c.View != "month" && c.View != "agenda") || (c.WeekStartsOn != "sunday" && c.WeekStartsOn != "monday") || !validText(c.Timezone, 128) || c.Timezone == "Local" {
 		return nil, diagnostic("", "input", "invalid_config")
 	}

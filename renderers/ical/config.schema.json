@@ -6,7 +6,7 @@
   "required": ["version"],
   "properties": {
     "version": {"const": 1},
-    "title": {"type": "string", "minLength": 1, "maxLength": 256, "default": "カレンダー"},
+    "title": {"type": "string", "minLength": 1, "maxLength": 256, "default": "Calendar"},
     "view": {"enum": ["month", "agenda"], "default": "month"},
     "timezone": {"type": "string", "minLength": 1, "maxLength": 128, "default": "Asia/Tokyo"},
     "weekStartsOn": {"enum": ["sunday", "monday"], "default": "sunday"},

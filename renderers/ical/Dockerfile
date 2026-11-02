@@ -4,15 +4,31 @@ ENV CGO_ENABLED=0 GOTOOLCHAIN=local
 COPY renderers/ical/go.mod renderers/ical/go.sum ./
 RUN go mod download && go mod verify
 COPY renderers/ical/*.go ./
-COPY renderers/ical/fixtures ./fixtures
 COPY renderers/ical/cmd ./cmd
-RUN CGO_ENABLED=0 go test -mod=readonly -c -o /out/semantics.test .
-RUN CGO_ENABLED=0 go build -mod=readonly -trimpath -o /out/ical-probe ./cmd/ical-probe
-COPY LICENSE /out/licenses/ARPRT
-COPY renderers/ical/licenses /out/licenses
-RUN cp /usr/local/go/LICENSE /out/licenses/Go-LICENSE
+COPY renderers/ical/fixtures ./fixtures
+RUN go build -mod=readonly -trimpath -ldflags="-s -w" -o /out/renderer ./cmd/renderer
 
-FROM scratch
-COPY --from=build /out /app
+FROM build AS tests
+RUN go test -mod=readonly -trimpath -c -o /out/renderer.test .
+
+FROM scratch AS test-export
+COPY --from=tests /out/renderer.test /renderer.test
+
+FROM scratch AS runtime
+ARG VERSION=dev
+ARG REVISION=unknown
+LABEL org.opencontainers.image.title="ARPRT iCalendar renderer" \
+      org.opencontainers.image.description="iCalendar Job renderer maintained by the independent, unofficial ARPRT project; not affiliated with or endorsed by TRMNL." \
+      org.opencontainers.image.source="https://github.com/dayflower/arprt-renderers" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${REVISION}" \
+      org.opencontainers.image.licenses="MIT"
+WORKDIR /app
+COPY --from=build /out/renderer /app/renderer
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=build /usr/local/go/LICENSE /usr/share/licenses/arprt-renderer-ical/Go-LICENSE
+COPY LICENSE /usr/share/licenses/arprt-renderer-ical/LICENSE
+COPY renderers/ical/THIRD_PARTY_NOTICES.md /usr/share/licenses/arprt-renderer-ical/THIRD_PARTY_NOTICES.md
+COPY renderers/ical/licenses /usr/share/licenses/arprt-renderer-ical/dependencies
 USER 1000:1000
-ENTRYPOINT ["/app/semantics.test", "-test.v"]
+ENTRYPOINT ["/app/renderer"]

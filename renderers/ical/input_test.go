@@ -23,7 +23,7 @@ func loadTestInput(t *testing.T, text string) (*Input, error) {
 func TestStrictInput(t *testing.T) {
 	good := `{"version":1,"calendars":[{"id":"work","name":"仕事","url":"https://calendar.example/work?private=value"}]}`
 	input, err := loadTestInput(t, good)
-	if err != nil || input.title != "カレンダー" || input.view != "month" || input.timezone != "Asia/Tokyo" || input.weekStartsOn != "sunday" {
+	if err != nil || input.title != "Calendar" || input.view != "month" || input.timezone != "Asia/Tokyo" || input.weekStartsOn != "sunday" {
 		t.Fatalf("defaults: %v", err)
 	}
 	for _, bad := range []string{

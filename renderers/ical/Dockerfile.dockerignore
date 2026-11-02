@@ -11,3 +11,4 @@
 !renderers/ical/cmd/**
 !renderers/ical/licenses/
 !renderers/ical/licenses/**
+!renderers/ical/THIRD_PARTY_NOTICES.md

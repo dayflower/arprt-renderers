@@ -1,0 +1,110 @@
+# Synthetic inputs only. Build/load arprt-renderer-ical:dev on your test nodes.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ical-config-v1
+data:
+  config.json: |
+    {
+      "version": 1,
+      "title": "暮らしのカレンダー",
+      "view": "month",
+      "timezone": "Asia/Tokyo",
+      "weekStartsOn": "sunday",
+      "calendars": [
+        {
+          "id": "work", "name": "仕事",
+          "urlFile": "/etc/ical-urls/work-url",
+          "auth": {"type": "basic", "credentialsFile": "/etc/ical-basic/credentials"}
+        },
+        {
+          "id": "home", "name": "家族",
+          "url": "https://calendar.example.com/home.ics",
+          "auth": {"type": "bearer", "credentialsFile": "/etc/ical-bearer/token"}
+        }
+      ],
+      "holidayCalendars": [
+        {"id": "holidays", "name": "祝日", "url": "webcal://calendar.example.com/holidays.ics"}
+      ]
+    }
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ical-urls-v1
+type: Opaque
+stringData:
+  work-url: https://calendar.example.com/work.ics?subscription=synthetic
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ical-basic-v1
+type: Opaque
+stringData:
+  credentials: '{"username":"synthetic-user","password":"synthetic-password"}'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ical-bearer-v1
+type: Opaque
+stringData:
+  token: synthetic-calendar-token
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ical-capture-v1
+type: Opaque
+stringData:
+  token: synthetic-capture-token
+---
+apiVersion: arprt.dayflower.github.io/v1alpha1
+kind: ArprtScreen
+metadata:
+  name: ical
+spec:
+  refreshInterval: 30m
+  imageProcessing:
+    dithering: none
+  source:
+    job:
+      volumes:
+        - name: config
+          configMap:
+            name: ical-config-v1
+        - name: urls
+          secret:
+            secretName: ical-urls-v1
+        - name: basic
+          secret:
+            secretName: ical-basic-v1
+        - name: bearer
+          secret:
+            secretName: ical-bearer-v1
+        - name: capture
+          secret:
+            secretName: ical-capture-v1
+      renderer:
+        image: arprt-renderer-ical:dev
+        args:
+          - --config
+          - /etc/ical-config/config.json
+          - --webcappi-url
+          - https://webcappi.example.com
+          - --webcappi-token-file
+          - /etc/ical-capture/token
+        volumeMounts:
+          - {name: config, mountPath: /etc/ical-config, readOnly: true}
+          - {name: urls, mountPath: /etc/ical-urls, readOnly: true}
+          - {name: basic, mountPath: /etc/ical-basic, readOnly: true}
+          - {name: bearer, mountPath: /etc/ical-bearer, readOnly: true}
+          - {name: capture, mountPath: /etc/ical-capture, readOnly: true}
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 192Mi
