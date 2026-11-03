@@ -4,12 +4,11 @@ An independent Go Job renderer for ARPRT, an unofficial Kubernetes controller
 for TRMNL BYOS. Neither project is affiliated with or endorsed by TRMNL.
 The renderer fetches configured iCalendar sources, resolves calendar semantics,
 and sends escaped HTML with English interface labels and Unicode event text to a separately operated webcappi for capture.
-[iCalendar 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.1.0)
+[iCalendar 0.1.1](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.1.1)
 is available for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-ical:0.1.0`. The immutable multi-platform reference is
-`ghcr.io/dayflower/arprt-renderer-ical@sha256:077ee2b4423d0420dda649436637f1f6d601038009d22ba4c372561a337c7a4c`.
-The independent [VERSION](VERSION) is 0.1.1, prepared for the next release;
-the Screen example currently pins the published 0.1.0 digest.
+`ghcr.io/dayflower/arprt-renderer-ical:0.1.1`. The immutable multi-platform reference is
+`ghcr.io/dayflower/arprt-renderer-ical@sha256:a0f9ea18051a804531fb0d6ff31197f06c1b5378281d17ee22bc2c306aa22365`.
+The independent [VERSION](VERSION) is 0.1.1; the Screen example pins this digest.
 See the [changelog](CHANGELOG.md) for the 0.1.1 compatibility fix.
 
 ```sh
@@ -52,7 +51,7 @@ interpretation, including Google Calendar's `X-GOOGLE-CONFERENCE` and
 `X-GOOGLE-HANGOUT`, and Apple's `X-APPLE-STRUCTURED-LOCATION`. Property, parameter
 and line-length budgets still apply. Unknown non-`X-` properties and unsupported
 recurrence/date semantics remain fatal; see [semantics](SEMANTICS.md). This
-compatibility change is included in 0.1.1 and is not in the published 0.1.0 image.
+compatibility change is included in 0.1.1.
 
 ## Display behavior
 
@@ -170,7 +169,7 @@ live subscriptions, a browser, a cluster or a physical display.
 
 Follow [the release guide](../../notes/RELEASE.md#publishing-icalendar) only when
 publication is requested. Verify anonymous pulls and postpublication execution
-separately, then pin the verified index digest in the Screen example. For 0.1.0,
+separately, then pin the verified index digest in the Screen example. For 0.1.1,
 both platforms passed native prepublication checks and anonymous tag/digest pulls;
 the public amd64 image also passed postpublication container checks.
 Postpublication native arm64 execution was not performed. Renderer releases do
