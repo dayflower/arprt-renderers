@@ -171,7 +171,15 @@ func newer(a, b *ical.Component) bool {
 	if seq(a) != seq(b) {
 		return seq(a) > seq(b)
 	}
-	return text(a, "DTSTAMP") >= text(b, "DTSTAMP")
+	stamp := func(c *ical.Component) string {
+		v := text(c, "DTSTAMP")
+		// Date-only metadata has no UTC instant and ranks like an absent stamp.
+		if len(v) == 8 {
+			return ""
+		}
+		return v
+	}
+	return stamp(a) >= stamp(b)
 }
 
 func expand(req Request) ([]Instance, error) {
@@ -258,11 +266,6 @@ func expand(req Request) ([]Instance, error) {
 		if p := c.Get("SEQUENCE"); p != nil {
 			n, err := strconv.Atoi(p.Value)
 			if err != nil || n < 0 {
-				return nil, Invalid
-			}
-		}
-		if p := c.Get("DTSTAMP"); p != nil {
-			if _, err := time.Parse("20060102T150405Z", p.Value); err != nil {
 				return nil, Invalid
 			}
 		}

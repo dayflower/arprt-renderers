@@ -225,8 +225,8 @@ func validateDates(p *ical.Property, cal *ical.Calendar, c *ical.Component, coun
 	if value != "" && value != "DATE" && value != "DATE-TIME" && !period {
 		return Unsupported
 	}
-	if p.Name == "DTSTAMP" && (value != "" && value != "DATE-TIME" || p.Params.Has("TZID")) {
-		return Invalid
+	if p.Name == "DTSTAMP" {
+		return validateStamp(p)
 	}
 	if p.Name != "RECURRENCE-ID" && p.Params.Has("RANGE") {
 		return Unsupported
@@ -312,6 +312,29 @@ func validateDates(p *ical.Property, cal *ical.Calendar, c *ical.Component, coun
 	}
 	return nil
 }
+
+// validateStamp tolerates date-only creation metadata without assigning it an instant.
+// UTC timestamps retain their revision ordering; no other date property is relaxed.
+func validateStamp(p *ical.Property) error {
+	if p.Params.Has("TZID") {
+		return Invalid
+	}
+	for _, param := range p.Params {
+		if strings.ToUpper(param.Name) != "VALUE" {
+			return Unsupported
+		}
+	}
+	value := p.Params.Get("VALUE")
+	layout := "20060102T150405Z"
+	if value == "DATE" || (value == "" && len(p.Value) == 8) {
+		layout = "20060102"
+	}
+	if _, err := time.Parse(layout, p.Value); err != nil {
+		return Invalid
+	}
+	return nil
+}
+
 func validateRule(p *ical.Property, c *ical.Component) error {
 	seen := map[string]bool{}
 	for _, part := range strings.Split(p.Value, ";") {

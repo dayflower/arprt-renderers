@@ -90,8 +90,15 @@ loading enforces file/string/source limits. Fetching bounds decompressed bodies,
 parallelism and deadlines. The semantic worker checks component/property/parameter,
 retained text, date-list and rule budgets before revision selection. Every rule,
 including unreferenced VTIMEZONE rules, is preflighted before any timezone
-compilation. Typed accessors validate dates, spans, recurrence sets and zones,
-including discarded revisions and out-of-window events. Unknown event semantics
+compilation. DTSTAMP alone accepts valid date-only creation metadata, either
+`VALUE=DATE` or eight date digits without VALUE, for compatibility with iCloud
+holiday calendars. These values rank like missing DTSTAMP in revision selection;
+SEQUENCE, valid UTC stamps and later input position keep their existing priority.
+DTSTAMP with TZID, floating DATE-TIME, invalid dates, explicit type mismatches or
+multiple DTSTAMP properties is rejected. Unknown DTSTAMP parameters remain
+unsupported. DTSTART, DTEND, RECURRENCE-ID, RDATE and EXDATE retain strict type,
+timezone and recurrence checks. Typed accessors validate dates, spans, recurrence
+sets and zones, including discarded revisions and out-of-window events. Unknown event semantics
 are fatal; ordinary standard non-display fields and VTODO are not fetched or
 rendered. On VEVENT, STANDARD and DAYLIGHT, vendor properties with a
 case-insensitive `X-` prefix are ignored without interpretation. They remain

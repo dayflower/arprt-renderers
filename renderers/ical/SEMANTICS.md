@@ -86,9 +86,18 @@ not last 24 hours. These are fixed expected values, not platform defaults.
 The renderer groups by source before UID; never merge ordinary events from
 different sources. Compare timed RIDs by resolved instant, DATE RIDs by civil
 date, retaining original identity after movement. Missing SEQUENCE is zero;
-missing DTSTAMP sorts before present stamps (a consumer tolerance), malformed
-present values fail. Revisions are selected before expansion. Validate every
-event before discarding older revisions so malformed entries never disappear
+missing DTSTAMP sorts before valid UTC stamps (a consumer tolerance). As a narrow
+compatibility exception for creation metadata, DTSTAMP accepts a valid civil
+DATE with `VALUE=DATE`, or eight date digits without a VALUE parameter, including
+the form distributed by Apple's iCloud holiday calendars. Date-only DTSTAMP is
+not assigned a time or timezone: it ranks like an absent stamp during revision
+selection, so SEQUENCE still wins first and later input breaks ties. It never
+changes event dates, recurrence or durations. UTC DATE-TIME stamps retain their
+existing ordering. TZID, floating DATE-TIME, mismatched explicit VALUE types,
+invalid dates and duplicate DTSTAMP properties remain invalid; unknown parameters
+remain unsupported. All other date properties retain strict validation.
+Revisions are selected before expansion. Validate every event before discarding
+older revisions so malformed entries never disappear
 silently. For conflicts not specified by RFC, an explicit winning detached
 component is authoritative over the master's generated set, including EXDATE;
 EXDATE still excludes unmodified generated instances.
@@ -104,7 +113,8 @@ all candidates, not just the final visible set. An orphan ordinary detached even
 is a standalone occurrence; an orphan THISANDFUTURE is invalid without a master.
 Do not feed RANGE directly to the upstream Expander and assume it propagates.
 
-The validation layer enforces RFC value types and allowed property
+Except for the DTSTAMP metadata tolerance above, the validation layer enforces
+RFC value types and allowed property
 cardinality, DTEND/DURATION exclusivity, valid positive spans (except timed
 instantaneous events), RID/master type consistency, unique zone definitions,
 legal RRULE forms and unknown important recurrence/date semantics. Validate
