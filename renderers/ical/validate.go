@@ -63,7 +63,10 @@ func validateCalendar(cal *ical.Calendar, holiday bool, loc *time.Location) erro
 					}
 				case "UID", "SUMMARY", "STATUS", "DURATION", "SEQUENCE", "TZOFFSETFROM", "TZOFFSETTO", "TZNAME", "COMMENT", "DESCRIPTION", "LOCATION", "URL", "ATTACH", "ATTENDEE", "ORGANIZER", "CLASS", "CATEGORIES", "CONTACT", "CREATED", "LAST-MODIFIED", "PRIORITY", "RELATED-TO", "RESOURCES", "TRANSP", "REQUEST-STATUS", "COLOR", "CONFERENCE", "IMAGE":
 				default:
-					return Unsupported
+					// Ignore vendor properties only after the shared input checks.
+					if !strings.HasPrefix(p.Name, "X-") {
+						return Unsupported
+					}
 				}
 			}
 		}

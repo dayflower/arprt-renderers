@@ -53,7 +53,13 @@ func checkRenderer(t *testing.T, binary string) {
 			if r.Header.Get("Authorization") != "" {
 				t.Error("capture credentials leaked to calendar")
 			}
-			fmt.Fprint(w, "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//ARPRT//Synthetic//EN\r\nBEGIN:VEVENT\r\nUID:synthetic\r\nDTSTAMP:20261101T000000Z\r\nDTSTART;VALUE=DATE:"+time.Now().In(time.FixedZone("JST", 9*3600)).Format("20060102")+"\r\nSUMMARY:合成予定\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n")
+			data, err := fixtures.ReadFile("fixtures/vendor-properties.ics")
+			if err != nil {
+				t.Error(err)
+				http.Error(w, "fixture unavailable", http.StatusInternalServerError)
+				return
+			}
+			fmt.Fprint(w, strings.ReplaceAll(string(data), "20261102", time.Now().In(time.FixedZone("JST", 9*3600)).Format("20060102")))
 			return
 		}
 		captures.Add(1)
@@ -71,7 +77,7 @@ func checkRenderer(t *testing.T, binary string) {
 			fmt.Fprint(w, "broken PNG")
 			return
 		}
-		if !bytes.Contains(body, []byte("合成予定")) || r.Header.Get("Authorization") != "Bearer synthetic-capture" || r.URL.Query().Get("ready_selector") != "#ical-ready" {
+		if !bytes.Contains(body, []byte("Synthetic vendor event")) || r.Header.Get("Authorization") != "Bearer synthetic-capture" || r.URL.Query().Get("ready_selector") != "#ical-ready" {
 			t.Error("incorrect capture contract")
 		}
 		width, _ := strconv.Atoi(r.URL.Query().Get("width"))

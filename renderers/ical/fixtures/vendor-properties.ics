@@ -1,0 +1,13 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//ARPRT//Synthetic vendor properties//EN
+BEGIN:VEVENT
+UID:synthetic-vendor
+DTSTAMP:20261101T000000Z
+DTSTART;VALUE=DATE:20261102
+SUMMARY:Synthetic vendor event
+X-GOOGLE-CONFERENCE:https://conference.example.com/synthetic
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-TITLE=Synthetic room:geo:0,0
+X-GOOGLE-HANGOUT:https://hangout.example.com/synthetic
+END:VEVENT
+END:VCALENDAR
