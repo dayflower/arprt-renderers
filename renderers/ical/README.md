@@ -8,7 +8,9 @@ and sends escaped HTML with English interface labels and Unicode event text to a
 is available for Linux amd64 and arm64 as
 `ghcr.io/dayflower/arprt-renderer-ical:0.1.0`. The immutable multi-platform reference is
 `ghcr.io/dayflower/arprt-renderer-ical@sha256:077ee2b4423d0420dda649436637f1f6d601038009d22ba4c372561a337c7a4c`.
-The independent [VERSION](VERSION) is 0.1.0; the Screen example pins this digest.
+The independent [VERSION](VERSION) is 0.1.1, prepared for the next release;
+the Screen example currently pins the published 0.1.0 digest.
+See the [changelog](CHANGELOG.md) for the 0.1.1 compatibility fix.
 
 ```sh
 make -C renderers/ical setup
@@ -50,7 +52,7 @@ interpretation, including Google Calendar's `X-GOOGLE-CONFERENCE` and
 `X-GOOGLE-HANGOUT`, and Apple's `X-APPLE-STRUCTURED-LOCATION`. Property, parameter
 and line-length budgets still apply. Unknown non-`X-` properties and unsupported
 recurrence/date semantics remain fatal; see [semantics](SEMANTICS.md). This
-compatibility change is in the source tree and is not in the published 0.1.0 image.
+compatibility change is included in 0.1.1 and is not in the published 0.1.0 image.
 
 ## Display behavior
 
