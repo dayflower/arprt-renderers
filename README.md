@@ -2,61 +2,24 @@
 
 Renderers provided and maintained by the [ARPRT project](https://github.com/dayflower/arprt),
 an independent, unofficial Kubernetes controller for TRMNL BYOS. Neither ARPRT
-nor these renderers are affiliated with or endorsed by TRMNL. "Project-provided"
-means maintained by ARPRT, not approved by TRMNL.
+nor these renderers are affiliated with or endorsed by TRMNL.
 
-Sources share this repository; each renderer owns its implementation, dependencies,
-examples, image, version and release. Renderer versions are independent of ARPRT
-and of one another. No shared SDK is required.
+## Renderers
 
-| Renderer | Execution | Image | Release tags | Status |
-| --- | --- | --- | --- | --- |
-| [RSS](renderers/rss/README.md) | Kubernetes Job CLI with external webcappi | `ghcr.io/dayflower/arprt-renderer-rss` | `rss/vMAJOR.MINOR.PATCH` | Released [0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.1.0) |
-| [iCalendar](renderers/ical/README.md) | Kubernetes Job CLI with external webcappi | `ghcr.io/dayflower/arprt-renderer-ical` | `ical/vMAJOR.MINOR.PATCH` | Released [0.1.1](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.1.1) |
-| [Picsum](renderers/picsum/README.md) | Kubernetes Job CLI | `ghcr.io/dayflower/arprt-renderer-picsum` | `picsum/vMAJOR.MINOR.PATCH` | Released [0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.2.0) |
+| Renderer | Purpose | External services |
+| --- | --- | --- |
+| [RSS](renderers/rss/README.md) | Display RSS feeds | webcappi for capture |
+| [iCalendar](renderers/ical/README.md) | Display month calendars and agendas | webcappi for capture |
+| [Picsum](renderers/picsum/README.md) | Display photographs | Lorem Picsum, or none with local images |
 
-Picsum 0.2.0 is available for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-picsum:0.2.0`. The Screen examples pin its
-multi-platform image digest; release notes record the source revision and
+See each renderer's README for setup, configuration, images, releases and
 validation scope.
 
-Picsum 0.2.0 uses a static Go binary in a minimal runtime image. See the renderer
-README and [Picsum changelog](renderers/picsum/CHANGELOG.md) for migration details
-and local builds.
+## Development and releases
 
-```sh
-make setup
-make check
-make -C renderers/picsum image
-make -C renderers/picsum container-check
-```
+Each renderer owns its implementation, dependencies, image, version and release,
+independently of ARPRT and the other renderers.
 
-RSS reads RSS 2.0 and RSS 1.0/RDF, normalizes feed metadata and optional images,
-and sends generated HTML to a separately operated webcappi service for capture.
-Its scratch runtime contains a static Go binary, CA certificates and licenses;
-timezone data is embedded. No browser or fonts are installed in the renderer.
-RSS 0.1.0 is available for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-rss:0.1.0`. Its Screen example pins the verified
-multi-platform digest. See [RSS usage and Screen example](renderers/rss/README.md)
-for setup, network limits and validation scope.
-
-iCalendar reads file-mounted configuration and independent calendar credentials,
-resolves recurring events and holidays, and captures month/agenda HTML using
-external webcappi. iCalendar 0.1.1 is available for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-ical:0.1.1`. Its Screen example pins the verified
-multi-platform digest. See [iCalendar usage](renderers/ical/README.md) and its
-validation record before deployment.
-
-See [Picsum usage](renderers/picsum/README.md) for local/offline rendering and Screen usage;
-[DEVELOP](notes/DEVELOP.md) for development and CI;
-and [RELEASE](notes/RELEASE.md) for independent image publication and its initial setup.
-The source and fixtures are self-contained: tests never need an ARPRT checkout
-or a changing upstream branch. MIT licensing and original copyright are preserved
-in [LICENSE](LICENSE).
-
-Picsum needs no Helm chart: ARPRT creates its Jobs from an `ArprtScreen`. If an
-HTTP renderer is added later, a small Deployment/Service/configuration chart can
-be installed separately from the controller Helm release and individually from
-other renderers. Chart and image versions may differ. Do not bundle all renderers
-into the controller chart. Consider splitting a renderer into its own repository
-when maintainers, permissions, licensing or usage become independent.
+- [Development guide](notes/DEVELOP.md): local checks, CI and adding a renderer.
+- [Release guide](notes/RELEASE.md): image publication and initial setup.
+- [MIT license](LICENSE).
