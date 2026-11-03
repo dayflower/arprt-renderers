@@ -100,9 +100,10 @@ renderer does not require putting its dependencies into Picsum's environment or
 changing the root Makefile.
 
 Keep the root [README](../README.md) as a project introduction and renderer
-index. Update it when adding or removing a renderer, or changing its purpose or
-external service requirements. Keep version, image and validation details in the
-renderer documents; routine releases do not require a root README update.
+index. Update it when adding or removing a renderer, or changing its type (Job or
+HTTP), purpose or external service requirements. Keep version, image and
+validation details in the renderer documents; routine releases do not require a
+root README update.
 
 ARPRT creates Jobs from an `ArprtScreen`, so Job renderers need no Helm chart.
 If an HTTP renderer is added, install its Deployment/Service/configuration chart
