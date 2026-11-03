@@ -185,7 +185,7 @@ modules; source CI caches both dependency sets.
 make lint format-check RUFF_PATHS=renderers/ical
 make -C renderers/ical setup
 make -C renderers/ical check
-make -C renderers/ical image VERSION=0.1.1 REVISION=your-source-revision
+make -C renderers/ical image VERSION=0.1.2 REVISION=your-source-revision
 make -C renderers/ical container-check
 ```
 
@@ -205,10 +205,10 @@ cluster file mounts/Secret updates, physical-display readability and live-source
 compatibility have separate scopes in the [validation record](../renderers/ical/VALIDATION.md).
 No stub capture or cross-build substitutes for those acceptance checks.
 
-iCalendar 0.1.1 passed native Linux amd64 and arm64 release builds and offline
+iCalendar 0.1.2 passed native Linux amd64 and arm64 release builds and offline
 container execution at source revision
-`c9596e58a694340245a08f86c562234a296d1cc4`. Anonymous version/digest pulls passed
+`e2b41b42bde2484dec2a98182a61ddd0a4e17840`. Anonymous version/digest pulls passed
 on both platforms, and the public amd64 digest passed postpublication container
 checks. Postpublication native arm64 execution was not performed. See the
-[iCalendar validation record](../renderers/ical/VALIDATION.md#2026-11-03-icalendar-011-publication)
+[iCalendar validation record](../renderers/ical/VALIDATION.md#2026-11-03-icalendar-012-publication)
 for the immutable reference and separate acceptance scope.

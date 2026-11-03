@@ -369,3 +369,49 @@ Live Google Calendar feeds, real-browser rendering, Kubernetes and physical
 displays were not tested for this patch. Earlier synthetic browser/cluster/display
 acceptance records remain separate evidence. Publication did not deploy a Screen
 or change Device assignments.
+
+## 2026-11-03: iCalendar 0.1.2 publication
+
+[iCalendar 0.1.2](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.1.2)
+was published from annotated tag `ical/v0.1.2`, source revision
+`e2b41b42bde2484dec2a98182a61ddd0a4e17840`.
+The [release workflow](https://github.com/dayflower/arprt-renderers/actions/runs/41606755101)
+passed source checks and native Linux amd64/arm64 builds, offline unit tests
+and production CLI checks under Job security restrictions. It published the
+exact tested image archives without rebuilding.
+
+This patch accepts valid DATE DTSTAMP metadata, including dates without VALUE,
+for iCloud holiday compatibility. Date-only stamps rank like missing stamps in
+revision selection; SEQUENCE and UTC timestamp ordering remain intact. Synthetic
+fixtures cover Japanese summaries, yearly COUNT rules, multiple DATE EXDATEs,
+gzip fetching, holiday-only and mixed-source rendering. Invalid dates, duplicate
+stamps, floating or TZID-bearing stamps and existing rejected semantics remain
+covered by regression tests.
+
+Before publication, a snapshot of Apple's public Japanese holiday feed (44
+VEVENTs) expanded successfully across 72 monthly windows from 2024 through 2029.
+November 2026 included Culture Day and Labor Thanksgiving Day on their expected
+civil dates. The same snapshot passed month/agenda CLI execution through HTML
+submission and PNG output with a stub capture service. No additional validation
+relaxation was needed. The real feed was kept outside the repository; automated
+tests use synthetic fixtures only. These checks establish snapshot compatibility,
+not continuing live-source availability or real-browser layout.
+
+The public image is `ghcr.io/dayflower/arprt-renderer-ical:0.1.2`; its immutable
+multi-platform reference is
+`ghcr.io/dayflower/arprt-renderer-ical@sha256:7f1ef75678d70e762acaf7b090269668688a7780e7ad79b967891916caa2993c`.
+Anonymous version-tag and index-digest pulls succeeded for both Linux amd64
+and arm64 using a fresh empty Docker config. The public amd64 image's OCI
+version/revision labels matched 0.1.2 and the source revision above.
+
+Local `make check`, a 0.1.2 version/revision-labeled image build and its container
+checker passed before tagging. After publication,
+`make -C renderers/ical container-check IMAGE=<immutable-reference>` passed on
+native Linux amd64, including the new stamp/holiday tests and production CLI
+checks under Job restrictions. No postpublication native arm64 execution was
+performed; its native execution evidence comes from release CI, while anonymous
+pulls verify public availability.
+
+Real-browser layout, Kubernetes and physical displays were not retested for
+this patch. Earlier acceptance records remain separate evidence. Publication
+did not deploy a Screen or change Device assignments.
