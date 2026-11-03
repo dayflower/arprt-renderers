@@ -8,8 +8,9 @@ and sends escaped HTML with English interface labels and Unicode event text to a
 is available for Linux amd64 and arm64 as
 `ghcr.io/dayflower/arprt-renderer-ical:0.1.1`. The immutable multi-platform reference is
 `ghcr.io/dayflower/arprt-renderer-ical@sha256:a0f9ea18051a804531fb0d6ff31197f06c1b5378281d17ee22bc2c306aa22365`.
-The independent [VERSION](VERSION) is 0.1.1; the Screen example pins this digest.
-See the [changelog](CHANGELOG.md) for the 0.1.1 compatibility fix.
+The independent [VERSION](VERSION) is 0.1.2, prepared for the next release;
+public distribution and the Screen example above remain at 0.1.1 until publication
+and anonymous pull verification complete. See the [changelog](CHANGELOG.md).
 
 ```sh
 make -C renderers/ical setup
@@ -52,6 +53,12 @@ interpretation, including Google Calendar's `X-GOOGLE-CONFERENCE` and
 and line-length budgets still apply. Unknown non-`X-` properties and unsupported
 recurrence/date semantics remain fatal; see [semantics](SEMANTICS.md). This
 compatibility change is included in 0.1.1.
+
+Version 0.1.2 accepts valid date-only DTSTAMP creation metadata, including
+`DTSTAMP;VALUE=DATE:19760401` from iCloud Japanese holiday calendars. Date-only
+stamps rank like missing stamps when selecting revisions; SEQUENCE and valid
+UTC timestamps keep their existing precedence. Other event/recurrence dates,
+invalid dates, duplicate stamps and TZID-bearing stamps retain strict validation.
 
 ## Display behavior
 
