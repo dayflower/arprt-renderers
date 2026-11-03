@@ -219,3 +219,63 @@ func TestWholeExecutionAndInvalidInputBeforeHTTP(t *testing.T) {
 		t.Fatal("shared deadline failed")
 	}
 }
+
+func TestPrepareHolidayMetadata(t *testing.T) {
+	data, err := fixtures.ReadFile("fixtures/holiday-metadata.ics")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Encoding", "gzip")
+		z := gzip.NewWriter(w)
+		defer z.Close()
+		if r.URL.Path == "/holiday" {
+			_, _ = z.Write(data)
+			return
+		}
+		fmt.Fprint(z, calendar("BEGIN:VEVENT\nUID:synthetic-appointment\nDTSTART;VALUE=DATE:20250211\nSUMMARY:Appointment\nEND:VEVENT\n"))
+	}))
+	defer server.Close()
+	for _, view := range []string{"month", "agenda"} {
+		for _, mixed := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/mixed=%t", view, mixed), func(t *testing.T) {
+				config := map[string]any{"version": 1, "view": view, "holidayCalendars": []any{map[string]string{"id": "holidays-jp", "name": "祝日", "url": server.URL + "/holiday"}}}
+				if mixed {
+					config["calendars"] = []any{map[string]string{"id": "ordinary", "name": "Calendar", "url": server.URL + "/ordinary"}}
+				}
+				raw, _ := json.Marshal(config)
+				now := time.Date(2025, 2, 11, 1, 0, 0, 0, time.UTC)
+				model, err := Prepare(context.Background(), writeTestFile(t, "holiday-config", string(raw)), now, testCommand(t), nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+				found := false
+				for _, day := range model.Days {
+					if day.Date == "2025-02-11" {
+						found = true
+						wantEvents := 0
+						if mixed {
+							wantEvents = 1
+						}
+						if strings.Join(day.Holidays, "|") != "合成の祝日" || len(day.Events) != wantEvents {
+							t.Fatalf("incorrect holiday model: %+v", day)
+						}
+					} else if len(day.Holidays) != 0 {
+						t.Fatalf("holiday on wrong date: %+v", day)
+					}
+				}
+				if !found {
+					t.Fatal("holiday date absent")
+				}
+				html, err := RenderHTML(model)
+				if err != nil {
+					t.Fatal(err)
+				}
+				// Agenda intentionally omits holiday-only rows; month always shows the name.
+				if (mixed || view == "month") && !strings.Contains(string(html), "合成の祝日") {
+					t.Fatal("holiday name missing from HTML")
+				}
+			})
+		}
+	}
+}
