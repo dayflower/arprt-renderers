@@ -99,6 +99,18 @@ renderer-specific build and container checks there as well. Adding another
 renderer does not require putting its dependencies into Picsum's environment or
 changing the root Makefile.
 
+Keep the root [README](../README.md) as a project introduction and renderer
+index. Update it when adding or removing a renderer, or changing its purpose or
+external service requirements. Keep version, image and validation details in the
+renderer documents; routine releases do not require a root README update.
+
+ARPRT creates Jobs from an `ArprtScreen`, so Job renderers need no Helm chart.
+If an HTTP renderer is added, install its Deployment/Service/configuration chart
+separately from the controller Helm release and other renderers. Chart and image
+versions may differ; do not bundle all renderers into the controller chart.
+Consider splitting a renderer into its own repository when maintainers,
+permissions, licensing or usage become independent.
+
 The root LICENSE applies to all renderers and is copied into their images.
 Use the repository root as the image build context with the renderer's Dockerfile
 and a `Dockerfile.dockerignore` beside it to limit the context to its inputs and

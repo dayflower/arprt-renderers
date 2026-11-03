@@ -82,8 +82,8 @@ reference and run
 `make -C renderers/picsum container-check IMAGE=<digest-reference>` on each native
 architecture where a native host is available. Record the actual verification
 scope in the release, distinguishing it from the native prepublication CI
-checks. Update the READMEs and pin the verified digest in the Screen examples
-after public availability is confirmed. If release immutability is enabled,
+checks. Update the Picsum README and pin the verified digest in the Screen
+examples after public availability is confirmed. If release immutability is enabled,
 assets cannot be added after publication; record later verification in the
 editable release notes. No Helm publication is needed for the Job renderer.
 
@@ -151,7 +151,7 @@ DOCKER_CONFIG="$PWD/dist/rss-anonymous-docker" docker pull --platform linux/arm6
 Also verify the release's digest reference and run the RSS container checker
 against that reference on each available native host. Record prepublication CI,
 anonymous pull checks and postpublication execution separately. Then update the
-root/renderer README status and replace the local image in
+RSS README status and replace the local image in
 [the RSS Screen example](../renderers/rss/screen.yaml) with the verified
 multi-platform digest. Keep its feed and webcappi endpoints synthetic in the
 repository. Publishing a renderer does not deploy it or change existing
