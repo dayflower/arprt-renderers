@@ -12,7 +12,7 @@ and of one another. No shared SDK is required.
 | Renderer | Execution | Image | Release tags | Status |
 | --- | --- | --- | --- | --- |
 | [RSS](renderers/rss/README.md) | Kubernetes Job CLI with external webcappi | `ghcr.io/dayflower/arprt-renderer-rss` | `rss/vMAJOR.MINOR.PATCH` | Released [0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.1.0) |
-| [iCalendar](renderers/ical/README.md) | Kubernetes Job CLI with external webcappi | `ghcr.io/dayflower/arprt-renderer-ical` | `ical/vMAJOR.MINOR.PATCH` | Released [0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.1.0) |
+| [iCalendar](renderers/ical/README.md) | Kubernetes Job CLI with external webcappi | `ghcr.io/dayflower/arprt-renderer-ical` | `ical/vMAJOR.MINOR.PATCH` | Released [0.1.1](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.1.1) |
 | [Picsum](renderers/picsum/README.md) | Kubernetes Job CLI | `ghcr.io/dayflower/arprt-renderer-picsum` | `picsum/vMAJOR.MINOR.PATCH` | Released [0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.2.0) |
 
 Picsum 0.2.0 is available for Linux amd64 and arm64 as
@@ -42,8 +42,8 @@ for setup, network limits and validation scope.
 
 iCalendar reads file-mounted configuration and independent calendar credentials,
 resolves recurring events and holidays, and captures month/agenda HTML using
-external webcappi. iCalendar 0.1.0 is available for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-ical:0.1.0`. Its Screen example pins the verified
+external webcappi. iCalendar 0.1.1 is available for Linux amd64 and arm64 as
+`ghcr.io/dayflower/arprt-renderer-ical:0.1.1`. Its Screen example pins the verified
 multi-platform digest. See [iCalendar usage](renderers/ical/README.md) and its
 validation record before deployment.
 

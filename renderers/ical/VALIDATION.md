@@ -331,3 +331,41 @@ acceptance records remain separate evidence for the same renderer implementation
 This publication did not repeat those acceptance checks, deploy a Screen or
 change Device assignments. Live calendar subscriptions/provider compatibility
 and the broader physical cases listed above remain unverified.
+
+## 2026-11-03: iCalendar 0.1.1 publication
+
+[iCalendar 0.1.1](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.1.1)
+was published from annotated tag `ical/v0.1.1`, source revision
+`c9596e58a694340245a08f86c562234a296d1cc4`.
+The [release workflow](https://github.com/dayflower/arprt-renderers/actions/runs/41601106107)
+passed source checks and native Linux amd64/arm64 builds, offline unit tests
+and production CLI checks under Job security restrictions. It published those
+exact tested image archives without rebuilding.
+
+This patch ignores vendor `X-` properties on VEVENT, STANDARD and DAYLIGHT,
+including Google conference/Hangouts links and Apple structured locations.
+Synthetic fixtures cover these properties, custom timezone observances and
+full CLI rendering through a stub capture service. Regression tests preserve
+input budgets and rejection of unsupported recurrence/date semantics and
+unknown non-`X-` properties. No real calendar content or credentials were used.
+
+The public image is `ghcr.io/dayflower/arprt-renderer-ical:0.1.1`; its immutable
+multi-platform reference is
+`ghcr.io/dayflower/arprt-renderer-ical@sha256:a0f9ea18051a804531fb0d6ff31197f06c1b5378281d17ee22bc2c306aa22365`.
+Anonymous version-tag and index-digest pulls succeeded for both Linux amd64
+and arm64 using a fresh empty Docker config. The public amd64 image's OCI
+version/revision labels matched 0.1.1 and the source revision above.
+
+Local `make check`, a 0.1.1 version/revision-labeled image build and its container
+checker passed before tagging. After publication,
+`make -C renderers/ical container-check IMAGE=<immutable-reference>` passed on
+native Linux amd64, including the vendor-property tests, real production CLI,
+both views/palettes, all rotations, default/custom paths and output preservation
+after failure/cancellation. No postpublication native arm64 execution was
+performed; native execution evidence comes from release CI, while its anonymous
+pulls verify public availability.
+
+Live Google Calendar feeds, real-browser rendering, Kubernetes and physical
+displays were not tested for this patch. Earlier synthetic browser/cluster/display
+acceptance records remain separate evidence. Publication did not deploy a Screen
+or change Device assignments.
