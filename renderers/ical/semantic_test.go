@@ -5,6 +5,7 @@ import (
 	"embed"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -165,5 +166,41 @@ func TestAgendaTimeBoundaries(t *testing.T) {
 	}
 	if (Instance{AllDay: true, Start: start, End: start.AddDate(0, 0, 1)}).Finished(start.AddDate(0, 0, 2)) {
 		t.Fatal("day normalization owns all-day visibility")
+	}
+}
+
+func TestVendorPropertyValidation(t *testing.T) {
+	params := ""
+	for n := range 65 {
+		params += fmt.Sprintf(";X-PARAM-%d=x", n)
+	}
+	for _, component := range []string{"VEVENT", "STANDARD", "DAYLIGHT"} {
+		t.Run(component, func(t *testing.T) {
+			for _, tc := range []struct {
+				name, property string
+				want           error
+			}{
+				{"ignored", "x-arprt-unknown:anything\n", nil},
+				{"iana-property", "UNKNOWN-PROPERTY:anything\n", Unsupported},
+				{"exrule", "EXRULE:FREQ=DAILY\n", Unsupported},
+				{"rscale", "RRULE:FREQ=DAILY;RSCALE=CHINESE\n", Unsupported},
+				{"rule-extension", "RRULE:FREQ=DAILY;X-ARPRT-RULE=VALUE\n", Unsupported},
+				{"parameters", "X-ARPRT-UNKNOWN" + params + ":ignored\n", Limit},
+				{"properties", strings.Repeat("X-A:x\n", 100001), Limit},
+				{"line", "X-ARPRT-UNKNOWN:" + strings.Repeat("x", MaxLine) + "\n", Invalid},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					body := "BEGIN:VEVENT\nUID:synthetic\nDTSTART:20261102T090000Z\n" + tc.property + "END:VEVENT\n"
+					if component != "VEVENT" {
+						body = "BEGIN:VTIMEZONE\nTZID:ARPRT-Synthetic\nBEGIN:" + component + "\nDTSTART:20000101T000000\nTZOFFSETFROM:+0900\nTZOFFSETTO:+0900\n" + tc.property + "END:" + component + "\nEND:VTIMEZONE\n"
+					}
+					from := time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC)
+					_, err := run(t, Request{Calendar: calendar(body), Timezone: "Asia/Tokyo", From: from, To: from.AddDate(0, 0, 7)})
+					if !errors.Is(err, tc.want) {
+						t.Fatalf("got %v, want %v", err, tc.want)
+					}
+				})
+			}
+		})
 	}
 }

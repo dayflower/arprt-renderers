@@ -109,8 +109,8 @@ cardinality, DTEND/DURATION exclusivity, valid positive spans (except timed
 instantaneous events), RID/master type consistency, unique zone definitions,
 legal RRULE forms and unknown important recurrence/date semantics. Validate
 unreferenced zone definitions and out-of-window events too. Obsolete EXRULE,
-RANGE values other than THISANDFUTURE, non-Gregorian RSCALE and unknown semantic
-extensions are whole-source `unsupported_semantics` errors, never ignored.
+RANGE values other than THISANDFUTURE, non-Gregorian RSCALE and unknown recurrence/date
+parameters or rule parts are whole-source `unsupported_semantics` errors, never ignored.
 Ordinary non-display fields such as LOCATION/DESCRIPTION/ATTACH/URL and VTODO
 are not interpreted or fetched. This fixes rejection policy without restricting
 the required RRULE/RDATE/EXDATE/VTIMEZONE/THISANDFUTURE feature set.
@@ -119,7 +119,15 @@ The worker implements revision/range supplementation and preflights all rules
 and structural budgets before typed value validation, zone compilation and
 expansion. `validate.go` enforces cardinality, value forms, positive durations,
 master/RID type consistency and required timezone observance fields. Unknown
-VEVENT properties are rejected conservatively, including vendor extensions.
+non-`X-` properties on VEVENT, STANDARD and DAYLIGHT are rejected conservatively.
+Vendor properties with the case-insensitive `X-` prefix (RFC 5545 x-name) on
+those components are ignored without interpretation, including
+`X-GOOGLE-CONFERENCE`, `X-APPLE-STRUCTURED-LOCATION` and `X-GOOGLE-HANGOUT`.
+They still count toward property, parameter, line-length and body budgets and
+undergo the shared structural checks. This exception applies to property names,
+not parameters on date properties or parts inside RRULE. Synthetic
+`vendor-properties` and `custom-zone-dst` fixtures cover event and observance
+extensions; CLI tests render the vendor fixture through a stub capture service.
 These decisions also apply to network input; no recurrence feature subset is
 delegated to layout work.
 

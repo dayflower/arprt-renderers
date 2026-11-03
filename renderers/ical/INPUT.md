@@ -93,8 +93,12 @@ including unreferenced VTIMEZONE rules, is preflighted before any timezone
 compilation. Typed accessors validate dates, spans, recurrence sets and zones,
 including discarded revisions and out-of-window events. Unknown event semantics
 are fatal; ordinary standard non-display fields and VTODO are not fetched or
-rendered. Unknown VEVENT properties are conservatively rejected as
-`unsupported_semantics`, including vendor extensions whose meaning is unknown.
+rendered. On VEVENT, STANDARD and DAYLIGHT, vendor properties with a
+case-insensitive `X-` prefix are ignored without interpretation. They remain
+subject to all existing input budgets and shared structural checks. Unknown
+non-`X-` properties remain fatal with `unsupported_semantics`, as do EXRULE,
+unsupported RANGE values, non-Gregorian RSCALE and unknown date parameters or
+RRULE parts (including `X-` parameters/parts).
 
 The supervisor owns the deadline across **all sources**; no source receives a
 fresh five seconds. Old COUNT rules and impossible/sparse rules may compute

@@ -45,6 +45,13 @@ worker resolves semantics with a shared five-second deadline, then produces
 complete day models without subscription URLs, credentials or UIDs. A single
 execution-start clock sample and 60-second deadline cover all stages.
 
+Vendor `X-` properties on VEVENT, STANDARD and DAYLIGHT are ignored without
+interpretation, including Google Calendar's `X-GOOGLE-CONFERENCE` and
+`X-GOOGLE-HANGOUT`, and Apple's `X-APPLE-STRUCTURED-LOCATION`. Property, parameter
+and line-length budgets still apply. Unknown non-`X-` properties and unsupported
+recurrence/date semantics remain fatal; see [semantics](SEMANTICS.md). This
+compatibility change is in the source tree and is not in the published 0.1.0 image.
+
 ## Display behavior
 
 `month` shows a complete 4–6 week month grid, including neighboring days and

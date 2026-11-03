@@ -87,7 +87,9 @@ func TestNetworkSemanticValidation(t *testing.T) {
 		want       Error
 	}{
 		{"unsupported-rule", "BEGIN:VEVENT\nUID:private\nDTSTART:20261102T090000Z\nRRULE:FREQ=DAILY;RSCALE=CHINESE\nEND:VEVENT\n", false, Unsupported},
-		{"unknown-extension", "BEGIN:VEVENT\nUID:private\nDTSTART:20261102T090000Z\nX-UNKNOWN-RULE:anything\nEND:VEVENT\n", false, Unsupported},
+		{"unknown-property", "BEGIN:VEVENT\nUID:private\nDTSTART:20261102T090000Z\nUNKNOWN-RULE:anything\nEND:VEVENT\n", false, Unsupported},
+		{"unsupported-range", "BEGIN:VEVENT\nUID:synthetic\nDTSTART:20261102T090000Z\nRECURRENCE-ID;RANGE=THISANDPRIOR:20261102T090000Z\nEND:VEVENT\n", false, Unsupported},
+		{"date-extension", "BEGIN:VEVENT\nUID:synthetic\nDTSTART;X-ARPRT-DATE=ignored:20261102T090000Z\nEND:VEVENT\n", false, Unsupported},
 		{"old-invalid", "BEGIN:VEVENT\nUID:private\nDTSTART:20000101T090000Z\nRRULE:FREQ=DAILY;COUNT=2;UNTIL=20010101T090000Z\nEND:VEVENT\n", false, Invalid},
 		{"wrong-value", "BEGIN:VEVENT\nUID:private\nDTSTART;VALUE=DATE:20261102T090000Z\nEND:VEVENT\n", false, Invalid},
 		{"missing-date-type", "BEGIN:VEVENT\nUID:private\nDTSTART:20261102\nEND:VEVENT\n", false, Invalid},
