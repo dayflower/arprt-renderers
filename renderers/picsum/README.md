@@ -1,9 +1,10 @@
 # Picsum renderer
 
-A Go CLI for ARPRT Kubernetes Jobs. It downloads a random photograph
-from [Lorem Picsum](https://picsum.photos/) or reads a local image, then writes a
-PNG. It renders only the photograph; timestamp, battery and Wi-Fi overlays belong
-to the controller. This is maintained by ARPRT, which is independent, unofficial
+A Go Job renderer that ARPRT runs as a Kubernetes Job. It downloads a random
+photograph from [Lorem Picsum](https://picsum.photos/) or reads a local image,
+then writes a PNG to the output file. It renders only the photograph; timestamp,
+battery and Wi-Fi overlays belong to the controller. This is maintained by ARPRT,
+which is independent, unofficial
 and not affiliated with or endorsed by TRMNL.
 
 ## Compatibility and limits

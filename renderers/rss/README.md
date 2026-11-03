@@ -1,7 +1,8 @@
 # RSS renderer
 
-A Go CLI that reads one RSS feed, generates its own HTML, requests a PNG from
-an external webcappi service, and atomically writes an ARPRT Job output file.
+A Go Job renderer that ARPRT runs as a Kubernetes Job. It reads one RSS feed,
+generates its own HTML, requests a PNG over HTTP from an external webcappi
+service, and atomically writes the PNG to the output file.
 It displays headlines, optional summaries, categories, sources, bookmark counts,
 optional thumbnails and feed-supplied article dates.
 ARPRT is independent and unofficial, with no affiliation with or endorsement by

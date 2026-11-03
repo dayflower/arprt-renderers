@@ -6,11 +6,11 @@ nor these renderers are affiliated with or endorsed by TRMNL.
 
 ## Renderers
 
-| Renderer | Purpose | External services |
-| --- | --- | --- |
-| [RSS](renderers/rss/README.md) | Display RSS feeds | webcappi for capture |
-| [iCalendar](renderers/ical/README.md) | Display month calendars and agendas | webcappi for capture |
-| [Picsum](renderers/picsum/README.md) | Display photographs | Lorem Picsum, or none with local images |
+| Renderer | Type | Purpose | External services |
+| --- | --- | --- | --- |
+| [RSS](renderers/rss/README.md) | Job | Display RSS feeds | webcappi for capture |
+| [iCalendar](renderers/ical/README.md) | Job | Display month calendars and agendas | webcappi for capture |
+| [Picsum](renderers/picsum/README.md) | Job | Display photographs | Lorem Picsum, or none with local images |
 
 See each renderer's README for setup, configuration, images, releases and
 validation scope.

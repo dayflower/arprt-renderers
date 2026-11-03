@@ -3,7 +3,9 @@
 An independent Go Job renderer for ARPRT, an unofficial Kubernetes controller
 for TRMNL BYOS. Neither project is affiliated with or endorsed by TRMNL.
 The renderer fetches configured iCalendar sources, resolves calendar semantics,
-and sends escaped HTML with English interface labels and Unicode event text to a separately operated webcappi for capture.
+and sends escaped HTML with English interface labels and Unicode event text
+over HTTP to a separately operated webcappi for capture. ARPRT runs the renderer
+as a Kubernetes Job, which writes the captured PNG to the output file.
 [iCalendar 0.1.2](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.1.2)
 is available for Linux amd64 and arm64 as
 `ghcr.io/dayflower/arprt-renderer-ical:0.1.2`. The immutable multi-platform reference is
