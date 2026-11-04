@@ -6,6 +6,12 @@
     "sources": 1
   },
   {
+    "name": "holidays-only",
+    "events": 0,
+    "holidays": 3,
+    "sources": 1
+  },
+  {
     "name": "dense",
     "events": 80,
     "holidays": 4,

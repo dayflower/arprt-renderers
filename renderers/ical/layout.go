@@ -11,7 +11,11 @@ import (
 
 type layoutEvent struct{ Text, Meta string }
 
-type upcomingEvent struct{ Date, Weekday, Text, Meta string }
+type upcomingEvent struct {
+	Date, Weekday, Text, Meta string
+	HolidayOnly               bool
+	HolidayExtra              int
+}
 type layoutDay struct {
 	Month                                 bool
 	HolidayExtra                          int
@@ -132,18 +136,17 @@ func RenderHTML(m *Model) ([]byte, error) {
 	if m.View == "agenda" {
 		for i, d := range p.Days {
 			if i < 2 {
-				if len(d.Events) > 0 || d.Omitted > 0 {
-					p.Priorities = append(p.Priorities, d)
-				}
+				p.Priorities = append(p.Priorities, d)
 				continue
 			}
 			p.FutureOmitted += d.Omitted
 			p.FutureTotal += len(d.Events) + d.Omitted
+			if len(d.Events) == 0 && d.Omitted == 0 && len(d.Holidays) > 0 {
+				name := d.Holidays[0]
+				p.FutureTotal++
+				p.Upcoming = append(p.Upcoming, upcomingEvent{Date: d.Date, Weekday: d.Number + " " + d.Weekday, Text: name, HolidayOnly: true, HolidayExtra: d.HolidayExtra})
+			}
 			for _, e := range d.Events {
-				if len(p.Upcoming) >= 32 {
-					p.FutureOmitted++
-					continue
-				}
 				meta := e.Meta
 				if len(d.Holidays) > 0 {
 					meta += " · " + d.Holidays[0]
@@ -153,6 +156,18 @@ func RenderHTML(m *Model) ([]byte, error) {
 				}
 				p.Upcoming = append(p.Upcoming, upcomingEvent{Date: d.Date, Weekday: d.Number + " " + d.Weekday, Text: e.Text, Meta: meta})
 			}
+		}
+		// Keep appointment candidates before holiday-only rows, preserving date order.
+		for len(p.Upcoming) > 32 {
+			remove := len(p.Upcoming) - 1
+			for j := len(p.Upcoming) - 1; j >= 0; j-- {
+				if p.Upcoming[j].HolidayOnly {
+					remove = j
+					break
+				}
+			}
+			p.Upcoming = append(p.Upcoming[:remove], p.Upcoming[remove+1:]...)
+			p.FutureOmitted++
 		}
 	}
 
@@ -190,7 +205,7 @@ header span{font-size:22px;line-height:32px;white-space:nowrap;font-weight:700}
 .omitted{font-size:16px;font-weight:700;line-height:22px;height:22px;flex-shrink:0;white-space:nowrap}.date .omitted{margin-left:auto}
 .agenda{flex:1;min-height:0;display:flex;flex-direction:row;gap:24px}
 .primary-days{display:flex;flex-direction:column;gap:20px;flex:1;min-width:0;min-height:0;max-height:100%}.agenda.has-upcoming .primary-days{flex:0 0 40%;max-height:100%}
-.agenda .day{flex:1;border:0;padding:0;min-height:0}.agenda .date{font-size:22px;height:34px;line-height:34px}.agenda .day-number{line-height:28px}
+.agenda .day{flex:1;border:0;padding:0;min-height:34px}.agenda .day.holiday{min-height:56px}.agenda .date{font-size:22px;height:34px;line-height:34px}.agenda .day-number{line-height:28px}
 .agenda .today .day-number{background:transparent;color:#000;padding:0;border-radius:0}.agenda .today.holiday .day-number{outline:0}
 .agenda .event{height:56px;line-height:30px;font-size:22px}.agenda .event-meta{display:block;font-size:16px;line-height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .agenda .event-title{line-height:30px}
@@ -208,12 +223,13 @@ h2{font-size:22px;font-weight:700;line-height:30px;height:30px;flex-shrink:0;mar
 .upcoming-date{grid-column:1;grid-row:1/3;line-height:30px}.upcoming-title{grid-column:2;grid-row:1;line-height:30px}.upcoming-meta{grid-column:2;grid-row:2;line-height:22px}
 }
 
+.upcoming-event.holiday-only{height:34px;grid-template-rows:30px}.holiday-only .upcoming-title{display:flex}.holiday-only .upcoming-date{grid-row:1;text-decoration:underline double;text-underline-offset:3px}
 </style></head><body><main><header><h1>{{.Title}}</h1><span>{{.Period}}</span></header>
-{{if eq .View "month"}}<div class="calendar">{{range .Weekdays}}<div class="weekday{{if or (eq . "Sat") (eq . "Sun")}} weekend{{end}}">{{.}}</div>{{end}}{{range .Days}}{{template "day" .}}{{end}}</div>{{else}}<div class="agenda{{if .FutureTotal}} has-upcoming{{end}}">{{if .Priorities}}<div class="primary-days">{{range .Priorities}}{{template "day" .}}{{end}}</div>{{end}}{{if .FutureTotal}}<section class="upcoming" data-total="{{.FutureTotal}}" data-omitted="{{.FutureOmitted}}"><h2>Upcoming<span class="omitted"></span></h2><div class="upcoming-list">{{range .Upcoming}}<div class="upcoming-event" data-date="{{.Date}}"><div class="upcoming-date">{{.Weekday}}</div><div class="upcoming-title">{{.Text}}</div><div class="upcoming-meta">{{.Meta}}</div></div>{{end}}</div></section>{{end}}</div>{{end}}</main>
+{{if eq .View "month"}}<div class="calendar">{{range .Weekdays}}<div class="weekday{{if or (eq . "Sat") (eq . "Sun")}} weekend{{end}}">{{.}}</div>{{end}}{{range .Days}}{{template "day" .}}{{end}}</div>{{else}}<div class="agenda{{if .FutureTotal}} has-upcoming{{end}}">{{if .Priorities}}<div class="primary-days">{{range .Priorities}}{{template "day" .}}{{end}}</div>{{end}}{{if .FutureTotal}}<section class="upcoming" data-total="{{.FutureTotal}}" data-omitted="{{.FutureOmitted}}"><h2>Upcoming<span class="omitted"></span></h2><div class="upcoming-list">{{range .Upcoming}}<div class="upcoming-event{{if .HolidayOnly}} holiday-only{{end}}" data-date="{{.Date}}"><div class="upcoming-date">{{.Weekday}}</div><div class="upcoming-title">{{if .HolidayOnly}}<span class="holiday-name">{{.Text}}</span><span class="holiday-more">{{if .HolidayExtra}} +{{.HolidayExtra}}{{end}}</span>{{else}}{{.Text}}{{end}}</div>{{if not .HolidayOnly}}<div class="upcoming-meta">{{.Meta}}</div>{{end}}</div>{{end}}</div></section>{{end}}</div>{{end}}</main>
 
 <script>
 (async()=>{await document.fonts.ready;await new Promise(requestAnimationFrame);
-const fit=(container,boxSelector,rowSelector)=>{const box=container.querySelector(boxSelector),rows=[...box.querySelectorAll(rowSelector)];let hidden=Number(container.dataset.omitted);while(rows.length&&rows.at(-1).getBoundingClientRect().bottom>box.getBoundingClientRect().bottom+0.1){rows.pop().remove();hidden++}container.querySelector('.omitted').textContent=hidden?'+'+hidden+(container.classList.contains('month-day')?'':' more'):'';container.dataset.hidden=String(hidden)};
+const fit=(container,boxSelector,rowSelector)=>{const box=container.querySelector(boxSelector),rows=[...box.querySelectorAll(rowSelector)];let hidden=Number(container.dataset.omitted);while(rows.length&&rows.at(-1).getBoundingClientRect().bottom>box.getBoundingClientRect().bottom+0.1){const holiday=rows.findLastIndex(row=>row.classList.contains('holiday-only'));rows.splice(holiday<0?rows.length-1:holiday,1)[0].remove();hidden++}container.querySelector('.omitted').textContent=hidden?'+'+hidden+(container.classList.contains('month-day')?'':' more'):'';container.dataset.hidden=String(hidden)};
 for(const day of document.querySelectorAll('.day')){fit(day,'.events','.event');const holiday=day.querySelector('.holiday-name');if(holiday&&holiday.scrollWidth>holiday.clientWidth)day.querySelector('.holiday-more').textContent+='…'}
 const upcoming=document.querySelector('.upcoming');if(upcoming)fit(upcoming,'.upcoming-list','.upcoming-event');await new Promise(requestAnimationFrame);document.body.id='ical-ready'})();
 </script></body></html>
