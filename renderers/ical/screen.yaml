@@ -1,4 +1,4 @@
-# Synthetic inputs only. The image pins the public iCalendar 0.1.2 index.
+# Synthetic inputs only. The image pins the public iCalendar 0.2.0 index.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -87,7 +87,7 @@ spec:
           secret:
             secretName: ical-capture-v1
       renderer:
-        image: ghcr.io/dayflower/arprt-renderer-ical@sha256:7f1ef75678d70e762acaf7b090269668688a7780e7ad79b967891916caa2993c
+        image: ghcr.io/dayflower/arprt-renderer-ical@sha256:5b5dc25f8184493ae9638b8c09789ade4d01b92b0c2dbf5365fd329e2a4b5388
         args:
           - --config
           - /etc/ical-config/config.json

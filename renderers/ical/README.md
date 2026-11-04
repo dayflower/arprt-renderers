@@ -6,13 +6,12 @@ The renderer fetches configured iCalendar sources, resolves calendar semantics,
 and sends escaped HTML with English interface labels and Unicode event text
 over HTTP to a separately operated webcappi for capture. ARPRT runs the renderer
 as a Kubernetes Job, which writes the captured PNG to the output file.
-[iCalendar 0.1.2](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.1.2)
+[iCalendar 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.2.0)
 is available for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-ical:0.1.2`. The immutable multi-platform reference is
-`ghcr.io/dayflower/arprt-renderer-ical@sha256:7f1ef75678d70e762acaf7b090269668688a7780e7ad79b967891916caa2993c`.
-The independent [VERSION](VERSION) is 0.2.0, pending publication. The Screen
-example pins the published 0.1.2 digest above. See the [changelog](CHANGELOG.md)
-for changes.
+`ghcr.io/dayflower/arprt-renderer-ical:0.2.0`. The immutable multi-platform reference is
+`ghcr.io/dayflower/arprt-renderer-ical@sha256:5b5dc25f8184493ae9638b8c09789ade4d01b92b0c2dbf5365fd329e2a4b5388`.
+The independent [VERSION](VERSION) is 0.2.0; the Screen example pins this digest.
+See the [changelog](CHANGELOG.md) for changes.
 
 ```sh
 make -C renderers/ical setup
@@ -186,7 +185,7 @@ live subscriptions, a browser, a cluster or a physical display.
 
 Follow [the release guide](../../notes/RELEASE.md#publishing-icalendar) only when
 publication is requested. Verify anonymous pulls and postpublication execution
-separately, then pin the verified index digest in the Screen example. For 0.1.2,
+separately, then pin the verified index digest in the Screen example. For 0.2.0,
 both platforms passed native prepublication checks and anonymous tag/digest pulls;
 the public amd64 image also passed postpublication container checks.
 Postpublication native arm64 execution was not performed. Renderer releases do

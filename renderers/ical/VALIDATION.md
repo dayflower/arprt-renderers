@@ -415,3 +415,47 @@ pulls verify public availability.
 Real-browser layout, Kubernetes and physical displays were not retested for
 this patch. Earlier acceptance records remain separate evidence. Publication
 did not deploy a Screen or change Device assignments.
+
+## 2026-11-05: iCalendar 0.2.0 publication
+
+[iCalendar 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.2.0)
+was published from annotated tag `ical/v0.2.0`, source revision
+`239d294e40c874e5a0b5914be9a3c6a69034ba33`.
+The [release workflow](https://github.com/dayflower/arprt-renderers/actions/runs/41927581172)
+passed source checks and native Linux amd64/arm64 builds, offline unit tests
+and production CLI checks under Job security restrictions. It published the
+exact tested image archives without rebuilding. The
+[main checks](https://github.com/dayflower/arprt-renderers/actions/runs/41927375400)
+also passed for this source revision before tagging.
+
+This minor release always displays Today and Tomorrow, including empty days,
+and shows holiday names and monochrome holiday date markings. Upcoming adds
+chronological rows for holidays without appointments. Candidate selection and
+browser fitting prioritize appointments over holiday-only rows and include
+omitted holiday rows in `+N more`. Multiple holidays use the first name and `+N`.
+Regression coverage checks empty days, holiday-only and mixed dates, escaping,
+per-day and combined candidate limits, and exact pre-layout omission totals.
+
+Before the version bump, the agenda implementation was measured using synthetic
+models in Chromium at 800×480 and 480×800. Empty, holiday-only, sample, dense,
+long-text and mixed holiday/appointment cases passed row containment, date
+ordering and omission-total checks. Mixed overflow retained appointments ahead
+of holiday-only rows. Portrait priority holiday headings retained their minimum
+height. These implementation checks are separate from release CI; they do not
+establish live-subscription, cluster or physical-display acceptance.
+
+The public image is `ghcr.io/dayflower/arprt-renderer-ical:0.2.0`; its immutable
+multi-platform reference is
+`ghcr.io/dayflower/arprt-renderer-ical@sha256:5b5dc25f8184493ae9638b8c09789ade4d01b92b0c2dbf5365fd329e2a4b5388`.
+Anonymous version-tag and index-digest pulls succeeded for both Linux amd64
+and arm64 using a fresh empty Docker config. Both platforms' OCI version and
+revision labels matched 0.2.0 and the source revision above.
+
+Local `make check`, a version-labeled image build and its container checker
+passed before tagging. After publication,
+`make -C renderers/ical container-check IMAGE=<immutable-reference>` passed on
+native Linux amd64, including production CLI checks under Job restrictions.
+Postpublication native arm64 execution was not performed; its native execution
+evidence comes from release CI, while anonymous pulls verify public availability.
+Kubernetes, physical displays and live subscriptions were not retested for this
+release. Publication did not deploy a Screen or change Device assignments.
