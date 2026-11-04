@@ -1,5 +1,16 @@
 # iCalendar changelog
 
+## 0.2.0 (unreleased)
+
+- Always show Today and Tomorrow in agenda view, including empty days, with
+  holiday names and monochrome date markings.
+- Show holidays without appointments as chronological Upcoming rows. Retain
+  holiday names in time metadata on dates with appointments and show additional
+  holidays with `+N`.
+- Prioritize appointments over holiday-only rows during candidate selection and
+  browser fitting, counting omitted holiday rows in `+N more`. Preserve the
+  per-day and Upcoming candidate limits and reserve space for holiday headings.
+
 ## 0.1.2
 
 - Accept valid date-only DTSTAMP creation metadata, with `VALUE=DATE` or without
