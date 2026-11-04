@@ -1,6 +1,6 @@
 # iCalendar changelog
 
-## 0.2.0 (unreleased)
+## 0.2.0
 
 - Always show Today and Tomorrow in agenda view, including empty days, with
   holiday names and monochrome date markings.
