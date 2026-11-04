@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -93,15 +94,13 @@ func TestLayouts(t *testing.T) {
 			}
 			entries := len(m.Days)
 			if view == "agenda" {
-				entries = 0
-				for _, d := range m.Days[:2] {
-					if len(d.Events) > 0 {
-						entries++
-					}
-				}
+				entries = 2
 				futureCandidates := 0
 				for _, d := range m.Days[2:] {
 					futureCandidates += min(16, len(d.Events))
+					if len(d.Events) == 0 && len(d.Holidays) > 0 {
+						futureCandidates++
+					}
 				}
 				entries += min(32, futureCandidates)
 			}
@@ -164,8 +163,8 @@ func TestAgendaUpcomingDates(t *testing.T) {
 	for i := range 7 {
 		d := now.AddDate(0, 0, i)
 		day := Day{Date: d.Format(time.DateOnly), Weekday: d.Weekday(), InMonth: true, Today: i == 0}
-		if i == 1 {
-			day.Holidays = []string{"Holiday without appointments"}
+		if i == 1 || i == 3 {
+			day.Holidays = []string{"Holiday without appointments", "Another holiday"}
 		}
 		if i == 2 {
 			day.Events = []DayEvent{{Summary: "日本語の予定", AllDay: true, SourceName: "Hidden source"}}
@@ -179,24 +178,86 @@ func TestAgendaUpcomingDates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	html := string(body)
-	if strings.Contains(html, `class="primary-days"`) {
-		t.Fatal("empty priority sections must be absent")
+	markup := html.UnescapeString(string(body))
+	if !strings.Contains(markup, `class="primary-days"`) || !strings.Contains(markup, "Tomorrow") || !strings.Contains(markup, "Holiday without appointments") {
+		t.Fatal("empty priority days and their holidays must be present")
 	}
-	if !strings.Contains(html, `data-total="2"`) || !strings.Contains(html, "日本語の予定") || !strings.Contains(html, "Last day") {
+	if !strings.Contains(markup, `data-total="3"`) || !strings.Contains(markup, "日本語の予定") || !strings.Contains(markup, "Last day") {
 		t.Fatal("missing upcoming events")
 	}
-	for _, date := range []string{"2026-11-02", "2026-11-03", "2026-11-05", "2026-11-06", "2026-11-07"} {
-		if strings.Contains(html, `data-date="`+date+`"`) {
+	for _, date := range []string{"2026-11-06", "2026-11-07"} {
+		if strings.Contains(markup, `data-date="`+date+`"`) {
 			t.Fatal("empty date became a displayed row", date)
 		}
 	}
-	first := strings.Index(html, `data-date="2026-11-04"`)
-	last := strings.Index(html, `data-date="2026-11-08"`)
+	first := strings.Index(markup, `data-date="2026-11-04"`)
+	last := strings.Index(markup, `data-date="2026-11-08"`)
+	holiday := strings.Index(markup, `class="upcoming-event holiday-only" data-date="2026-11-05"`)
+	if holiday < first || holiday > last || !strings.Contains(markup, `<span class="holiday-name">Holiday without appointments</span><span class="holiday-more"> +1</span>`) {
+		t.Fatal("holiday-only row missing, out of order or missing extra holiday count")
+	}
 	if first < 0 || last < first {
 		t.Fatal("upcoming dates are missing or out of order")
 	}
-	if strings.Contains(html, "Hidden source") {
+	if strings.Contains(markup, "Hidden source") {
 		t.Fatal("source labels should not be displayed")
+	}
+}
+
+func TestAgendaHolidayCandidateLimits(t *testing.T) {
+	for _, tc := range []struct {
+		name                                           string
+		events                                         [5]int
+		omitted                                        [5]int
+		wantTotal, wantOmitted, wantRows, wantHolidays int
+	}{
+		{"holidays only", [5]int{}, [5]int{}, 5, 0, 5, 5},
+		{"room for holidays", [5]int{0, 16, 0, 14, 0}, [5]int{}, 33, 1, 32, 2},
+		{"appointments take all candidates", [5]int{0, 20, 0, 20, 0}, [5]int{}, 43, 11, 32, 0},
+		{"daily and combined overflow", [5]int{0, 80, 1, 0, 80}, [5]int{}, 163, 131, 32, 0},
+		{"already omitted appointments", [5]int{}, [5]int{2, 0, 0, 0, 0}, 6, 2, 4, 4},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			now := time.Date(2026, 11, 2, 12, 0, 0, 0, time.UTC)
+			m := &Model{View: "agenda", Now: now}
+			for i := range 7 {
+				d := now.AddDate(0, 0, i)
+				day := Day{Date: d.Format(time.DateOnly), Weekday: d.Weekday(), InMonth: true, Today: i == 0, Holidays: []string{"First <holiday>", "Second", "Third"}}
+				if i >= 2 {
+					day.Omitted = tc.omitted[i-2]
+					for range tc.events[i-2] {
+						day.Events = append(day.Events, DayEvent{Summary: "Appointment", AllDay: true})
+					}
+				}
+				m.Days = append(m.Days, day)
+			}
+			body, err := RenderHTML(m)
+			if err != nil {
+				t.Fatal(err)
+			}
+			markup := html.UnescapeString(string(body))
+			want := fmt.Sprintf(`class="upcoming" data-total="%d" data-omitted="%d"`, tc.wantTotal, tc.wantOmitted)
+			if !strings.Contains(markup, want) {
+				t.Fatalf("missing totals: %s", want)
+			}
+			if got := strings.Count(markup, `class="upcoming-event`); got != tc.wantRows {
+				t.Fatalf("rows: got %d want %d", got, tc.wantRows)
+			}
+			if got := strings.Count(markup, `class="upcoming-event holiday-only"`); got != tc.wantHolidays {
+				t.Fatalf("holiday rows: got %d want %d", got, tc.wantHolidays)
+			}
+			if bytes.Contains(body, []byte("First <holiday>")) || !bytes.Contains(body, []byte("First &lt;holiday&gt;")) {
+				t.Fatal("holiday name escaping")
+			}
+			if tc.wantHolidays > 0 && !strings.Contains(markup, `<span class="holiday-name">First <holiday></span><span class="holiday-more"> +2</span>`) {
+				t.Fatal("missing holiday-only extra count")
+			}
+			if tc.wantRows > tc.wantHolidays && !strings.Contains(markup, "All day · First <holiday> (+2)") {
+				t.Fatal("missing appointment holiday metadata")
+			}
+			if tc.name == "room for holidays" && strings.Contains(markup, `data-date="2026-11-08"`) {
+				t.Fatal("latest holiday should be omitted first")
+			}
+		})
 	}
 }

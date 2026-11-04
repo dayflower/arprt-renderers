@@ -83,19 +83,23 @@ have a double underline, and weekend weekday headings are reversed with
 underlined weekend dates. Neighboring-month dates use a dotted frame and italic
 digits. These distinctions survive monochrome output without relying on hue.
 
-`agenda` shows Today and Tomorrow without enclosing boxes and suppresses
-sections that have no appointments. It does not display `Now`, `No events`,
+`agenda` always shows Today and Tomorrow without enclosing boxes, including
+empty days. Holidays appear below each date heading with a double-underlined
+date; multiple holidays use the first name followed by `+N`. It does not display
+`Now`, `No events`,
 source numbers/names, a source legend or an explanatory footer. Month also omits
 both legends. Large typography and monochrome calendar distinctions remain.
 
 In landscape, Today/Tomorrow stack in the left column and Upcoming occupies
-the right column. Portrait keeps the vertical flow. Empty groups do not reserve
-a column.
+the right column. Portrait keeps the vertical flow. Today/Tomorrow retain their
+column even when both days are empty.
 
 The remaining five days form one chronological `Upcoming` list. Each row
-carries its own date, title and time; empty dates create no row or reserved slot.
-Holiday names are attached to the time metadata of appointments on that date,
-rather than generating separate holiday-only rows. Day-spanning appointments
+carries its own date, title and time. Dates without appointments or holidays
+create no row. A holiday without appointments creates a compact row containing
+only its double-underlined date and holiday name. Holidays on dates with
+appointments remain attached to the time metadata, avoiding duplicate rows.
+Multiple holidays use the first name followed by `+N`. Day-spanning appointments
 retain their daily continuation arrows. Only today's finished timed events
 are removed by normalization, as before.
 
@@ -103,10 +107,14 @@ Browser measurement removes complete overflowing rows and displays exact
 `+N` counts in month headers, `+N more` in Today/Tomorrow headers, and a combined
 `+N more` count in the Upcoming heading. Month candidates remain bounded to
 eight per day. Agenda retains sixteen candidates per day and at most thirty-two
-combined Upcoming candidates; all additional appointments count toward omission.
-Dense earlier dates may use the remaining list space, with later appointments
-included in the overall omitted count. This replaces the initial fixed slots
-for all seven days. The complete normalization model remains unchanged.
+combined Upcoming candidates, including holiday-only rows. Candidate selection
+and browser fitting omit holiday-only rows before appointments, starting with
+the latest holiday; remaining rows stay chronological. Each omitted holiday-only
+row counts as one item in `+N more`, regardless of the number of holiday names.
+All additional appointments count toward omission. Dense earlier dates may use
+the remaining list space, with later appointments included in the overall omitted
+count. Today/Tomorrow holiday headings remain visible independently of event
+fitting. This replaces the initial fixed slots for all seven days. The complete normalization model remains unchanged.
 
 ## Runtime and verification
 
