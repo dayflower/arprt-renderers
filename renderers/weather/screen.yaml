@@ -1,0 +1,29 @@
+apiVersion: arprt.dayflower.github.io/v1alpha1
+kind: ArprtScreen
+metadata:
+  name: weather
+spec:
+  refreshInterval: 30m
+  imageProcessing:
+    dithering: none
+  source:
+    job:
+      renderer:
+        # Development image: build and load it into the cluster before use.
+        image: arprt-renderer-weather:dev
+        args:
+          - --latitude
+          - '35.0'
+          - --longitude
+          - '135.0'
+          - --temperature-unit
+          - celsius
+          - --webcappi-url
+          - https://webcappi.example.com
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 192Mi

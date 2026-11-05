@@ -213,3 +213,24 @@ on both platforms, and the public amd64 digest passed postpublication container
 checks. Postpublication native arm64 execution was not performed. See the
 [iCalendar validation record](../renderers/ical/VALIDATION.md#2026-11-05-icalendar-020-publication)
 for the immutable reference and separate acceptance scope.
+
+## Weather development and distribution
+
+Weather is an independent Go module under `renderers/weather/`, with its own
+VERSION, Dockerfile, synthetic fixtures, container checker and release guards.
+It uses only the Go standard library. Root setup/check discovers its Makefile.
+
+```sh
+make -C renderers/weather setup
+make check
+make -C renderers/weather image
+make -C renderers/weather container-check
+```
+
+`check-weather.yaml` runs scoped source checks and native amd64/arm64 image
+execution; normal CI calls it alongside the other renderer workflows. Weather
+releases call only Weather verification and transfer the tested images without
+rebuilding. The runtime is scratch; tests use a separate exported binary and
+loopback stubs under the Job security restrictions. Real-browser checks are
+opt-in. Live API compatibility, browser layout, cluster execution and physical
+display acceptance have separate scopes in the Weather validation record.

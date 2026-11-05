@@ -205,3 +205,26 @@ postpublication execution separately. Only then advertise availability and pin
 the verified index digest in [screen.yaml](../renderers/ical/screen.yaml), keeping
 all source URLs, credentials and device identities synthetic. No Helm release is
 required and publication does not deploy the renderer.
+
+## Publishing Weather
+
+Weather has not been published. Its independent initial VERSION is 0.1.0.
+Use the same immutable publication procedure above with `weather/vMAJOR.MINOR.PATCH`,
+`renderers/weather/release.py`, `check-weather.yaml`, `release-weather.yaml` and
+`ghcr.io/dayflower/arprt-renderer-weather`. Run scoped lint, source and native
+container checks before publication. Annotated tags must match VERSION and refer
+to a commit on origin/main. Inspect Codex-contributed commit attribution before
+pushing.
+
+The release calls only Weather verification, publishes its exact tested amd64 and
+arm64 archives and records `weather-index.json`. It rejects existing version or
+platform tags and releases, and does not publish `latest`. After partial image
+publication use a new version; never delete tags to bypass the guards. If only
+GitHub release creation fails, inspect the completed index and finish the release
+without rebuilding or repushing.
+
+After publication, set package visibility to Public, verify anonymous version and
+digest pulls for both platforms, and record postpublication execution separately.
+Only then pin the verified index digest in Weather's Screen example and advertise
+availability. Release automation does not establish live API, browser, cluster or
+physical-display acceptance and does not deploy the renderer.

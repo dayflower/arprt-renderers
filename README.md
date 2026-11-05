@@ -11,6 +11,7 @@ nor these renderers are affiliated with or endorsed by TRMNL.
 | [RSS](renderers/rss/README.md) | Job | Display RSS feeds | webcappi for capture |
 | [iCalendar](renderers/ical/README.md) | Job | Display month calendars and agendas | webcappi for capture |
 | [Picsum](renderers/picsum/README.md) | Job | Display photographs | Lorem Picsum, or none with local images |
+| [Weather](renderers/weather/README.md) | Job | Display current weather and forecasts | Open-Meteo, webcappi for capture |
 
 See each renderer's README for setup, configuration, images, releases and
 validation scope.
