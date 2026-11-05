@@ -249,3 +249,46 @@ use a one-line ellipsis with the full name retained in the title attribute.
 
 No live API, native arm64, Kubernetes/PVC or physical-display tests were performed
 for this change. The published 0.1.0 image does not include the new option.
+
+## 2026-11-06: Weather 0.2.0 publication
+
+[Weather 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.2.0)
+was published from annotated tag `weather/v0.2.0` at source revision
+`971599d6be9838df78cfc8cc18bf0f2c8a88daed`. It adds palette-aware color accents,
+optional location-name display and a Secret-backed configuration example.
+The visible timezone identifier is removed; forecast-local calculations remain.
+
+The [release workflow](https://github.com/dayflower/arprt-renderers/actions/runs/42131396566)
+passed scoped source checks and native Linux amd64/arm64 builds, offline tests
+and shipped-CLI execution under Job restrictions. The publish job loaded those
+exact tested archives without rebuilding and passed the unused-version/platform
+and release guards. The exact source also passed normal main CI before tagging.
+
+The public image is `ghcr.io/dayflower/arprt-renderer-weather:0.2.0`.
+Its immutable multi-platform reference is:
+
+```text
+ghcr.io/dayflower/arprt-renderer-weather@sha256:9029926fbd67b36ebbfd1f0f747ac0b5634c0411c17d94d906ff8ee11f559d05
+```
+
+The release asset `weather-index.json` records these platform manifests:
+
+| Platform | Manifest digest |
+| --- | --- |
+| linux/amd64 | `sha256:0bd4e82ec4750a336a89c9ce61109e57a61fff07d16587db5a1282e8d32ff831` |
+| linux/arm64 | `sha256:f658b52190c8b9f85e83dde5af907ebdaaf5064be96498ddfb889e20b11a5b4e` |
+
+With a fresh empty Docker authentication configuration, anonymous version-tag
+and index-digest pulls passed for both platforms. OCI platform/version/revision/
+source labels matched the expected native architecture, `0.2.0`, the revision
+above and this repository. The public amd64 index reference then passed
+`make -C renderers/weather container-check IMAGE=<index-reference>`, including
+the shipped CLI, both palettes, all rotations and output preservation.
+Both Screen examples now pin this verified public index.
+
+Native arm64 execution passed before publication on the release runner;
+postpublication native arm64 execution was not performed. Existing synthetic
+browser checks for color and location are recorded separately above; they were
+not repeated by the release workflow. Secret wiring was checked offline, not
+applied to a cluster. No new live API, Kubernetes/PVC or physical-display tests
+were performed. Publication does not deploy a Screen or modify device assignments.

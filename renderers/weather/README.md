@@ -5,13 +5,13 @@ with embedded weather and wind SVGs, captures it through a separately operated
 webcappi service, and atomically writes an opaque RGB PNG. ARPRT is independent
 and unofficial, with no affiliation with or endorsement by TRMNL.
 
-[Weather 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.1.0)
+[Weather 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.2.0)
 is publicly available for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-weather:0.1.0`. The immutable multi-platform
+`ghcr.io/dayflower/arprt-renderer-weather:0.2.0`. The immutable multi-platform
 reference is
-`ghcr.io/dayflower/arprt-renderer-weather@sha256:2eef95da45eb4382ead5baf8f02d234bb5d52e4ca7af73af9fd11554c91d0ca3`.
-VERSION is independently set to 0.2.0 for the next Weather release. See the [changelog](CHANGELOG.md) and
-[publication evidence](VALIDATION.md#2026-11-06-weather-010-publication).
+`ghcr.io/dayflower/arprt-renderer-weather@sha256:9029926fbd67b36ebbfd1f0f747ac0b5634c0411c17d94d906ff8ee11f559d05`.
+VERSION remains independently set to 0.2.0. See the [changelog](CHANGELOG.md) and
+[publication evidence](VALIDATION.md#2026-11-06-weather-020-publication).
 The local development image remains `arprt-renderer-weather:dev`.
 
 ## Build and use
@@ -30,7 +30,7 @@ renderers/weather/dist/renderer --latitude 35.0 --longitude 135.0 \
 | --- | --- |
 | `--latitude` | Required finite WGS84 latitude, -90 through 90 |
 | `--longitude` | Required finite WGS84 longitude, -180 through 180 |
-| `--location-name` | Optional display-only place name below Now time (development builds) |
+| `--location-name` | Optional display-only place name below Now time (since 0.2.0) |
 | `--model` | Omitted: Open-Meteo automatic selection; otherwise one model ID |
 | `--temperature-unit` | `celsius`; accepts `celsius` or `fahrenheit` |
 | `--context` | `/arprt/context.json`, read-only Render Context v1 |
@@ -80,7 +80,7 @@ current value and section legends show °C or °F; other temperatures are bare
 numbers without a standalone degree symbol.
 Wind uses one decimal place in m/s. Humidity is neither requested nor displayed.
 
-In development builds, `--location-name "Example City"` adds a plain-text
+`--location-name "Example City"` adds a plain-text
 place name beneath the Now time in both orientations. Omission or whitespace
 leaves no location row. Surrounding whitespace is trimmed; the name accepts
 up to 128 Unicode characters without control characters. Long names fit on one
@@ -88,7 +88,7 @@ line with an ellipsis; the full text remains in the HTML title. The name is
 display-only and does not change coordinates, model or timezone, and is never
 sent to Open-Meteo. The timezone identifier is no longer displayed, but all
 times still use the forecast location timezone. This option and display change
-are not in the published 0.1.0 image.
+are available since Weather 0.2.0.
 
 The API resolves the location timezone with `timezone=auto`. Hourly and current
 UNIX instants are converted using embedded IANA timezone data, including DST.
@@ -105,15 +105,14 @@ an unknown icon/name. Individual missing values display `—`. Seven daily and e
 hourly slots are always retained. A response with no displayable data fails.
 Malformed arrays, times, values and inverted daily high/low pairs fail.
 
-Development builds use the Render Context palette automatically: `gray4`
+Since Weather 0.2.0, the Render Context palette is used automatically: `gray4`
 keeps monochrome artwork and text; `spectra6` adds restrained accents.
 Daily highs are red, lows and precipitation probabilities blue. Sun artwork
 is red, rain blue, thunderstorms yellow, and snow/hail light blue. Partly
 cloudy, cloud, fog and unknown icons, current/hourly temperatures, wind, section headings,
 borders and background retain their black/white appearance. Icons use one
 stroke color each; pinned Lucide source files are unchanged. ARPRT still owns
-final device palette conversion and dithering. This behavior is not in the
-published 0.1.0 image.
+final device palette conversion and dithering.
 
 Landscape places Today/Now/Tomorrow above the hourly and weekly strips. Portrait
 places Now above Today/Tomorrow, hourly slots in two rows and weekly days in aligned
@@ -154,7 +153,7 @@ contents, coordinates, response bodies, Context device data and endpoint URLs ar
 not logged. Configure Job egress for Open-Meteo, DNS and the trusted capture service.
 
 [screen.yaml](screen.yaml) pins the verified public multi-platform digest of
-Weather 0.1.0 and uses synthetic coordinates and a synthetic capture endpoint.
+Weather 0.2.0 and uses synthetic coordinates and a synthetic capture endpoint.
 Replace the capture URL before use. For local development, build/load
 `arprt-renderer-weather:dev` and replace the image reference. Refresh is managed by ARPRT, initially
 every 30 minutes; the renderer does not run a scheduler or persist a cache. For
@@ -173,19 +172,15 @@ CLI arguments. See Kubernetes documentation on
 [Secret environment variables](https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#define-container-environment-variables-using-secret-data)
 and [arguments using environment variables](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#use-environment-variables-to-define-arguments).
 
-This example uses `arprt-renderer-weather:dev` because `--location-name` is
-unreleased and unsupported by the public 0.1.0 image. Build/load the development
-image onto eligible cluster nodes, or replace the image reference with your
-own accessible image built from this source. Replace the synthetic capture URL.
+This example pins the verified public Weather 0.2.0 multi-platform digest,
+including support for `--location-name`. Replace the synthetic capture URL.
 Create the Secret and Screen in the same controller namespace; Secret references
 cannot cross namespaces. Quote coordinate values under `stringData` as strings.
 Keep actual personal values in your private deployment configuration.
 
 All three Secret keys are required in this example. To omit the display name,
 remove both its `WEATHER_LOCATION_NAME` environment entry and the
-`--location-name` argument/value pair. To use the public 0.1.0 image with Secret
-coordinates, make those same removals and use the verified digest in
-[screen.yaml](screen.yaml).
+`--location-name` argument/value pair.
 
 Newly created Jobs read the current Secret values. Changing a Secret does not
 change an already started process's environment or trigger an immediate ARPRT

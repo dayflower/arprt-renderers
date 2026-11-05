@@ -235,10 +235,10 @@ loopback stubs under the Job security restrictions. Real-browser checks are
 opt-in. Live API compatibility, browser layout, cluster execution and physical
 display acceptance have separate scopes in the Weather validation record.
 
-Weather 0.1.0 passed native Linux amd64 and arm64 release builds and offline
+Weather 0.2.0 passed native Linux amd64 and arm64 release builds and offline
 container execution at source revision
-`bb3362817f22fd64425526924c75f864fbc4a020`. Anonymous version/digest pulls and
+`971599d6be9838df78cfc8cc18bf0f2c8a88daed`. Anonymous version/digest pulls and
 OCI revision/version labels passed for both platforms. The public amd64 image
 also passed postpublication container checks. Postpublication native arm64
-execution was not performed. See the [Weather publication record](../renderers/weather/VALIDATION.md#2026-11-06-weather-010-publication)
+execution was not performed. See the [Weather publication record](../renderers/weather/VALIDATION.md#2026-11-06-weather-020-publication)
 for the immutable reference and separate cluster/physical-display limits.
