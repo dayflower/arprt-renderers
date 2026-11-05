@@ -89,10 +89,20 @@ unavailable; when repeated the first occurrence wins.
 Wind arrows point toward the direction the wind travels: a northerly wind points
 down. The API's incoming bearing is rotated 180 degrees. A speed that rounds to
 0.0 m/s displays a calm circle. Missing direction displays a dash while preserving
-available speed. WMO codes map to embedded monochrome icons; unknown codes display
+available speed. WMO codes map to embedded icons; unknown codes display
 an unknown icon/name. Individual missing values display `—`. Seven daily and eight
 hourly slots are always retained. A response with no displayable data fails.
 Malformed arrays, times, values and inverted daily high/low pairs fail.
+
+Development builds use the Render Context palette automatically: `gray4`
+keeps monochrome artwork and text; `spectra6` adds restrained accents.
+Daily highs are red, lows and precipitation probabilities blue. Sun artwork
+is red, rain blue, thunderstorms yellow, and snow/hail light blue. Partly
+cloudy, cloud, fog and unknown icons, current/hourly temperatures, wind, section headings,
+borders and background retain their black/white appearance. Icons use one
+stroke color each; pinned Lucide source files are unchanged. ARPRT still owns
+final device palette conversion and dithering. This behavior is not in the
+published 0.1.0 image.
 
 Landscape places Today/Now/Tomorrow above the hourly and weekly strips. Portrait
 places Now above Today/Tomorrow, hourly slots in two rows and weekly days in aligned
@@ -161,7 +171,7 @@ WEATHER_WEBCAPPI=http://127.0.0.1:8080 WEATHER_LAYOUT_DIR=/tmp/weather-layouts \
   go test -run '^TestBrowserLayouts$' -v -timeout 180s
 ```
 
-This captures synthetic normal, missing-data, Fahrenheit and precipitation cases in both
+This captures synthetic normal, missing-data, Fahrenheit and precipitation cases with both palettes in both
 orientations and checks element bounds before readiness. Screenshots still need
 visual inspection. See [VALIDATION.md](VALIDATION.md) for actual scope and limits.
 

@@ -52,6 +52,7 @@ func checkCLI(t *testing.T, binary string) {
 		t.Fatal(e)
 	}
 	var failed atomic.Bool
+	var captured atomic.Value
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if failed.Load() {
 			w.WriteHeader(500)
@@ -61,6 +62,7 @@ func checkCLI(t *testing.T, binary string) {
 			t.Error("incorrect capture contract")
 		}
 		b, _ := io.ReadAll(r.Body)
+		captured.Store(string(b))
 		if !bytes.Contains(b, []byte("7-Day Forecast")) {
 			t.Error("missing weather HTML")
 		}
@@ -90,6 +92,11 @@ func checkCLI(t *testing.T, binary string) {
 			args := append(append([]string{}, base...), "--context", contextPath, "--output", output)
 			if e := invoke(args); e != nil {
 				t.Fatal(e)
+			}
+
+			html := captured.Load().(string)
+			if !strings.Contains(html, `data-palette="`+palette+`"`) || strings.Contains(html, "--warm:") != (palette == "spectra6") {
+				t.Fatal("capture HTML does not match the target palette")
 			}
 			before := mustRead(t, output)
 			assertRotated(t, before, rotation)

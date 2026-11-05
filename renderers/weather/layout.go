@@ -141,7 +141,18 @@ footer a { color:black }
  footer { font-size:11px; gap:3px }
 }
 
-</style></head><body><main>
+{{if eq .Palette "spectra6"}}
+/* Limit accents to forecast values and artwork; keep structure and headings black. */
+:root { --warm:#c00000; --cool:#0000c0; --lightning:#e0b000; --ice:#40a8d8 }
+.range b { color:var(--warm) }
+.low,.precip { color:var(--cool) }
+.weather-icon[data-kind="sun"] { color:var(--warm) }
+.weather-icon[data-kind="cloud-lightning"] { color:var(--lightning) }
+.weather-icon[data-kind="cloud-drizzle"],.weather-icon[data-kind="cloud-hail"],
+.weather-icon[data-kind="cloud-rain"],.weather-icon[data-kind="cloud-rain-wind"] { color:var(--cool) }
+.weather-icon[data-kind="snowflake"],.weather-icon[data-kind="regex"] { color:var(--ice) }
+{{end}}
+</style></head><body data-palette="{{.Palette}}"><main>
 <section class="summary"><div class="card"><div class="card-heading"><h1>{{.Labels.Today}}</h1><time class="date">{{.Today.Date}}</time></div><div class="card-body">{{template "icon" .Today.Icon}}<span class="condition-name">{{.Today.Name}}</span><div class="range"><b>{{.Today.High}}</b> / <span class="low">{{.Today.Low}}</span></div><div class="precip" title="{{.Labels.DailyPrecipitation}}">{{.Labels.Precipitation}} {{.Today.Precipitation}}</div></div></div>
 <div class="now"><h2>{{.Labels.Now}}</h2><div class="value">{{.Current}}<span class="unit"> {{.Unit}}</span></div><div class="stamp">{{.CurrentTime}}</div></div>
 <div class="card tomorrow"><div class="card-heading"><h2>{{.Labels.Tomorrow}}</h2><time class="date">{{.Tomorrow.Date}}</time></div><div class="card-body">{{template "icon" .Tomorrow.Icon}}<span class="condition-name">{{.Tomorrow.Name}}</span><div class="range"><b>{{.Tomorrow.High}}</b> / <span class="low">{{.Tomorrow.Low}}</span></div><div class="precip" title="{{.Labels.DailyPrecipitation}}">{{.Labels.Precipitation}} {{.Tomorrow.Precipitation}}</div></div></div></section>
@@ -150,7 +161,7 @@ footer a { color:black }
 <footer><span>{{.Labels.Updated}} {{.Updated}} · {{.Timezone}}</span><span>{{if .Model}}<span class="model">{{.Labels.Model}}: {{.Model}} · </span>{{end}}<a href="https://open-meteo.com/">{{.Labels.Attribution}}</a></span></footer>
 </main><script>(async()=>{await document.fonts.ready;for(const svg of document.querySelectorAll('svg.weather-icon')){const art=svg.querySelector('.weather-art'),b=art.getBBox();art.setAttribute('transform','translate('+(12-b.x-b.width/2)+' '+(12-b.y-b.height/2)+')')}await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);document.body.id='weather-ready'})();</script></body></html>
 {{define "wind"}}{{if .Missing}}<span aria-label="Wind direction unavailable">—</span>{{else}}<svg class="wind" viewBox="0 0 32 32" role="img" aria-label="{{if .Calm}}Calm{{else}}Wind travel direction{{end}}">{{if .Calm}}<circle cx="16" cy="16" r="7" fill="none" stroke="black" stroke-width="2.5"/>{{else}}<path d="M16 3 L24 15 L18 13 L18 28 L14 28 L14 13 L8 15 Z" transform="rotate({{.Angle}} 16 16)" fill="black"/>{{end}}</svg>{{end}}{{end}}
-{{define "icon"}}<svg class="weather-icon" viewBox="0 0 24 24" role="img" aria-label="{{.Name}}"><title>{{.Name}}</title><g class="weather-art" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{{.Artwork}}</g></svg>{{end}}`))
+{{define "icon"}}<svg class="weather-icon" data-kind="{{.Kind}}" viewBox="0 0 24 24" role="img" aria-label="{{.Name}}"><title>{{.Name}}</title><g class="weather-art" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{{.Artwork}}</g></svg>{{end}}`))
 
 func renderHTML(v dashboard) ([]byte, error) {
 	var b bytes.Buffer

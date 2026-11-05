@@ -193,3 +193,32 @@ publication do not deploy a Screen or modify device assignments. Cluster/PVC
 collection and physical-display readability remain unverified for Weather.
 Earlier local browser/live-source checks remain narrow point-in-time observations,
 separate from the release workflow's offline native evidence.
+
+## 2026-11-06: Palette-aware color accents (unreleased)
+
+Render Context `target.palette` now selects restrained color accents for
+`spectra6`; `gray4` remains monochrome. Vendored Lucide SVG files are unchanged;
+their trusted wrapper inherits the palette-specific CSS stroke color. The
+renderer still writes opaque RGB and leaves final palette conversion to ARPRT.
+The final artwork accents are red sun, blue rain, yellow thunderstorm and
+light-blue snow/hail; partly cloudy, cloud and fog artwork remains black.
+
+- `make check` passed for the repository.
+- The rebuilt native Linux amd64 development image passed
+  `make -C renderers/weather container-check`, including the shipped CLI,
+  both palettes and all four rotations under Job restrictions. CLI checks
+  verify the target palette reaches the captured HTML.
+- The real-browser matrix passed all 16 cases: normal, missing, Fahrenheit
+  and mixed precipitation, each with gray4/spectra6 and landscape/portrait.
+  Checks cover computed text/stroke colors, artwork centering and slot bounds.
+  Color normal landscape, color mixed-precipitation portrait and monochrome
+  normal landscape captures were visually inspected.
+- Browser checks used synthetic data and the existing local
+  `webcappi:font-cdp-fix` image on loopback. Chromium sandboxing was disabled
+  only for this disposable local test because of host namespace restrictions.
+  The test container was removed afterward.
+
+Captures are local ignored files under `dist/color-previews/`. No live weather
+requests were needed. Native arm64 execution, Kubernetes/PVC integration and
+physical Spectra 6 color reproduction were not tested for this change. These
+changes are not part of the published 0.1.0 image.
