@@ -151,12 +151,12 @@ type hourView struct {
 	Direction                              windIcon
 }
 type dashboard struct {
-	Palette                                              string
-	Labels                                               labels
-	Today, Tomorrow                                      dayView
-	Days                                                 []dayView
-	Hours                                                []hourView
-	Current, CurrentTime, Updated, Timezone, Model, Unit string
+	Palette                                                  string
+	Labels                                                   labels
+	Today, Tomorrow                                          dayView
+	Days                                                     []dayView
+	Hours                                                    []hourView
+	Current, CurrentTime, Updated, LocationName, Model, Unit string
 }
 
 func buildView(data []byte, now time.Time, model, unit string) (dashboard, error) {
@@ -207,7 +207,6 @@ func buildView(data []byte, now time.Time, model, unit string) (dashboard, error
 		}
 	}
 	v.Labels = englishLabels
-	v.Timezone = f.Timezone
 	v.Model = model
 	v.Current = "—"
 	v.CurrentTime = "—"

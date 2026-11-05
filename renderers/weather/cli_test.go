@@ -90,6 +90,9 @@ func checkCLI(t *testing.T, binary string) {
 				t.Fatal(e)
 			}
 			args := append(append([]string{}, base...), "--context", contextPath, "--output", output)
+			if rotation == 0 {
+				args = append(args, "--location-name", "  Example <Harbor> & 湾  ")
+			}
 			if e := invoke(args); e != nil {
 				t.Fatal(e)
 			}
@@ -97,6 +100,12 @@ func checkCLI(t *testing.T, binary string) {
 			html := captured.Load().(string)
 			if !strings.Contains(html, `data-palette="`+palette+`"`) || strings.Contains(html, "--warm:") != (palette == "spectra6") {
 				t.Fatal("capture HTML does not match the target palette")
+			}
+			if strings.Contains(html, "UTC") || strings.Contains(html, `class="location"`) != (rotation == 0) {
+				t.Fatal("unexpected timezone or optional location display")
+			}
+			if rotation == 0 && (!strings.Contains(html, ">Example &lt;Harbor&gt; &amp; 湾</div>") || strings.Contains(html, "<Harbor>")) {
+				t.Fatal("location must be trimmed and HTML escaped")
 			}
 			before := mustRead(t, output)
 			assertRotated(t, before, rotation)
@@ -110,6 +119,15 @@ func checkCLI(t *testing.T, binary string) {
 			}
 		}
 	}
+	for _, name := range []string{"   ", strings.Repeat("湾", 128)} {
+		args := append(append([]string{}, base...), "--context", contextPath, "--output", output, "--location-name", name)
+		if e := invoke(args); e != nil {
+			t.Fatal(e)
+		}
+		if strings.Contains(captured.Load().(string), `class="location"`) != (strings.TrimSpace(name) != "") {
+			t.Fatal("incorrect optional location")
+		}
+	}
 	if binary != "" {
 		if e := invoke(base); e != nil {
 			t.Fatal(e)
@@ -121,7 +139,7 @@ func checkCLI(t *testing.T, binary string) {
 		}
 		assertRotated(t, mustRead(t, output), 0)
 	}
-	for _, extra := range [][]string{{"--latitude", "NaN"}, {"--latitude", "Inf"}, {"--latitude", "91"}, {"--longitude", "181"}, {"--model", "a,b"}, {"--model", "x y"}, {"--temperature-unit", "kelvin"}, {"unexpected"}} {
+	for _, extra := range [][]string{{"--latitude", "NaN"}, {"--latitude", "Inf"}, {"--latitude", "91"}, {"--longitude", "181"}, {"--model", "a,b"}, {"--model", "x y"}, {"--temperature-unit", "kelvin"}, {"--location-name", strings.Repeat("湾", 129)}, {"--location-name", "Example\nCity"}, {"--location-name", string([]byte{0xff})}, {"unexpected"}} {
 		args := append(append([]string{}, base...), "--context", contextPath, "--output", output)
 		args = append(args, extra...)
 		if e := invoke(args); e == nil {

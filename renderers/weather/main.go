@@ -15,6 +15,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 var modelID = regexp.MustCompile(`^[a-z][a-z0-9_]{0,79}$`)
@@ -26,6 +28,7 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	output := flags.String("output", "/arprt/output.png", "Output PNG path")
 	latitude := flags.Float64("latitude", math.NaN(), "Required latitude (-90 to 90)")
 	longitude := flags.Float64("longitude", math.NaN(), "Required longitude (-180 to 180)")
+	locationName := flags.String("location-name", "", "Optional display name below the current local time")
 	model := flags.String("model", "", "Optional single Open-Meteo model identifier")
 	unit := flags.String("temperature-unit", "celsius", "celsius or fahrenheit")
 	input := flags.String("input", "", "Read an Open-Meteo JSON snapshot instead of requesting the API")
@@ -39,6 +42,13 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	}
 	if math.IsNaN(*latitude) || math.IsInf(*latitude, 0) || *latitude < -90 || *latitude > 90 || math.IsNaN(*longitude) || math.IsInf(*longitude, 0) || *longitude < -180 || *longitude > 180 {
 		return errors.New("valid latitude and longitude are required")
+	}
+	if !utf8.ValidString(*locationName) || strings.IndexFunc(*locationName, unicode.IsControl) >= 0 {
+		return errors.New("location-name must be UTF-8 text without control characters")
+	}
+	*locationName = strings.TrimSpace(*locationName)
+	if utf8.RuneCountInString(*locationName) > 128 {
+		return errors.New("location-name must be at most 128 characters")
 	}
 	if *model != "" && !modelID.MatchString(*model) {
 		return errors.New("expected one model identifier")
@@ -85,6 +95,7 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	if err != nil {
 		return err
 	}
+	view.LocationName = *locationName
 	view.Palette = target.Target.Palette
 	body, err := renderHTML(view)
 	if err != nil {

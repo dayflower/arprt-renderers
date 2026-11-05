@@ -222,3 +222,30 @@ Captures are local ignored files under `dist/color-previews/`. No live weather
 requests were needed. Native arm64 execution, Kubernetes/PVC integration and
 physical Spectra 6 color reproduction were not tested for this change. These
 changes are not part of the published 0.1.0 image.
+
+## 2026-11-06: Optional location name (unreleased)
+
+Added display-only `--location-name` beneath the Now time in landscape and
+portrait, and removed the timezone identifier from the footer. Forecast-local
+time calculations still use the API timezone. Names are trimmed, bounded to
+128 Unicode characters and HTML-escaped; empty names omit the row and long names
+use a one-line ellipsis with the full name retained in the title attribute.
+
+- `make check` passed for the repository.
+- The rebuilt native Linux amd64 development image passed
+  `make -C renderers/weather container-check` under the Job restrictions.
+  The shipped CLI checks cover optional/blank names, trimming, Unicode,
+  HTML escaping, maximum length, rejection of control characters/invalid UTF-8,
+  and absence of the timezone identifier in captured HTML.
+- All 16 synthetic real-browser cases passed existing color/geometry/bounds
+  checks plus location placement beneath the time and absence of timezone text.
+  Normal and precipitation cases include a location, missing data omits it,
+  and the Fahrenheit case uses a 128-character unbroken name.
+  Normal color landscape and portrait captures were visually inspected.
+- Browser checks used the existing loopback-only `webcappi:font-cdp-fix` setup,
+  with Chromium sandboxing disabled only for the disposable local synthetic test
+  because of host namespace restrictions. Captures are ignored local files under
+  `dist/location-previews/`.
+
+No live API, native arm64, Kubernetes/PVC or physical-display tests were performed
+for this change. The published 0.1.0 image does not include the new option.

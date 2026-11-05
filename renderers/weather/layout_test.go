@@ -63,6 +63,12 @@ func TestBrowserLayouts(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		switch name {
+		case "normal", "precipitation":
+			v.LocationName = "Example City"
+		case "fahrenheit":
+			v.LocationName = strings.Repeat("W", 128)
+		}
 		for _, palette := range []string{"gray4", "spectra6"} {
 			v.Palette = palette
 			body, err := renderHTML(v)
@@ -70,7 +76,8 @@ func TestBrowserLayouts(t *testing.T) {
 				t.Fatal(err)
 			}
 			// Fail readiness if a visible slot extends outside the canvas.
-			check := `for(const svg of document.querySelectorAll('svg.weather-icon')){const b=svg.getBBox();if(Math.abs(b.x+b.width/2-12)>.1||Math.abs(b.y+b.height/2-12)>.1)throw new Error('Weather art is not centered');}for(const e of document.querySelectorAll('main>*,.card-heading,.card-body>*,.hour>*,.day>*')){const r=e.getBoundingClientRect();if(r.bottom>innerHeight||r.right>innerWidth||r.left<0||r.top<0)throw new Error('Layout overflow');}for(const s of document.querySelectorAll('.summary,.hourly,.weekly')){const r=s.getBoundingClientRect();for(const e of s.querySelectorAll('.card-heading,.card-body>*,.hour>*,.day>*'))if(e.getBoundingClientRect().bottom>r.bottom+1)throw new Error('Section overflow');}for(const e of document.querySelectorAll('.day .range,.hour>*,.card-body>*')){const r=e.getBoundingClientRect(),p=e.parentElement.getBoundingClientRect();if(r.left<p.left-1||r.right>p.right+1)throw new Error('Slot overflow');}`
+			check := `for(const svg of document.querySelectorAll('svg.weather-icon')){const b=svg.getBBox();if(Math.abs(b.x+b.width/2-12)>.1||Math.abs(b.y+b.height/2-12)>.1)throw new Error('Weather art is not centered');}for(const e of document.querySelectorAll('main>*,.now h2,.now .value,.now .stamp,.now .location,.card-heading,.card-body>*,.hour>*,.day>*')){const r=e.getBoundingClientRect();if(r.bottom>innerHeight||r.right>innerWidth||r.left<0||r.top<0)throw new Error('Layout overflow');}for(const s of document.querySelectorAll('.summary,.hourly,.weekly')){const r=s.getBoundingClientRect();for(const e of s.querySelectorAll('.card-heading,.card-body>*,.hour>*,.day>*'))if(e.getBoundingClientRect().bottom>r.bottom+1)throw new Error('Section overflow');}for(const e of document.querySelectorAll('.day .range,.hour>*,.card-body>*')){const r=e.getBoundingClientRect(),p=e.parentElement.getBoundingClientRect();if(r.left<p.left-1||r.right>p.right+1)throw new Error('Slot overflow');}`
+			check += `const place=document.querySelector('.now .location');if(place){const r=place.getBoundingClientRect(),s=document.querySelector('.now .stamp').getBoundingClientRect();if(r.top<s.bottom-1)throw new Error('Location must be below time');const p=document.querySelector('.now').getBoundingClientRect();if(r.left<p.left||r.right>p.right)throw new Error('Location overflow');}if(document.querySelector('footer').textContent.includes('America/New_York'))throw new Error('Timezone is still visible');`
 			check += `const colored=document.body.dataset.palette==='spectra6';const black='rgb(0, 0, 0)',red='rgb(192, 0, 0)',blue='rgb(0, 0, 192)',yellow='rgb(224, 176, 0)',ice='rgb(64, 168, 216)';for(const e of document.querySelectorAll('.range b,.low,.precip,.now .value,.hour .temperature,.windrow,footer')){const expected=colored?(e.matches('.range b')?red:e.matches('.low,.precip')?blue:black):black;if(getComputedStyle(e).color!==expected)throw new Error('Incorrect text color');}for(const e of document.querySelectorAll('.weather-icon')){const kind=e.dataset.kind;const expected=colored?(kind==='sun'?red:kind==='cloud-lightning'?yellow:['snowflake','regex'].includes(kind)?ice:['cloud-drizzle','cloud-hail','cloud-rain','cloud-rain-wind'].includes(kind)?blue:black):black;if(getComputedStyle(e.querySelector('.weather-art')).stroke!==expected)throw new Error('Incorrect weather stroke');}`
 			body = []byte(strings.Replace(string(body), "document.body.id='weather-ready'", check+"document.body.id='weather-ready'", 1))
 			for _, size := range [][2]int{{800, 480}, {480, 800}} {
