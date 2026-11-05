@@ -30,6 +30,7 @@ renderers/weather/dist/renderer --latitude 35.0 --longitude 135.0 \
 | --- | --- |
 | `--latitude` | Required finite WGS84 latitude, -90 through 90 |
 | `--longitude` | Required finite WGS84 longitude, -180 through 180 |
+| `--location-name` | Optional display-only place name below Now time (development builds) |
 | `--model` | Omitted: Open-Meteo automatic selection; otherwise one model ID |
 | `--temperature-unit` | `celsius`; accepts `celsius` or `fahrenheit` |
 | `--context` | `/arprt/context.json`, read-only Render Context v1 |
@@ -59,7 +60,7 @@ relabeled as current forecasts. The renderer samples the execution clock once.
 
 - Today: date, English weather name/icon and API daily high/low and maximum precipitation probability.
 - Now: model-based current temperature and its valid local time, not a station
-  observation. Missing values or samples over two hours from execution time, or
+  observation. An optional user-supplied place name appears below its local time. Missing values or samples over two hours from execution time, or
   outside today's local date, display a dash.
 - Hourly Forecast: today's 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00 and
   21:00, including past hours. Each slot shows a weather icon, temperature, wind
@@ -67,7 +68,7 @@ relabeled as current forecasts. The renderer samples the execution clock once.
 - Tomorrow: date, English weather name/icon and API daily high/low and maximum precipitation probability.
 - 7-Day Forecast: today through six days later, including Today and Tomorrow; each day includes
   maximum precipitation probability.
-- Footer: retrieval time, IANA timezone, optional requested model and Open-Meteo
+- Footer: retrieval time, optional requested model and Open-Meteo
   attribution link. In snapshot mode the timestamp is processing time.
 
 Dates are fixed month/day plus English weekday, such as `11/5 (Thu)`, without
@@ -78,6 +79,16 @@ independent of language: one decimal place, with negative zero normalized. The
 current value and section legends show °C or °F; other temperatures are bare
 numbers without a standalone degree symbol.
 Wind uses one decimal place in m/s. Humidity is neither requested nor displayed.
+
+In development builds, `--location-name "Example City"` adds a plain-text
+place name beneath the Now time in both orientations. Omission or whitespace
+leaves no location row. Surrounding whitespace is trimmed; the name accepts
+up to 128 Unicode characters without control characters. Long names fit on one
+line with an ellipsis; the full text remains in the HTML title. The name is
+display-only and does not change coordinates, model or timezone, and is never
+sent to Open-Meteo. The timezone identifier is no longer displayed, but all
+times still use the forecast location timezone. This option and display change
+are not in the published 0.1.0 image.
 
 The API resolves the location timezone with `timezone=auto`. Hourly and current
 UNIX instants are converted using embedded IANA timezone data, including DST.
@@ -148,6 +159,42 @@ Replace the capture URL before use. For local development, build/load
 `arprt-renderer-weather:dev` and replace the image reference. Refresh is managed by ARPRT, initially
 every 30 minutes; the renderer does not run a scheduler or persist a cache. For
 custom `contextPath`/`imagePath`, pass matching `--context`/`--output` arguments.
+
+## Location settings from a Kubernetes Secret
+
+[screen-secret.yaml](screen-secret.yaml) contains a synthetic Secret and
+ArprtScreen that pass latitude, longitude and the display name through
+`renderer.env[].valueFrom.secretKeyRef`. ARPRT copies these standard environment
+references and arguments into the renderer Job. Kubernetes expands
+`$(WEATHER_LATITUDE)`, `$(WEATHER_LONGITUDE)` and `$(WEATHER_LOCATION_NAME)` in
+the argument list before starting the process. No shell, Kubernetes client or
+ServiceAccount token is needed in the renderer; it continues to accept ordinary
+CLI arguments. See Kubernetes documentation on
+[Secret environment variables](https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#define-container-environment-variables-using-secret-data)
+and [arguments using environment variables](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#use-environment-variables-to-define-arguments).
+
+This example uses `arprt-renderer-weather:dev` because `--location-name` is
+unreleased and unsupported by the public 0.1.0 image. Build/load the development
+image onto eligible cluster nodes, or replace the image reference with your
+own accessible image built from this source. Replace the synthetic capture URL.
+Create the Secret and Screen in the same controller namespace; Secret references
+cannot cross namespaces. Quote coordinate values under `stringData` as strings.
+Keep actual personal values in your private deployment configuration.
+
+All three Secret keys are required in this example. To omit the display name,
+remove both its `WEATHER_LOCATION_NAME` environment entry and the
+`--location-name` argument/value pair. To use the public 0.1.0 image with Secret
+coordinates, make those same removals and use the verified digest in
+[screen.yaml](screen.yaml).
+
+Newly created Jobs read the current Secret values. Changing a Secret does not
+change an already started process's environment or trigger an immediate ARPRT
+render. For an explicit configuration rollout, create a new versioned Secret
+(for example `weather-location-v2`) and update all three Screen references.
+Literal location values stay out of the Screen, but are expanded into the
+running process's arguments; coordinates still go to Open-Meteo and the
+display name is included in the HTML sent to webcappi. This example has been
+checked offline, not applied to a cluster.
 
 ## Verification and releases
 

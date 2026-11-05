@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add optional `--location-name` below the Now time and remove the visible
+  timezone identifier; forecast-local time calculations are unchanged.
+
 - Add automatic palette-aware accents: Spectra 6 uses red daily highs and
   sun icons, blue daily lows, precipitation and rain icons, yellow thunderstorm
   icons and light-blue snow/hail icons. Partly cloudy icons remain black.
