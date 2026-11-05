@@ -152,3 +152,44 @@ right. Landscape and portrait retain the existing SVG sizes and artwork centerin
 The eight-case real-browser matrix passed bounds/geometry checks; normal landscape
 and portrait captures were visually inspected. Source and native amd64 container
 checks cover this layout; arm64, cluster and physical-display limits remain.
+
+## 2026-11-06: Weather 0.1.0 publication
+
+[Weather 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.1.0)
+was published from annotated tag `weather/v0.1.0` at source revision
+`bb3362817f22fd64425526924c75f864fbc4a020`.
+The [release workflow](https://github.com/dayflower/arprt-renderers/actions/runs/42118263156)
+passed Weather source checks and native Linux amd64/arm64 image builds, offline
+unit tests and shipped-CLI execution under the Job security restrictions. The
+publish job loaded those exact tested archives without rebuilding and passed its
+unused-version/platform-tag and release guards.
+
+The public image is `ghcr.io/dayflower/arprt-renderer-weather:0.1.0`.
+Its immutable multi-platform reference is:
+
+```text
+ghcr.io/dayflower/arprt-renderer-weather@sha256:2eef95da45eb4382ead5baf8f02d234bb5d52e4ca7af73af9fd11554c91d0ca3
+```
+
+The release asset `weather-index.json` records exactly these platform manifests:
+
+| Platform | Manifest digest |
+| --- | --- |
+| linux/amd64 | `sha256:b4e6beac0b3c22b8a1e7615342072ea39d1790c22d3f25ddf967660e8410247a` |
+| linux/arm64 | `sha256:e1772cfcc74c61de5af626311eb9eefca826dd02cf5b876894a142bf9cf43c41` |
+
+Postpublication checks used a fresh empty Docker authentication configuration.
+Anonymous version-tag and index-digest pulls succeeded for both platforms, and
+both images reported version `0.1.0`, the exact source revision above and the
+expected repository source label. The public amd64 digest then passed
+`make -C renderers/weather container-check IMAGE=<index-reference>`, including
+production CLI paths, palettes, rotations, output preservation and restrictions.
+The Screen example now pins this verified index digest.
+
+Native arm64 execution passed before publication on the arm64 release runner;
+postpublication arm64 native execution was not performed. Anonymous arm64 pulls
+establish availability, not runtime execution. GitHub Release and image
+publication do not deploy a Screen or modify device assignments. Cluster/PVC
+collection and physical-display readability remain unverified for Weather.
+Earlier local browser/live-source checks remain narrow point-in-time observations,
+separate from the release workflow's offline native evidence.

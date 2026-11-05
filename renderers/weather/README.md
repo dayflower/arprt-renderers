@@ -5,8 +5,14 @@ with embedded weather and wind SVGs, captures it through a separately operated
 webcappi service, and atomically writes an opaque RGB PNG. ARPRT is independent
 and unofficial, with no affiliation with or endorsement by TRMNL.
 
-VERSION is independently set to 0.1.0 for the initial implementation. No Weather
-image has been published. The development image is `arprt-renderer-weather:dev`.
+[Weather 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.1.0)
+is publicly available for Linux amd64 and arm64 as
+`ghcr.io/dayflower/arprt-renderer-weather:0.1.0`. The immutable multi-platform
+reference is
+`ghcr.io/dayflower/arprt-renderer-weather@sha256:2eef95da45eb4382ead5baf8f02d234bb5d52e4ca7af73af9fd11554c91d0ca3`.
+VERSION remains independently set to 0.1.0. See the [changelog](CHANGELOG.md) and
+[publication evidence](VALIDATION.md#2026-11-06-weather-010-publication).
+The local development image remains `arprt-renderer-weather:dev`.
 
 ## Build and use
 
@@ -126,8 +132,10 @@ parent is writable; no writable `/tmp` or runtime installation is needed. Token
 contents, coordinates, response bodies, Context device data and endpoint URLs are
 not logged. Configure Job egress for Open-Meteo, DNS and the trusted capture service.
 
-[screen.yaml](screen.yaml) is a synthetic development example. Build/load the image
-and replace the capture URL before use. Refresh is managed by ARPRT, initially
+[screen.yaml](screen.yaml) pins the verified public multi-platform digest of
+Weather 0.1.0 and uses synthetic coordinates and a synthetic capture endpoint.
+Replace the capture URL before use. For local development, build/load
+`arprt-renderer-weather:dev` and replace the image reference. Refresh is managed by ARPRT, initially
 every 30 minutes; the renderer does not run a scheduler or persist a cache. For
 custom `contextPath`/`imagePath`, pass matching `--context`/`--output` arguments.
 

@@ -208,7 +208,11 @@ required and publication does not deploy the renderer.
 
 ## Publishing Weather
 
-Weather has not been published. Its independent initial VERSION is 0.1.0.
+[Weather 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.1.0)
+is published and anonymously pullable for Linux amd64 and arm64. Its release
+notes record the immutable reference and source revision; the Screen example pins
+the verified index digest. Its independent VERSION is 0.1.0; choose an unused
+version for subsequent releases.
 Use the same immutable publication procedure above with `weather/vMAJOR.MINOR.PATCH`,
 `renderers/weather/release.py`, `check-weather.yaml`, `release-weather.yaml` and
 `ghcr.io/dayflower/arprt-renderer-weather`. Run scoped lint, source and native
