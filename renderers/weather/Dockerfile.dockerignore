@@ -1,0 +1,12 @@
+**
+!LICENSE
+!renderers/
+!renderers/weather/
+!renderers/weather/Dockerfile
+!renderers/weather/go.mod
+!renderers/weather/*.go
+!renderers/weather/THIRD_PARTY_NOTICES.md
+!renderers/weather/icons/
+!renderers/weather/icons/lucide/
+!renderers/weather/icons/lucide/*.svg
+!renderers/weather/icons/lucide/LICENSE

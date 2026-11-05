@@ -32,3 +32,6 @@ jobs:
 
   ical:
     uses: ./.github/workflows/check-ical.yaml
+
+  weather:
+    uses: ./.github/workflows/check-weather.yaml
