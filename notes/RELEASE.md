@@ -208,10 +208,10 @@ required and publication does not deploy the renderer.
 
 ## Publishing Weather
 
-[Weather 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.1.0)
+[Weather 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.2.0)
 is published and anonymously pullable for Linux amd64 and arm64. Its release
-notes record the immutable reference and source revision; the Screen example pins
-the verified index digest. Its independent VERSION is 0.1.0; choose an unused
+notes record the immutable reference and source revision; both Screen examples pin
+the verified index digest. Its independent VERSION is 0.2.0; choose an unused
 version for subsequent releases.
 Use the same immutable publication procedure above with `weather/vMAJOR.MINOR.PATCH`,
 `renderers/weather/release.py`, `check-weather.yaml`, `release-weather.yaml` and
@@ -229,6 +229,6 @@ without rebuilding or repushing.
 
 After publication, set package visibility to Public, verify anonymous version and
 digest pulls for both platforms, and record postpublication execution separately.
-Only then pin the verified index digest in Weather's Screen example and advertise
+Only then pin the verified index digest in Weather's Screen examples and advertise
 availability. Release automation does not establish live API, browser, cluster or
 physical-display acceptance and does not deploy the renderer.
