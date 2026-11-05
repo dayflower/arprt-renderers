@@ -10,7 +10,7 @@ is publicly available for Linux amd64 and arm64 as
 `ghcr.io/dayflower/arprt-renderer-weather:0.1.0`. The immutable multi-platform
 reference is
 `ghcr.io/dayflower/arprt-renderer-weather@sha256:2eef95da45eb4382ead5baf8f02d234bb5d52e4ca7af73af9fd11554c91d0ca3`.
-VERSION remains independently set to 0.1.0. See the [changelog](CHANGELOG.md) and
+VERSION is independently set to 0.2.0 for the next Weather release. See the [changelog](CHANGELOG.md) and
 [publication evidence](VALIDATION.md#2026-11-06-weather-010-publication).
 The local development image remains `arprt-renderer-weather:dev`.
 

@@ -1,14 +1,15 @@
 # Weather changelog
 
-## Unreleased
+## 0.2.0 - 2026-11-06
 
 - Add optional `--location-name` below the Now time and remove the visible
   timezone identifier; forecast-local time calculations are unchanged.
-
 - Add automatic palette-aware accents: Spectra 6 uses red daily highs and
   sun icons, blue daily lows, precipitation and rain icons, yellow thunderstorm
   icons and light-blue snow/hail icons. Partly cloudy icons remain black.
   Gray4 retains monochrome output.
+- Document latitude, longitude and location-name settings from a Kubernetes
+  Secret using standard environment references and argument expansion.
 
 ## 0.1.0 - 2026-11-06
 
