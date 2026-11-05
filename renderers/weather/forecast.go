@@ -151,6 +151,7 @@ type hourView struct {
 	Direction                              windIcon
 }
 type dashboard struct {
+	Palette                                              string
 	Labels                                               labels
 	Today, Tomorrow                                      dayView
 	Days                                                 []dayView

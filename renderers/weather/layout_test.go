@@ -63,23 +63,27 @@ func TestBrowserLayouts(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		body, err := renderHTML(v)
-		if err != nil {
-			t.Fatal(err)
-		}
-		// Fail readiness if a visible slot extends outside the canvas.
-		check := `for(const svg of document.querySelectorAll('svg.weather-icon')){const b=svg.getBBox();if(Math.abs(b.x+b.width/2-12)>.1||Math.abs(b.y+b.height/2-12)>.1)throw new Error('Weather art is not centered');}for(const e of document.querySelectorAll('main>*,.card-heading,.card-body>*,.hour>*,.day>*')){const r=e.getBoundingClientRect();if(r.bottom>innerHeight||r.right>innerWidth||r.left<0||r.top<0)throw new Error('Layout overflow');}for(const s of document.querySelectorAll('.summary,.hourly,.weekly')){const r=s.getBoundingClientRect();for(const e of s.querySelectorAll('.card-heading,.card-body>*,.hour>*,.day>*'))if(e.getBoundingClientRect().bottom>r.bottom+1)throw new Error('Section overflow');}for(const e of document.querySelectorAll('.day .range,.hour>*,.card-body>*')){const r=e.getBoundingClientRect(),p=e.parentElement.getBoundingClientRect();if(r.left<p.left-1||r.right>p.right+1)throw new Error('Slot overflow');}`
-		body = []byte(strings.Replace(string(body), "document.body.id='weather-ready'", check+"document.body.id='weather-ready'", 1))
-		for _, size := range [][2]int{{800, 480}, {480, 800}} {
-			ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
-			data, err := capture(ctx, newHTTPClient(), endpoint, "", body, size[0], size[1])
-			cancel()
+		for _, palette := range []string{"gray4", "spectra6"} {
+			v.Palette = palette
+			body, err := renderHTML(v)
 			if err != nil {
-				t.Fatalf("%s %v: %v", name, size, err)
-			}
-			path := filepath.Join(directory, fmt.Sprintf("%s-%dx%d.png", name, size[0], size[1]))
-			if err := os.WriteFile(path, data, 0o644); err != nil {
 				t.Fatal(err)
+			}
+			// Fail readiness if a visible slot extends outside the canvas.
+			check := `for(const svg of document.querySelectorAll('svg.weather-icon')){const b=svg.getBBox();if(Math.abs(b.x+b.width/2-12)>.1||Math.abs(b.y+b.height/2-12)>.1)throw new Error('Weather art is not centered');}for(const e of document.querySelectorAll('main>*,.card-heading,.card-body>*,.hour>*,.day>*')){const r=e.getBoundingClientRect();if(r.bottom>innerHeight||r.right>innerWidth||r.left<0||r.top<0)throw new Error('Layout overflow');}for(const s of document.querySelectorAll('.summary,.hourly,.weekly')){const r=s.getBoundingClientRect();for(const e of s.querySelectorAll('.card-heading,.card-body>*,.hour>*,.day>*'))if(e.getBoundingClientRect().bottom>r.bottom+1)throw new Error('Section overflow');}for(const e of document.querySelectorAll('.day .range,.hour>*,.card-body>*')){const r=e.getBoundingClientRect(),p=e.parentElement.getBoundingClientRect();if(r.left<p.left-1||r.right>p.right+1)throw new Error('Slot overflow');}`
+			check += `const colored=document.body.dataset.palette==='spectra6';const black='rgb(0, 0, 0)',red='rgb(192, 0, 0)',blue='rgb(0, 0, 192)',yellow='rgb(224, 176, 0)',ice='rgb(64, 168, 216)';for(const e of document.querySelectorAll('.range b,.low,.precip,.now .value,.hour .temperature,.windrow,footer')){const expected=colored?(e.matches('.range b')?red:e.matches('.low,.precip')?blue:black):black;if(getComputedStyle(e).color!==expected)throw new Error('Incorrect text color');}for(const e of document.querySelectorAll('.weather-icon')){const kind=e.dataset.kind;const expected=colored?(kind==='sun'?red:kind==='cloud-lightning'?yellow:['snowflake','regex'].includes(kind)?ice:['cloud-drizzle','cloud-hail','cloud-rain','cloud-rain-wind'].includes(kind)?blue:black):black;if(getComputedStyle(e.querySelector('.weather-art')).stroke!==expected)throw new Error('Incorrect weather stroke');}`
+			body = []byte(strings.Replace(string(body), "document.body.id='weather-ready'", check+"document.body.id='weather-ready'", 1))
+			for _, size := range [][2]int{{800, 480}, {480, 800}} {
+				ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+				data, err := capture(ctx, newHTTPClient(), endpoint, "", body, size[0], size[1])
+				cancel()
+				if err != nil {
+					t.Fatalf("%s %v: %v", name, size, err)
+				}
+				path := filepath.Join(directory, fmt.Sprintf("%s-%s-%dx%d.png", name, palette, size[0], size[1]))
+				if err := os.WriteFile(path, data, 0o644); err != nil {
+					t.Fatal(err)
+				}
 			}
 		}
 	}

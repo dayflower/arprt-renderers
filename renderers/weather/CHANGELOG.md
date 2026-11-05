@@ -1,5 +1,12 @@
 # Weather changelog
 
+## Unreleased
+
+- Add automatic palette-aware accents: Spectra 6 uses red daily highs and
+  sun icons, blue daily lows, precipitation and rain icons, yellow thunderstorm
+  icons and light-blue snow/hail icons. Partly cloudy icons remain black.
+  Gray4 retains monochrome output.
+
 ## 0.1.0 - 2026-11-06
 
 Initial independent Weather renderer release for ARPRT.

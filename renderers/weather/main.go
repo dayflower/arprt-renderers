@@ -85,6 +85,7 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	if err != nil {
 		return err
 	}
+	view.Palette = target.Target.Palette
 	body, err := renderHTML(view)
 	if err != nil {
 		return err
