@@ -22,7 +22,7 @@ jobs:
           version: '0.13.0'
           enable-cache: true
           cache-dependency-glob: Makefile
-      - run: make lint format-check
+      - run: make lint format-check tools-check
 
   picsum:
     uses: ./.github/workflows/check-picsum.yaml

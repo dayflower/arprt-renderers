@@ -1,234 +1,200 @@
 # Renderer releases
 
-[Picsum 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.2.0) is published and anonymously pullable for Linux
-amd64 and arm64. Its release notes record the immutable image reference,
-source revision and validation scope. The following procedure applies to
-subsequent releases; choose a version that has not been published before.
+Each renderer has an independent VERSION, image and release. Use the common
+operator tool below to coordinate releases; renderer-owned Actions still perform
+verification and publication. Current versions, immutable references and actual
+acceptance evidence belong in each renderer's README, VALIDATION.md and GitHub
+Release, rather than in this procedure.
+
+| Renderer argument | Directory | Annotated tag | Release workflow | GHCR image |
+| --- | --- | --- | --- | --- |
+| `picsum` | `renderers/picsum/` | `picsum/vMAJOR.MINOR.PATCH` | `release-picsum.yaml` | `ghcr.io/dayflower/arprt-renderer-picsum` |
+| `rss` | `renderers/rss/` | `rss/vMAJOR.MINOR.PATCH` | `release-rss.yaml` | `ghcr.io/dayflower/arprt-renderer-rss` |
+| `ical` | `renderers/ical/` | `ical/vMAJOR.MINOR.PATCH` | `release-ical.yaml` | `ghcr.io/dayflower/arprt-renderer-ical` |
+| `weather` | `renderers/weather/` | `weather/vMAJOR.MINOR.PATCH` | `release-weather.yaml` | `ghcr.io/dayflower/arprt-renderer-weather` |
 
 ## Initial setup
 
-1. Enable Actions for `dayflower/arprt-renderers` and allow the workflow's
-   `GITHUB_TOKEN` to write packages and releases.
-2. Require CI on main and restrict creation/update/deletion of `picsum/v*` tags to
-   maintainers. Do not force-move release tags.
-3. Ensure an existing `arprt-renderer-picsum` GHCR package, if any, is connected to
-   this repository and grants its Actions read/write access. The OCI source label
-   connects new packages. A 404 can mean hidden resources when package permissions
-   are incorrect, so check package ownership/access before the first release.
-4. Confirm both native CI runners are available (`ubuntu-24.04` and
-   `ubuntu-24.04-arm`). No private registry or photo-service secret is required.
+- Enable GitHub Actions and package/release write permissions for release jobs.
+  Connect existing GHCR packages to this repository and grant Actions access.
+- Require CI on main and restrict renderer release tag creation/update/deletion
+  to maintainers. Never force-move a release tag.
+- Confirm native `ubuntu-24.04` amd64 and `ubuntu-24.04-arm` runners are available.
+- Install Python 3.12+, Git and GitHub CLI, and authenticate `gh` for github.com.
+  Configure Git push authentication separately, for example with
+  `gh auth setup-git`. The coordinator does not change credentials or Git config.
+- Use a checkout whose origin fetch and push URLs both identify
+  `dayflower/arprt-renderers` on github.com. HTTPS and standard Git SSH URLs are
+  accepted. Custom host aliases, forks and multiple push URLs are rejected.
 
-## Publishing Picsum
+The coordinator is `python3 tools/release.py`. It requires neither Docker nor
+additional Python packages. Commands can be invoked from any working directory;
+the checkout containing the script is used. Read-only commands do not fetch,
+switch branches or move local refs. It does not create commits, PRs or merges,
+modify branch protection, rerun failed workflows, or deploy a renderer.
 
-Set [VERSION](../renderers/picsum/VERSION) and update the examples/documentation to
-the intended version in a reviewed commit on main. Keep versions independent of
-ARPRT and other renderers. Before pushing any Codex-contributed commits, inspect
-their messages and preserve the required co-author attribution.
+## Prepare a version
 
-Run the checks in [DEVELOP](DEVELOP.md), then create an annotated tag
-on that main commit (this example assumes VERSION was updated to 0.2.1):
-
-```sh
-picsum_version=0.2.1
-git tag -a "picsum/v${picsum_version}" -m "Picsum ${picsum_version}"
-git push origin "refs/tags/picsum/v${picsum_version}"
-```
-
-The [Picsum workflow](../.github/workflows/release-picsum.yaml) accepts only canonical
-stable `picsum/vMAJOR.MINOR.PATCH` tags matching VERSION. It requires an annotated
-tag whose commit is on origin/main and tests that exact revision. It then:
-
-1. Calls the reusable [Picsum checks](../.github/workflows/check-picsum.yaml)
-   directly to run Picsum-scoped lint/format and offline tests, build/check native
-   Linux amd64/arm64 containers, and export the exact tested images. It does not
-   run another renderer's setup or tests. Picsum's release helpers and tests live
-   under `renderers/picsum/`.
-2. Serializes Picsum releases and checks all GHCR package-version pages for the
-   version and both architecture tags. It also rejects an existing GitHub release.
-   Explicit 404 is accepted only for initial missing resources; auth, network,
-   rate-limit and server failures stop publication.
-3. Publishes `ghcr.io/dayflower/arprt-renderer-picsum:<version>-amd64` and
-   `:<version>-arm64`, then assembles `:<version>` as a multi-platform index.
-   There is no mutable `latest` tag. OCI image labels record version, source
-   repository and exact source revision; images include the MIT license. The multi-platform index and
-   release asset record the platform manifests and immutable image reference.
-4. Creates a renderer-specific GitHub release, attaches index digest/platform
-   metadata and records the immutable image reference. This is workflow evidence,
-   not a claim of cluster, live-service or physical-device acceptance.
-
-Workflow guards prevent its own reruns from replacing existing version/platform
-tags. GHCR tags are not intrinsically immutable; limit package write permissions
-and use digest references for deployments. Uncoordinated external pushes are
-outside the workflow's serialization. Never delete existing tags to bypass a
-guard. If publication fails after any platform tag was pushed, choose a new
-version and tag after investigating; a rerun intentionally stops. If only release
-creation failed after the complete image was published, inspect the recorded
-digest and manually finish the release without rebuilding or repushing images.
-
-## Public availability
-
-Confirm that the GHCR package is Public; a new package may require changing
-its visibility in package settings. Verify pulls without credentials using
-a fresh empty Docker config and the same `picsum_version` selected above:
+Choose a renderer and update its VERSION on your working branch:
 
 ```sh
-mkdir -p dist/anonymous-docker
-DOCKER_CONFIG="$PWD/dist/anonymous-docker" docker pull --platform linux/amd64 "ghcr.io/dayflower/arprt-renderer-picsum:${picsum_version}"
-DOCKER_CONFIG="$PWD/dist/anonymous-docker" docker pull --platform linux/arm64 "ghcr.io/dayflower/arprt-renderer-picsum:${picsum_version}"
+python3 tools/release.py bump weather minor --dry-run
+python3 tools/release.py bump weather minor
 ```
 
-Also pull the release's `ghcr.io/dayflower/arprt-renderer-picsum@sha256:...`
-reference and run
-`make -C renderers/picsum container-check IMAGE=<digest-reference>` on each native
-architecture where a native host is available. Record the actual verification
-scope in the release, distinguishing it from the native prepublication CI
-checks. Update the Picsum README and pin the verified digest in the Screen
-examples after public availability is confirmed. If release immutability is enabled,
-assets cannot be added after publication; record later verification in the
-editable release notes. No Helm publication is needed for the Job renderer.
+The second positional argument accepts `major`, `minor`, `patch` or an explicit
+stable version such as `0.3.0`. For example, `0.2.3 minor` becomes `0.3.0`.
+Explicit versions must be greater than the current VERSION. Leading zeros,
+prereleases and build metadata are rejected. The working tree must be clean,
+including untracked files, even with `--dry-run`.
 
-## Publishing RSS
+Only `renderers/<renderer>/VERSION` is replaced. Update the changelog and review
+other release documentation manually; changelog formats differ and not every
+renderer has one. Commit and merge the preparation through the normal review
+process. Keep versions independent of other renderers and ARPRT. Preserve the
+required Codex co-author attribution and inspect actual commit messages before
+pushing Codex-contributed commits.
 
-[RSS 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.1.0)
-is published and anonymously pullable for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-rss:0.1.0`. Its release notes record the
-immutable reference, source revision and validation scope. The following
-procedure applies to subsequent releases; choose an unpublished version.
-RSS keeps its independent [VERSION](../renderers/rss/VERSION), canonical stable
-`rss/vMAJOR.MINOR.PATCH` annotated tags and `release-rss` concurrency group.
-Do not change Picsum or controller versions for an RSS release.
+Run `make check`, then build and run the relevant renderer's container checker,
+as described in [DEVELOP.md](DEVELOP.md). These local checks are manual; the
+coordinator checks GitHub CI rather than claiming to have run them.
 
-Apply the initial setup above to `rss/v*` tag protection and the
-`arprt-renderer-rss` GHCR package, including repository linkage, Actions write
-access, and native amd64/arm64 runner availability. Set VERSION and review the
-RSS documents and Screen example on main. Inspect Codex-contributed commit
-messages for attribution before pushing. Run `make check`, build the RSS image,
-and run `make -C renderers/rss container-check`. Require both native jobs in
-[RSS checks](../.github/workflows/check-rss.yaml) to succeed; local amd64 execution
-cannot substitute for native arm64 validation. The
-[RSS validation record](../renderers/rss/VALIDATION.md) records the separate
-browser and disposable-cluster acceptance scope; it does not replace release
-checks against the revision intended for publication.
-
-When publication is authorized, tag the reviewed main revision. This example
-assumes VERSION was updated to the unused version 0.1.1:
+## Check an exact commit
 
 ```sh
-rss_version=0.1.1
-git tag -a "rss/v${rss_version}" -m "RSS ${rss_version}"
-git push origin "refs/tags/rss/v${rss_version}"
+python3 tools/release.py check weather --revision <commit>
 ```
 
-The [RSS release workflow](../.github/workflows/release-rss.yaml) verifies the
-annotated tag, VERSION, exact checkout and ancestry on origin/main. It calls only
-RSS checks, exports the exact tested native images and passes them to the publish
-job without rebuilding. The publish job checks architecture and OCI labels,
-checks every package-version page for the version and both platform tags, and
-rejects an existing GitHub release. Only explicit 404 responses permit absent
-initial resources; authentication, rate-limit, server and network errors stop
-publication. Package permissions must still be checked when a 404 may hide a
-resource.
+Use the reviewed main commit intended for publication. The tool resolves the
+revision once to a full SHA, reads VERSION and release-tool/workflow paths from
+that commit, and derives the tag from its VERSION. It checks that:
 
-Publication creates `:<version>-amd64`, `:<version>-arm64`, then a multi-platform
-`:<version>` index, without `latest`. Release notes and `rss-index.json` record
-the immutable reference, source revision and platforms. They describe offline
-native validation, not live-feed, browser, cluster or physical-display acceptance.
-The same non-overwrite policy and partial-publication recovery described for
-Picsum apply: use a new version after a partial image push; if only release
-creation failed after complete publication, inspect the recorded digest and
-finish the release without rebuilding or repushing. Never remove tags to evade
-the guard. Limit GHCR write permissions and deploy using digests.
+- Origin identifies the intended repository and GitHub access works.
+- The exact commit is an ancestor of remote main.
+- The newest main-push `ci.yaml` run for that SHA succeeded, including common,
+  renderer source and native amd64/arm64 jobs. PR runs or successful older runs
+  do not substitute for the newest matching run.
+- The remote release tag and GitHub Release do not already exist.
 
-Set the package visibility to Public and verify anonymous pulls with a fresh
-empty Docker config before advertising availability:
+Success means `ready` to start publication, not proof that the package version
+is unused or publicly pullable. GHCR version/platform-tag availability remains
+the final responsibility of the existing Actions guard, using the workflow
+token. Local package API permissions are not required. Authentication, network
+and malformed-response failures are not treated as an unused version.
+
+## Publish
+
+Only execute publication when it has been explicitly authorized:
 
 ```sh
-mkdir -p dist/rss-anonymous-docker
-DOCKER_CONFIG="$PWD/dist/rss-anonymous-docker" docker pull --platform linux/amd64 "ghcr.io/dayflower/arprt-renderer-rss:${rss_version}"
-DOCKER_CONFIG="$PWD/dist/rss-anonymous-docker" docker pull --platform linux/arm64 "ghcr.io/dayflower/arprt-renderer-rss:${rss_version}"
+python3 tools/release.py publish weather --revision <commit> --dry-run
+python3 tools/release.py publish weather --revision <commit>
 ```
 
-Also verify the release's digest reference and run the RSS container checker
-against that reference on each available native host. Record prepublication CI,
-anonymous pull checks and postpublication execution separately. Then update the
-RSS README status and replace the local image in
-[the RSS Screen example](../renderers/rss/screen.yaml) with the verified
-multi-platform digest. Keep its feed and webcappi endpoints synthetic in the
-repository. Publishing a renderer does not deploy it or change existing
-Device assignments.
+`publish` requires a clean working tree, repeats the exact-commit checks, prints
+the target to stderr, creates an annotated tag and pushes only that tag. It does
+not push a branch or retarget publication if main advances. The full SHA must
+already be available locally; fetch it yourself if needed.
 
-## Publishing iCalendar
+By default it tracks the matching tag-push release workflow until completion.
+Use `--no-wait` to return its current state after the tag is confirmed, or
+`--timeout <seconds>` to limit waiting (default 900 seconds).
+`--dry-run` performs reads and checks only, with no tag creation or push.
+It does not guarantee that a later Actions guard or publication will succeed.
 
-[iCalendar 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/ical/v0.2.0)
-is published and anonymously pullable for Linux amd64 and arm64. Its release
-notes record the immutable reference, source revision and validation scope.
-Its independent [VERSION](../renderers/ical/VERSION) is 0.2.0. Choose an
-unpublished version for subsequent releases. Its package is
-`ghcr.io/dayflower/arprt-renderer-ical`, tags are canonical stable
-`ical/vMAJOR.MINOR.PATCH`, and releases serialize in `release-ical`.
-Do not change another renderer or controller version for an iCalendar release.
+Existing local tags must be annotated and directly point to the requested SHA.
+An existing matching remote annotated tag resumes observation without another
+push. Conflicting/lightweight tags stop the command. A push error is followed
+by a remote tag check: if the expected SHA is confirmed, observation continues;
+otherwise the result is uncertain and requires inspection. Tags are never
+force-pushed, moved or deleted automatically.
 
-Before the first authorized publication, apply the initial setup above to
-`ical/v*` protection and the iCalendar GHCR package. Confirm native amd64/arm64
-runners and Actions package/release permissions. Review VERSION, README, notices,
-Screen examples and [validation evidence](../renderers/ical/VALIDATION.md) on main.
-Run `make check`, build the iCalendar image and run its container checker. Require
-both native jobs of [iCalendar checks](../.github/workflows/check-ical.yaml) to
-succeed for the intended source revision. Local amd64 success cannot substitute
-for native arm64. Inspect all Codex-contributed commit messages for attribution
-before pushing.
+The renderer's release workflow checks VERSION, annotated tag, exact checkout
+and main ancestry. It calls only that renderer's verification workflow, builds
+and tests native amd64/arm64 images, and exports those exact image archives.
+Publication loads the tested archives without rebuilding, verifies platform and
+OCI labels, rejects existing version/platform tags and Releases, publishes the
+two platform tags and a multi-platform version index, and creates a GitHub
+Release with `<renderer>-index.json`. It does not publish `latest`.
 
-Only on an explicit publication request, create and push an annotated
-`ical/v<version>` tag on the reviewed main commit matching VERSION.
-The [release workflow](../.github/workflows/release-ical.yaml) verifies tag type,
-canonical version, VERSION, exact checkout and ancestry on origin/main. It calls
-only iCalendar checks with archive export. The publish job loads the exact tested
-images, verifies architecture and OCI labels, and never rebuilds. It rejects an
-existing GitHub release or any version/amd64/arm64 tag across all GHCR pages.
-Only explicit HTTP 404 allows an absent first-publication resource; other API
-failures stop publication. Check permissions separately when a 404 may hide a
-resource.
+## Observe or resume
 
-Publication creates versioned amd64/arm64 tags and a multi-platform version
-index, with no `latest`. `ical-index.json` and release notes record the immutable
-reference, source revision and native offline verification. Browser, cluster,
-physical-display and live-subscription acceptance are not run by this workflow.
-Use a new version after any partial image push; never delete tags to bypass a
-guard. If only release creation failed after complete publication, inspect the
-digest and finish the release without rebuilding or repushing.
+```sh
+python3 tools/release.py status weather --version 0.3.0
+python3 tools/release.py status weather --version 0.3.0 --watch --timeout 900
+python3 tools/release.py status weather --version 0.3.0 --json
+```
 
-Set the package Public and verify anonymous version/digest pulls on both
-platforms using a fresh empty Docker config. Run
-`make -C renderers/ical container-check IMAGE=<digest-reference>` on each
-available native host. Record prepublication native checks, anonymous pulls and
-postpublication execution separately. Only then advertise availability and pin
-the verified index digest in [screen.yaml](../renderers/ical/screen.yaml), keeping
-all source URLs, credentials and device identities synthetic. No Helm release is
-required and publication does not deploy the renderer.
+Status reads GitHub, independent of the current local branch or working tree.
+It verifies the annotated remote tag and its VERSION, and selects the newest
+push run matching the renderer workflow, tag and exact SHA.
 
-## Publishing Weather
+| State | Meaning |
+| --- | --- |
+| `not_started` | No remote tag or Release exists |
+| `awaiting_run` | Tag exists; its workflow has not been observed |
+| `running` | Matching workflow is queued or running |
+| `published` | Workflow succeeded and the stable Release/index evidence agrees |
+| `failed` | Workflow failed, was cancelled or otherwise did not succeed |
+| `inconsistent` | Tag, VERSION, Release or index evidence conflicts/is missing |
+| `unknown` | Data or remote state could not be read reliably |
+| `timeout` | Waiting ended; publication may still be running |
 
-[Weather 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.2.0)
-is published and anonymously pullable for Linux amd64 and arm64. Its release
-notes record the immutable reference and source revision; both Screen examples pin
-the verified index digest. Its independent VERSION is 0.2.0; choose an unused
-version for subsequent releases.
-Use the same immutable publication procedure above with `weather/vMAJOR.MINOR.PATCH`,
-`renderers/weather/release.py`, `check-weather.yaml`, `release-weather.yaml` and
-`ghcr.io/dayflower/arprt-renderer-weather`. Run scoped lint, source and native
-container checks before publication. Annotated tags must match VERSION and refer
-to a commit on origin/main. Inspect Codex-contributed commit attribution before
-pushing.
+`published` requires a stable, non-draft Release and its uploaded index asset
+with a SHA-256 digest and exactly linux/amd64 and linux/arm64 manifests. Existing
+release-note source and immutable-reference fields must match the tag and index.
+This is workflow/metadata evidence, not anonymous registry or device acceptance.
 
-The release calls only Weather verification, publishes its exact tested amd64 and
-arm64 archives and records `weather-index.json`. It rejects existing version or
-platform tags and releases, and does not publish `latest`. After partial image
-publication use a new version; never delete tags to bypass the guards. If only
-GitHub release creation fails, inspect the completed index and finish the release
-without rebuilding or repushing.
+`--watch` waits for `published` or `failed`, or stops on error/timeout.
+No state file is needed: rerun `status` to observe progress after interruption.
+A completed failure is never automatically rerun, even if some publication
+steps might not have run.
 
-After publication, set package visibility to Public, verify anonymous version and
-digest pulls for both platforms, and record postpublication execution separately.
-Only then pin the verified index digest in Weather's Screen examples and advertise
-availability. Release automation does not establish live API, browser, cluster or
-physical-display acceptance and does not deploy the renderer.
+All commands accept `--json`, emitting one final result object on stdout.
+Publication notices go to stderr. Without `--watch`, a successfully read pending
+status exits 0; a known failed state/check exits 1. Invalid arguments/version
+exit 2; unreadable/uncertain state or timeout exits 3; interruption exits 130.
+JSON contains `state`, `renderer` and `message`, plus known version, revision,
+tag, run URL, Release URL and digest fields. Consumers should use `state` to
+distinguish pending observation from completed publication.
+
+## Failure and recovery
+
+Never delete existing tags to bypass guards. After any partial image push,
+investigate and choose a new version rather than rerunning publication.
+If the complete image was published but only Release creation failed, inspect
+the recorded digest and manually finish that Release without rebuilding or
+repushing images. The coordinator reports failure/inconsistency; it does not
+attempt this repair.
+
+The workflow serializes renderer releases, but external pushes are outside that
+serialization. GHCR tags are not inherently immutable: limit package write
+permissions and use digest references for deployment. A 404 can conceal
+inaccessible resources, so establish repository/package access separately when
+investigating first-publication failures.
+
+## Manual postpublication work
+
+These tasks remain manual; the coordinator does not perform or claim them:
+
+1. Confirm package visibility is Public. Verify anonymous version-tag and
+   index-digest pulls on amd64 and arm64 with a fresh empty Docker configuration.
+2. Confirm platform and OCI version/source/revision labels. Run
+   `make -C renderers/<renderer> container-check IMAGE=<digest-reference>`
+   on available native hosts. Pulling arm64 does not establish arm64 execution.
+3. Record prepublication CI, anonymous pulls, postpublication execution and
+   browser/cluster/physical acceptance separately. If release immutability
+   prevents adding assets, record later evidence in editable notes/documents.
+4. Update the renderer README, validation record, GitHub Release notes and Screen
+   digest pins only after availability has been verified. Keep examples synthetic.
+
+For example, after creating an empty Docker config directory:
+
+```sh
+DOCKER_CONFIG=/absolute/empty-config docker pull --platform linux/amd64 ghcr.io/dayflower/arprt-renderer-weather:0.3.0
+DOCKER_CONFIG=/absolute/empty-config docker pull --platform linux/arm64 ghcr.io/dayflower/arprt-renderer-weather:0.3.0
+```
+
+Live sources, browser layout, Kubernetes/PVC integration and physical displays
+have separate acceptance scopes. Job renderer publication needs no Helm release
+and does not change existing Device assignments.

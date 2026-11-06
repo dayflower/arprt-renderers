@@ -1,10 +1,11 @@
+PYTHON ?= python3
 UV ?= uv
 RUFF_VERSION := 0.17.1
 RUFF := $(UV) tool run --from 'ruff==$(RUFF_VERSION)' ruff
 RUFF_PATHS ?= .
 RENDERER_DIRS := $(patsubst %/Makefile,%,$(wildcard renderers/*/Makefile))
 
-.PHONY: setup lint format format-check test check
+.PHONY: setup lint format format-check test tools-check check
 
 setup:
 	@for directory in $(RENDERER_DIRS); do \
@@ -21,7 +22,10 @@ format:
 format-check:
 	$(RUFF) format --check $(RUFF_PATHS)
 
-test:
+tools-check:
+	$(PYTHON) -m unittest discover -s tools -p 'test_*.py' -v
+
+test: tools-check
 	@for directory in $(RENDERER_DIRS); do \
 		$(MAKE) -C "$$directory" check || exit $$?; \
 	done
