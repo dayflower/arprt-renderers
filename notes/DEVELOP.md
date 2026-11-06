@@ -21,7 +21,8 @@ and language versions can differ. `make -C renderers/picsum build` produces the
 local static CLI at `renderers/picsum/dist/renderer`.
 
 `make check` runs shared Ruff lint/import-order and formatting checks, then each
-renderer's `check` target. Picsum checks Go formatting, runs `go vet` and Go
+renderer's `check` target. It also runs `tools-check`, the offline Python
+standard-library tests for the common release coordinator. Picsum checks Go formatting, runs `go vet` and Go
 tests, and runs the Python standard-library release guard tests.
 `make format` applies shared Python formatting; use `gofmt -w` for Go files. To work
 only on Picsum:
@@ -45,7 +46,8 @@ Dependencies are downloaded at build time, never inside a running renderer.
 The [CI workflow](../.github/workflows/ci.yaml) runs on PRs, main pushes and manual
 dispatch. It runs repository-wide lint/format checks and calls each renderer's
 verification workflow. Each renderer workflow prepares its own toolchain and
-dependencies; the shared CI job does not run renderer setup or tests.
+dependencies; the shared CI job runs release-coordinator tests via `make tools-check` but
+does not run renderer setup or tests.
 
 The reusable [Picsum checks](../.github/workflows/check-picsum.yaml) run lint/format
 on `renderers/picsum/` using the global Ruff configuration, set up Picsum's Go
@@ -242,3 +244,17 @@ OCI revision/version labels passed for both platforms. The public amd64 image
 also passed postpublication container checks. Postpublication native arm64
 execution was not performed. See the [Weather publication record](../renderers/weather/VALIDATION.md#2026-11-06-weather-020-publication)
 for the immutable reference and separate cluster/physical-display limits.
+
+## Common release coordinator
+
+`tools/release.py` is a repository-level operator tool for bump/check/publish/status,
+not a renderer runtime or publication dependency. It uses Python 3.12+, Git and
+GitHub CLI without extra Python dependencies. Renderer-specific guards, image
+builds, release notes and distribution remain under each renderer.
+See [RELEASE.md](RELEASE.md) for commands and manual postpublication work.
+
+`make tools-check` runs offline tests with temporary Git repositories and fake
+GitHub responses, including tag conflicts, exact-commit CI matching, pagination,
+API errors, uncertain pushes, workflow delays, timeout/resume and release evidence.
+It never pushes tags or creates a release. Normal CI runs these tests in the
+common job; individual renderer release workflows do not depend on this tool.
