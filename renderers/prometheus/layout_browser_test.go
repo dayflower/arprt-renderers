@@ -99,7 +99,7 @@ func TestBrowserPlotWidths(t *testing.T) {
 				}
 				t.Fatal(e)
 			}
-			match := regexp.MustCompile(`<pre id="result">([^<]+)</pre>`).FindSubmatch(output)
+			match := regexp.MustCompile(`<pre id="result"[^>]*>([^<]+)</pre>`).FindSubmatch(output)
 			if match == nil {
 				t.Fatal("browser did not return geometry")
 			}
@@ -115,5 +115,131 @@ func TestBrowserPlotWidths(t *testing.T) {
 			}
 			t.Logf("sampling widths=%v; browser widths=%v", PlotWidths(c, ctx), actual)
 		})
+	}
+}
+
+// Completed dashboard geometry checks run separately from the prototype.
+func TestBrowserDashboard(t *testing.T) {
+	endpoint := os.Getenv("PROMETHEUS_WEBCAPPI")
+	if endpoint == "" {
+		t.Skip("set PROMETHEUS_WEBCAPPI for completed HTML capture")
+	}
+	for _, name := range []string{"landscape", "portrait", "explicit-portrait", "auto", "wrap", "grow", "pixels", "eight-series", "eight-bars", "stack", "missing", "japanese", "text", "hour-buckets", "stack-bar", "summary", "history", "daily"} {
+		for _, palette := range []string{"gray4", "spectra6"} {
+			for _, rotation := range []int{0, 90} {
+				t.Run(fmt.Sprintf("%s-%s-%d", name, palette, rotation), func(t *testing.T) {
+					c := config(t)
+					ctx := contextFixture(t)
+					ctx.Target.Palette = palette
+					ctx.Rotation = rotation
+					if name == "summary" || name == "history" || name == "daily" {
+						b, e := os.ReadFile(filepath.Join("examples", name+".json"))
+						if e != nil {
+							t.Fatal(e)
+						}
+						c, e = ParseConfig(strings.NewReader(string(b)), nil)
+						if e != nil {
+							t.Fatal(e)
+						}
+					}
+					switch name {
+					case "portrait":
+						ctx.Rotation = 90
+					case "explicit-portrait":
+						ctx.Rotation = 270
+						c.Layout.Portrait = &Grid{Areas: []string{"heading heading", "current history", "daily history"}, Columns: "1fr 1fr", Rows: "40px 1fr 1fr", Gap: 8}
+					case "auto":
+						c.Layout.Landscape.Columns = "auto 1fr"
+					case "wrap":
+						c.Panels[1].Wrap = true
+						for i := 0; i < 3; i++ {
+							c.Panels[1].Panels = append(c.Panels[1].Panels, Panel{ID: fmt.Sprintf("wrapped-%d", i), Type: "text", Text: fmt.Sprintf("Wrapped %d", i+1), Grow: 1})
+						}
+					case "grow":
+						c.Panels[1].Panels = append(c.Panels[1].Panels, Panel{ID: "extra", Type: "text", Grow: 2, Text: "Example"})
+					case "pixels":
+						c.Layout.Landscape.Columns = "264px 528px"
+					}
+					if name == "eight-series" || name == "eight-bars" || name == "stack" || name == "missing" || name == "hour-buckets" || name == "stack-bar" {
+						c.Panels = []Panel{c.Panels[2]}
+						c.Layout.Landscape = Grid{Areas: []string{"history"}, Columns: "1fr", Rows: "1fr", Gap: 8}
+						c.Layout.Portrait = &c.Layout.Landscape
+						if name == "hour-buckets" || name == "stack-bar" || name == "eight-bars" {
+							c.Panels[0] = Panel{ID: "history", Type: "bar", Title: "Hourly", Buckets: &BucketConfig{Unit: "hour", Count: 7, IncludeCurrent: true}, Series: []Series{{Query: "synthetic", Legend: "Energy", Style: "positive"}}}
+						}
+						if name == "eight-series" || name == "eight-bars" {
+							c.Panels[0].Series = []Series{}
+							for i := 0; i < 4; i++ {
+								c.Panels[0].Series = append(c.Panels[0].Series, Series{Query: "synthetic", Legend: fmt.Sprintf("Series %d {{source}}", i), Style: "primary"})
+							}
+						}
+						c.Panels[0].Stack = name == "stack" || name == "stack-bar"
+					}
+					if name == "japanese" {
+						c.Panels[0].Text = "日本語の見出し、長い表示テキストの省略を確認します。"
+						c.Panels[2].Title = "日本語の履歴グラフと長い見出し"
+						c.Panels[2].Series[0].Legend = "系列 {{source}}"
+					}
+					if name == "text" {
+						c.Panels = []Panel{{ID: "heading", Type: "text", Text: strings.Repeat("Long text ", 40) + "\nSecond line · {{now \"15:04 MST\"}}", Size: "large", Weight: "bold", Align: "end", VerticalAlign: "end"}}
+						c.Layout.Landscape = Grid{Areas: []string{"heading"}, Columns: "1fr", Rows: "1fr"}
+						c.Layout.Portrait = &c.Layout.Landscape
+					}
+					w, h := ctx.LogicalSize()
+					_, m, _ := syntheticModel(t, c, ctx)
+					if name == "missing" {
+						m.Panels[0].Series = nil
+						m.Panels[0].Missing = true
+					}
+					pageBytes, e := RenderHTML(c, ctx, m)
+					if e != nil {
+						t.Fatal(e)
+					}
+					// Check the Go sampling estimate against the completed plot before
+					// permitting capture; the production readiness checks geometry too.
+					expected, _ := json.Marshal(PlotWidths(c, ctx))
+					check := `const expected=` + string(expected) + `;for(const e of document.querySelectorAll('.plot')){const id=e.closest('.panel').id.slice(2);if(expected[id]>e.getBoundingClientRect().width+1)throw Error('sampling width');}for(const e of document.querySelectorAll('.text')){const r=e.getBoundingClientRect(),a=e.firstElementChild.getBoundingClientRect(),b=e.lastElementChild.getBoundingClientRect(),align=getComputedStyle(e).justifyContent;if(align==='end'&&Math.abs(b.bottom-r.bottom)>1)throw Error('text end alignment');if(align==='center'&&Math.abs(a.top+b.bottom-r.top-r.bottom)>2)throw Error('text center alignment');}`
+					pageBytes = []byte(strings.Replace(string(pageBytes), "const ready=document.createElement", check+"const ready=document.createElement", 1))
+					if out := os.Getenv("PROMETHEUS_LAYOUT_DIR"); out != "" {
+						os.MkdirAll(out, 0755)
+						os.WriteFile(filepath.Join(out, fmt.Sprintf("%s-%s-%d.html", name, palette, rotation)), pageBytes, 0644)
+					}
+					timeout, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+					defer cancel()
+					address, e := captureURL(endpoint, w, h)
+					if e != nil {
+						t.Fatal(e)
+					}
+					authorization := ""
+					if token := os.Getenv("PROMETHEUS_WEBCAPPI_TOKEN_FILE"); token != "" {
+						var err error
+						authorization, err = loadAuthorization(&Auth{Type: "bearer", CredentialsFile: token})
+						if err != nil {
+							t.Fatal(err)
+						}
+					}
+					data, e := capture(timeout, address, authorization, pageBytes)
+					if e != nil {
+						t.Fatal(e)
+					}
+					if _, e := decodePNG(data, w, h); e != nil {
+						t.Fatal(e)
+					}
+					if out := os.Getenv("PROMETHEUS_LAYOUT_DIR"); out != "" {
+						if e := os.MkdirAll(out, 0755); e != nil {
+							t.Fatal(e)
+						}
+						if e := os.WriteFile(filepath.Join(out, fmt.Sprintf("%s-%s-%d.png", name, palette, rotation)), data, 0644); e != nil {
+							t.Fatal(e)
+						}
+						if e := os.WriteFile(filepath.Join(out, fmt.Sprintf("%s-%s-%d.html", name, palette, rotation)), pageBytes, 0644); e != nil {
+							t.Fatal(e)
+						}
+					}
+					t.Log("completed HTML passed readiness and sampling geometry")
+				})
+			}
+
+		}
 	}
 }

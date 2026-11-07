@@ -105,7 +105,7 @@ func portrait(g Grid) Grid {
 
 // PlotWidths reserves 96 px for axes/direct labels. Auto columns and wrapping
 // groups use a single sample interval, avoiding guesses about text measurement.
-// The future browser layout uses min-width:0 and a fixed 120 px wrap basis.
+// The browser layout uses min-width:0 and a fixed 120 px wrap basis.
 func PlotWidths(c Config, ctx Context) map[string]int {
 	w, _ := ctx.LogicalSize()
 	g := c.Layout.Landscape

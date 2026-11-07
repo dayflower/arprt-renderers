@@ -60,7 +60,7 @@ type ReferenceModel struct {
 	Label, Style string
 }
 
-// LoadModel is the single acquisition boundary for future rendering. A failure
+// LoadModel is the single acquisition boundary for rendering. A failure
 // returns no model, so a caller must not proceed to capture/output replacement.
 // The caller owns the total execution deadline; live fetching additionally caps
 // its shared stage at FetchBudget. Snapshots never open credential files.

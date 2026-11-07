@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "timezone": "Asia/Tokyo",
+  "prometheus": {
+    "url": "http://prometheus.example:9090"
+  },
+  "layout": {
+    "landscape": {
+      "areas": [
+        "heading",
+        "data"
+      ],
+      "rows": "32px 1fr"
+    }
+  },
+  "panels": [
+    {
+      "id": "heading",
+      "type": "text",
+      "text": "Energy \u00b7 {{now \"2006-01-02 15:04 MST\"}}"
+    },
+    {
+      "id": "data",
+      "type": "bar",
+      "title": "Daily energy",
+      "suffix": " kWh",
+      "buckets": {
+        "unit": "day",
+        "count": 7
+      },
+      "series": [
+        {
+          "query": "increase(example_energy_kwh_total[$__bucket_range])",
+          "legend": "{{source}}"
+        }
+      ]
+    }
+  ]
+}
