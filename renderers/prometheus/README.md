@@ -8,8 +8,17 @@ Configuration, bounded acquisition, snapshot loading, normalized panel models,
 e-paper HTML/SVG rendering and a Job CLI are implemented. The CLI captures through
 webcappi, validates a static PNG, rotates once and atomically replaces output.
 A static scratch image, offline container checks and independent native
-amd64/arm64 verification/release workflows are available. VERSION is 0.1.0
-(unreleased); no public image or immutable registry reference is claimed.
+amd64/arm64 verification/release workflows are available.
+[Prometheus 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/prometheus/v0.1.0)
+is published as `ghcr.io/dayflower/arprt-renderer-prometheus:0.1.0`. The verified public multi-platform reference is:
+
+```text
+ghcr.io/dayflower/arprt-renderer-prometheus@sha256:3f51122caa1ca4bbe3953c063932e2792676db49f564f830d054d53b9e356d07
+```
+
+Native amd64/arm64 release checks and anonymous pulls passed. The public amd64
+image also passed postpublication container checks. See [VALIDATION.md](VALIDATION.md)
+for the exact source revision and separate acceptance limits.
 
 The module pins Go 1.27.3 and uses only the standard library, including embedded
 IANA tzdata. It has no shared renderer SDK or runtime dependency installation.
@@ -350,7 +359,8 @@ It compares geometry of a minimal Grid/flex prototype, not finished renderer HTM
 or image readability. See [VALIDATION.md](VALIDATION.md) for actual evidence.
 Production `image` and `container-check` commands are described below. Real capture
 and completed-HTML geometry have separate evidence in VALIDATION.md. Native
-arm64, live Prometheus, Kubernetes and physical-display acceptance remain unverified.
+arm64 release execution passed; live Prometheus, Kubernetes and physical-display
+acceptance remain unverified.
 
 ## CLI and display
 
@@ -478,17 +488,15 @@ loads them for publication without rebuilding. It owns the `release-prometheus`
 concurrency group, `prometheus/vMAJOR.MINOR.PATCH` annotated tags and
 `ghcr.io/dayflower/arprt-renderer-prometheus` package, with no latest tag.
 Guards reject VERSION/tag/checkout/main-ancestry mismatches and used release or
-platform versions. VERSION 0.1.0 is prepared locally, not published. See
+platform versions. VERSION 0.1.0 is published. See
 [release procedure](../../notes/RELEASE.md) and [changelog](CHANGELOG.md).
 
 ## Kubernetes configuration and updates
 
 [screen.yaml](screen.yaml) contains synthetic ConfigMap, separate Prometheus and
-capture Secrets, and an ArprtScreen. Its local image must be built/loaded on each
-eligible node; it is not a public pull reference. After explicit publication,
-verify anonymous pulls for both platforms, record validation, then replace it
-with the verified public index digest. Do not invent a digest or deploy a local
-example as part of release preparation.
+capture Secrets, and an ArprtScreen. It pins the verified public 0.1.0 index
+digest above. Both platform images were pulled anonymously before updating the
+example; publication does not apply these resources or modify device assignments.
 
 Create inputs in the controller namespace. The example mounts whole directories
 read-only and uses mode 0444 so the Job's UID/GID 1000 can read projected files;

@@ -1,5 +1,47 @@
 # Validation record
 
+## 2026-11-07: Prometheus 0.1.0 publication
+
+[Prometheus 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/prometheus/v0.1.0)
+was published from annotated tag `prometheus/v0.1.0` at source revision
+`37ef17c0988c33b936a6c03cdd6943d8ea1446c2`.
+The exact source passed main CI, local `make check`, and native amd64 image and
+container checks before tagging. The
+[release workflow](https://github.com/dayflower/arprt-renderers/actions/runs/42372087408)
+passed scoped source checks and native Linux amd64/arm64 builds, offline tests
+and shipped-CLI execution under Job security restrictions. Publication loaded
+those exact tested image archives without rebuilding.
+
+The public image is `ghcr.io/dayflower/arprt-renderer-prometheus:0.1.0`.
+Its immutable multi-platform reference is:
+
+```text
+ghcr.io/dayflower/arprt-renderer-prometheus@sha256:3f51122caa1ca4bbe3953c063932e2792676db49f564f830d054d53b9e356d07
+```
+
+The release asset `prometheus-index.json` records these platform manifests:
+
+| Platform | Manifest digest |
+| --- | --- |
+| linux/amd64 | `sha256:83ff1e30dc5a111c148634486d978db946e5a7385a894f65b0b2553371bb5a9d` |
+| linux/arm64 | `sha256:4d92d13513894b9483b68add93952d24da6338e327569a25bdfe498f02438bcd` |
+
+With a fresh empty Docker authentication configuration, anonymous version-tag
+and index-digest pulls succeeded for both platforms. OCI platform/version/source/
+revision labels matched the expected architecture, `0.1.0`, this repository and
+the exact source revision above. The public amd64 index reference then passed
+`make -C renderers/prometheus container-check IMAGE=<index-reference>`, including
+production CLI paths, palettes, all four rotations and failure preservation under
+Job restrictions. The Screen example pins this verified public index.
+
+Native arm64 execution passed before publication on the release runner;
+postpublication native arm64 execution was not performed. Anonymous arm64 pulls
+establish availability. Earlier synthetic browser evidence below is separate
+and was not repeated during publication. No live Prometheus numeric comparison,
+Kubernetes Job/mount/PVC/configuration-update acceptance or physical-display
+check was performed. The partial-current-bucket display treatment remains an
+operator acceptance item. Publication does not deploy resources or modify devices.
+
 ## Container distribution and handoff, 2026-11-07
 
 Work ran on native Linux amd64 (`x86_64`) with Go 1.27.3, on uncommitted changes

@@ -254,7 +254,10 @@ planning, bounded HTTP/snapshot acquisition and panel normalization are availabl
 HTML/SVG rendering, capture, PNG validation and the Job CLI are implemented.
 A static scratch production image, offline container checker and independent
 native amd64/arm64 verification/release workflows are available. Prometheus is
-registered with the release coordinator; no image publication is claimed.
+registered with the release coordinator. Prometheus 0.1.0 passed native amd64/arm64
+release checks, anonymous tag/digest pulls for both platforms and postpublication
+amd64 container checks. See the [publication record](../renderers/prometheus/VALIDATION.md#2026-11-07-prometheus-010-publication)
+for the immutable reference and separate live-source, cluster and physical-test limits.
 
 ```sh
 make -C renderers/prometheus setup
