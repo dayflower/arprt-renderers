@@ -1,4 +1,4 @@
-// Package prometheus defines the bounded configuration and deterministic query plan.
+// Package prometheus implements bounded metric acquisition and panel data models.
 package prometheus
 
 import (
