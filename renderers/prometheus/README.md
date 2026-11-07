@@ -7,7 +7,9 @@ or endorsement by TRMNL.
 Configuration, bounded acquisition, snapshot loading, normalized panel models,
 e-paper HTML/SVG rendering and a Job CLI are implemented. The CLI captures through
 webcappi, validates a static PNG, rotates once and atomically replaces output.
-A production image and release workflows remain future distribution work.
+A static scratch image, offline container checks and independent native
+amd64/arm64 verification/release workflows are available. VERSION is 0.1.0
+(unreleased); no public image or immutable registry reference is claimed.
 
 The module pins Go 1.27.3 and uses only the standard library, including embedded
 IANA tzdata. It has no shared renderer SDK or runtime dependency installation.
@@ -346,7 +348,7 @@ image must provide `/opt/chrome/chrome`; the experiment is network-disabled and
 uses disposable browser-only `/tmp` and `/work` tmpfs, without exposing credentials.
 It compares geometry of a minimal Grid/flex prototype, not finished renderer HTML
 or image readability. See [VALIDATION.md](VALIDATION.md) for actual evidence.
-`container-check` explicitly fails until a production image exists. Real capture
+Production `image` and `container-check` commands are described below. Real capture
 and completed-HTML geometry have separate evidence in VALIDATION.md. Native
 arm64, live Prometheus, Kubernetes and physical-display acceptance remain unverified.
 
@@ -440,3 +442,104 @@ in both palettes and orientations, enforcing production readiness and comparing
 planned/actual plot widths, and optionally saves PNG/HTML for visual inspection.
 Browser geometry, screenshot inspection, stub contracts and production-container
 verification are distinct evidence; see VALIDATION.md.
+
+## Container and distribution
+
+```sh
+make check
+make -C renderers/prometheus image
+make -C renderers/prometheus container-check
+```
+
+The default image `arprt-renderer-prometheus:dev` is local only. `IMAGE`, `VERSION`
+and `REVISION` override its name and OCI labels. The Dockerfile uses a pinned Go
+builder and copies only the static CLI, CA certificates and licenses into scratch.
+Timezone data, the two schemas, CSS and readiness JavaScript are embedded in the
+binary. The Dockerfile-specific context allowlist excludes fixtures, examples,
+snapshots, credential files and local outputs. Test sources enter only build/test
+stages; neither tests nor a compiler enter the runtime. See
+[third-party notices](THIRD_PARTY_NOTICES.md).
+
+The checker builds the separate `test-export` stage, mounts that executable and
+synthetic fixtures read-only, and invokes `/app/renderer` from the exact supplied
+production image. Tests use only container loopback with network none, UID/GID
+1000, read-only root, all capabilities dropped, no-new-privileges and `/arprt` as
+the sole writable output parent (also TMPDIR). There is no writable `/tmp` or
+runtime installation. It covers both palettes, four rotations, default/custom
+paths, snapshot acquisition, independent credentials and failure preservation.
+Only the host architecture executed locally is established by this command.
+
+[Prometheus checks](../../.github/workflows/check-prometheus.yaml) run scoped
+source checks and native Linux amd64/arm64 builds and execution. Normal CI calls
+all renderer workflows and shared checks. The independent
+[release workflow](../../.github/workflows/release-prometheus.yaml) calls only
+Prometheus verification, exports the exact tested native image archives and
+loads them for publication without rebuilding. It owns the `release-prometheus`
+concurrency group, `prometheus/vMAJOR.MINOR.PATCH` annotated tags and
+`ghcr.io/dayflower/arprt-renderer-prometheus` package, with no latest tag.
+Guards reject VERSION/tag/checkout/main-ancestry mismatches and used release or
+platform versions. VERSION 0.1.0 is prepared locally, not published. See
+[release procedure](../../notes/RELEASE.md) and [changelog](CHANGELOG.md).
+
+## Kubernetes configuration and updates
+
+[screen.yaml](screen.yaml) contains synthetic ConfigMap, separate Prometheus and
+capture Secrets, and an ArprtScreen. Its local image must be built/loaded on each
+eligible node; it is not a public pull reference. After explicit publication,
+verify anonymous pulls for both platforms, record validation, then replace it
+with the verified public index digest. Do not invent a digest or deploy a local
+example as part of release preparation.
+
+Create inputs in the controller namespace. The example mounts whole directories
+read-only and uses mode 0444 so the Job's UID/GID 1000 can read projected files;
+root-owned mode 0400 is unreadable to this user. Use namespace/RBAC isolation for
+Secrets. Basic Prometheus authentication can instead mount a strict JSON file
+with `username` and `password` and set `auth.type` to `basic`. Capture takes its
+own bearer file via `--webcappi-token-file`; never reuse the Prometheus file.
+Context and output paths are supplied by ARPRT. No writable configuration,
+credential mount or extra temporary volume is needed.
+
+Generate the configuration name from its content, for example:
+
+```sh
+kubectl create configmap prometheus-config --from-file=config.json --append-hash --dry-run=client -o yaml
+```
+
+Review/apply the new ConfigMap, then update the Screen's config volume reference
+to that exact generated name. The tracked example uses a SHA-256 content suffix
+instead; either method must change the reference when the content changes. Keep
+the old ConfigMap until Jobs referencing it finish. Version Secrets similarly
+and change their references for deterministic credential rollout. Existing Jobs
+read credentials once at startup. Validate a configuration and queries before
+rollout; a Secret/config update alone does not prove a successful render.
+
+Where egress is restricted, allow the Job to reach cluster DNS (UDP/TCP 53),
+Prometheus's actual HTTP(S) service port and webcappi's actual HTTP(S) service
+port, using the site's namespace/pod selectors or destination CIDRs. The synthetic
+HTTPS hosts use TCP 443. The renderer requires no other runtime download access;
+Chromium runs in webcappi, whose own network policy is separate. NetworkPolicy
+cannot generally select arbitrary DNS names. No cluster policy is installed by
+these examples.
+
+## Operator acceptance handoff
+
+Record each scope independently in [VALIDATION.md](VALIDATION.md):
+
+- Compare instant values, freshness and range/bucket results with real Prometheus
+  at the same fixed evaluation time and timezone. Check units, counter resets,
+  aggregation and source timestamps; synthetic tests do not validate operator PromQL.
+- Run the opt-in real-browser checks and inspect summary/history/daily PNGs for
+  both palettes and orientations with the intended fonts, legends and units.
+- In an isolated cluster, verify UID-readable ConfigMap/Secret mounts, Job
+  security settings, DNS/egress, PVC output collection, Screen updates and hashed
+  config/credential rollouts. Force API/capture failures and confirm the prior
+  successful image survives without temporary-file leaks.
+- On gray4 and spectra6 hardware, check text/axes, eight-series distinctions,
+  stale/missing data, signed stacks and rotation/overlays. Decide whether the
+  provisional `* partial` label and outlined current bucket are acceptable.
+- Before claiming arm64 support was executed, obtain passing native arm64 CI;
+  a cross-build, pull or workflow definition alone does not establish execution.
+
+Live Prometheus, cluster and physical checks are operator acceptance work. No
+local-environment deployment, image publication or tag push is performed by
+implementation or offline validation.

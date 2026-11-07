@@ -1,0 +1,15 @@
+**
+!LICENSE
+!renderers/
+!renderers/prometheus/
+!renderers/prometheus/Dockerfile
+!renderers/prometheus/go.mod
+!renderers/prometheus/*.go
+!renderers/prometheus/cmd/
+!renderers/prometheus/cmd/renderer/
+!renderers/prometheus/cmd/renderer/main.go
+!renderers/prometheus/config.schema.json
+!renderers/prometheus/snapshot.schema.json
+!renderers/prometheus/display.css
+!renderers/prometheus/display.js
+!renderers/prometheus/THIRD_PARTY_NOTICES.md

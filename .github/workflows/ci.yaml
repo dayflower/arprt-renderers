@@ -35,3 +35,6 @@ jobs:
 
   weather:
     uses: ./.github/workflows/check-weather.yaml
+
+  prometheus:
+    uses: ./.github/workflows/check-prometheus.yaml

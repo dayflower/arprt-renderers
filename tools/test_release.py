@@ -318,6 +318,49 @@ class CheckTests(unittest.TestCase):
                 service.remote_tag(TAG)
 
 
+class PrometheusTests(unittest.TestCase):
+    def test_registered_check_and_publication_evidence(self):
+        self.assertIn("prometheus", cli.RENDERERS)
+        args = cli.parser().parse_args(["check", "prometheus", "--revision", SHA])
+        self.assertEqual(args.renderer, "prometheus")
+        service = FakeRelease()
+        service.jobs = [
+            dict(job, name=job["name"].replace("weather", "prometheus"))
+            for job in service.jobs
+        ]
+        result = service.check("prometheus", SHA)
+        self.assertEqual(result["tag"], "prometheus/v0.3.0")
+        self.assertIn(
+            ("git", "show", SHA + ":renderers/prometheus/VERSION"), service.commands
+        )
+        for index in (1, 2, 3):
+            with self.subTest(job=index):
+                service.jobs[index]["conclusion"] = "skipped"
+                with self.assertRaises(cli.Problem):
+                    service.check("prometheus", SHA)
+                service.jobs[index]["conclusion"] = "success"
+        tag = "prometheus/v0.3.0"
+        with patch.dict(globals(), TAG=tag):
+            service.refs[tag] = SHA
+            service.workflow_runs = [run_record()]
+            service.release = release_record()
+            service.release["body"] = service.release["body"].replace(
+                "weather", "prometheus"
+            )
+            service.release["assets"][0]["name"] = "prometheus-index.json"
+            original_api = service.api
+            service.api = lambda path, optional=False: original_api(
+                path.replace("release-prometheus.yaml", "release-weather.yaml"),
+                optional,
+            )
+            self.assertEqual(
+                service.snapshot("prometheus", "0.3.0")["state"], "published"
+            )
+            service.release["assets"][0]["name"] = "weather-index.json"
+            with self.assertRaises(cli.Problem):
+                service.snapshot("prometheus", "0.3.0")
+
+
 class PublishTests(unittest.TestCase):
     def publish(self, service, **kwargs):
         with contextlib.redirect_stderr(io.StringIO()):

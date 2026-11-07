@@ -1,0 +1,81 @@
+# Synthetic example; local image only, not a published GHCR reference.
+# Create these resources in the controller namespace.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config-37454b5e5b
+immutable: true
+data:
+  config.json: |
+    {
+      "version": 1,
+      "timezone": "Asia/Tokyo",
+      "prometheus": {
+        "url": "https://prometheus.example.com",
+        "auth": {"type": "bearer", "credentialsFile": "/etc/prometheus-auth/token"}
+      },
+      "layout": {"landscape": {"areas": ["power"]}},
+      "panels": [{"id": "power", "type": "value", "title": "Example power",
+        "query": "example_power_watts", "suffix": " W", "staleAfter": "10m"}]
+    }
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: prometheus-auth-v1
+type: Opaque
+stringData:
+  token: synthetic-prometheus-token
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: prometheus-capture-v1
+type: Opaque
+stringData:
+  token: synthetic-independent-capture-token
+---
+apiVersion: arprt.dayflower.github.io/v1alpha1
+kind: ArprtScreen
+metadata:
+  name: prometheus
+spec:
+  refreshInterval: 5m
+  imageProcessing:
+    dithering: none
+  source:
+    job:
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config-37454b5e5b
+            defaultMode: 0444
+        - name: prometheus-auth
+          secret:
+            secretName: prometheus-auth-v1
+            defaultMode: 0444
+        - name: capture-auth
+          secret:
+            secretName: prometheus-capture-v1
+            defaultMode: 0444
+      renderer:
+        # Build/load this local image on every eligible node before use.
+        image: arprt-renderer-prometheus:dev
+        args:
+          - --config
+          - /etc/prometheus-config/config.json
+          - --webcappi-url
+          - https://webcappi.example.com
+          - --webcappi-token-file
+          - /etc/prometheus-capture/token
+        volumeMounts:
+          - {name: config, mountPath: /etc/prometheus-config, readOnly: true}
+          - {name: prometheus-auth, mountPath: /etc/prometheus-auth, readOnly: true}
+          - {name: capture-auth, mountPath: /etc/prometheus-capture, readOnly: true}
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
