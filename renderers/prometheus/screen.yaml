@@ -1,4 +1,4 @@
-# Synthetic example; local image only, not a published GHCR reference.
+# Synthetic example using the verified public Prometheus 0.1.0 index.
 # Create these resources in the controller namespace.
 apiVersion: v1
 kind: ConfigMap
@@ -59,8 +59,8 @@ spec:
             secretName: prometheus-capture-v1
             defaultMode: 0444
       renderer:
-        # Build/load this local image on every eligible node before use.
-        image: arprt-renderer-prometheus:dev
+        # Pin the verified multi-platform release index.
+        image: ghcr.io/dayflower/arprt-renderer-prometheus@sha256:3f51122caa1ca4bbe3953c063932e2792676db49f564f830d054d53b9e356d07
         args:
           - --config
           - /etc/prometheus-config/config.json
