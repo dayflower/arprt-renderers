@@ -1,5 +1,64 @@
 # Validation record
 
+## Container distribution and handoff, 2026-11-07
+
+Work ran on native Linux amd64 (`x86_64`) with Go 1.27.3, on uncommitted changes
+based on source revision `5b7c17c778fe164de5ca26f7db960e943d6e38a6`.
+The local image is `arprt-renderer-prometheus:dev`, built with VERSION `0.1.0`
+and REVISION equal to that base revision. The REVISION label identifies the base,
+not an exact committed representation of these working changes. Local image ID
+reported by `docker image inspect` (also the local manifest digest):
+`sha256:2f52aa64b3a78b2e4d81b3408b9ad15f2a2d35255097ca668557688b8d4ade5c`.
+Build-reported image config digest:
+`sha256:d9862d265a6531e363b19e130ab331af936f943e223ee2278b77d8c4fc49aa5a`.
+These are local build identifiers, not public GHCR references.
+
+### Source and container evidence
+
+`make check`, `make -C renderers/prometheus image` (with the VERSION and
+REVISION arguments above) and `make -C renderers/prometheus container-check`
+passed. Shared checks cover every
+renderer and release-coordinator tests. Prometheus release tests cover canonical
+renderer tags, VERSION matching, annotated tags, exact checkout/main ancestry,
+used version/platform tags, deleted-image versions with existing Releases,
+fail-closed API errors, paginated lookups and release index evidence. Coordinator
+tests cover Prometheus registration, required source/native CI jobs and renderer
+specific index assets. All GitHub responses in these tests are synthetic.
+
+The scratch image contains the static CLI, CA certificates and repository/Go
+licenses and notices. Schemas, readiness assets and timezone data are embedded.
+The container checker inspects exported runtime file membership, builds a separate
+static test executable via `test-export`, mounts it and fixtures read-only, and
+runs against the exact production image. No fixtures, snapshots, credentials,
+test binary, compiler or source tree ship in the runtime.
+
+Native amd64 offline tests and the production CLI passed with network none,
+loopback stubs, UID/GID 1000, read-only root, dropped capabilities,
+no-new-privileges and only the output parent `/arprt` writable. TMPDIR is `/arprt`;
+there is no writable `/tmp` or runtime installation. The CLI tests cover gray4
+and spectra6, all four rotations with asymmetric pixels, protocol default paths,
+independent custom paths and credentials, snapshots, cancellation, failure
+preservation and temporary-file cleanup. The default output is owned by UID 1000.
+Optional browser and independent-schema checks are excluded from this offline run.
+
+### Distribution and acceptance limits
+
+Native arm64 CI is configured but was not executed during this local work. No
+cross-build or image pull is represented as native execution. No Actions run,
+image publication, tag push, public availability or immutable public digest was
+created or verified. VERSION 0.1.0 remains unreleased. The release workflow is
+prepared to transfer tested native archives without rebuilding; its definition
+alone is not successful release evidence.
+
+Real-browser evidence from the earlier display work below is separate and was
+not rerun for this packaging change. No live Prometheus numeric comparison,
+Kubernetes Job/mount/PVC/configuration-update acceptance or physical-display
+check was performed. The synthetic Screen and separate Secret mounts were
+reviewed against the local ARPRT API types; no cluster resources were applied.
+The README hands off explicit checks for those scopes, including forced failure
+preservation, egress, UID-readable files and hashed ConfigMap updates. The final
+partial-current-bucket treatment remains an operator decision on real displays.
+
 ## E-paper display and Job CLI, 2026-11-07
 
 Source checks and execution ran on Linux amd64 (`x86_64`), Go 1.27.3, on working

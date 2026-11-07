@@ -12,6 +12,7 @@ Release, rather than in this procedure.
 | `rss` | `renderers/rss/` | `rss/vMAJOR.MINOR.PATCH` | `release-rss.yaml` | `ghcr.io/dayflower/arprt-renderer-rss` |
 | `ical` | `renderers/ical/` | `ical/vMAJOR.MINOR.PATCH` | `release-ical.yaml` | `ghcr.io/dayflower/arprt-renderer-ical` |
 | `weather` | `renderers/weather/` | `weather/vMAJOR.MINOR.PATCH` | `release-weather.yaml` | `ghcr.io/dayflower/arprt-renderer-weather` |
+| `prometheus` | `renderers/prometheus/` | `prometheus/vMAJOR.MINOR.PATCH` | `release-prometheus.yaml` | `ghcr.io/dayflower/arprt-renderer-prometheus` |
 
 ## Initial setup
 
