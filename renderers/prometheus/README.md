@@ -4,11 +4,11 @@ An independent Go module for a Prometheus Job renderer provided by ARPRT, an
 unofficial Kubernetes controller for TRMNL BYOS. ARPRT has no affiliation with
 or endorsement by TRMNL.
 
-The configuration, calendar calculations, query planning and bounded synthetic
-snapshot reader are implemented. This directory does **not yet contain a
-rendering executable, HTTP client, capture integration or production image**.
-The display and transport rules below freeze their input contract for further
-implementation; they are not claims of working image generation.
+Configuration, calendar calculations, query planning, bounded HTTP acquisition,
+synthetic snapshot loading and panel data normalization are implemented as a
+library. This directory does **not yet contain a rendering executable, capture
+integration or production image**. Display rules below define the contract for
+further implementation; they are not claims of working image generation.
 
 The module pins Go 1.27.3 and uses only the standard library, including embedded
 IANA tzdata. It has no shared renderer SDK or runtime dependency installation.
@@ -35,7 +35,7 @@ The final URL is required: an explicitly supplied `--prometheus-url` overrides
 overrides fail. Only absolute HTTP(S) URLs without userinfo, query or fragment
 are allowed; dot segments, repeated/escaped separators and control characters
 in paths are rejected. `APIURL` preserves the base path
-when appending `/api/v1/query` or `/api/v1/query_range`. All redirects will be
+when appending `/api/v1/query` or `/api/v1/query_range`. All redirects are
 rejected. URLs and queries must never appear in routine logs or errors.
 
 `auth` requires `type` (`bearer` or `basic`) and an absolute `credentialsFile`
@@ -43,9 +43,10 @@ path, up to 512 characters. The credential file contract matches iCalendar:
 Bearer is a token using `[A-Za-z0-9._~+/-]+={0,}` with optional surrounding
 whitespace; Basic is a strict JSON object with nonempty UTF-8 `username` and
 `password`, preserving whitespace and rejecting control characters and colons
-in the username. Files are limited to 8 KiB and will be read once before HTTP.
-Capture credentials and clients will remain independent. Credentials are not
-read by the planning library and are never included in a snapshot.
+in the username. Files are limited to 8 KiB and read once by `NewClient`, before
+HTTP. That client is dedicated to Prometheus; capture integration must use its
+own client and credentials. Credentials are not read by the planning library and
+are never included in a snapshot.
 
 All durations use positive whole `s`, `m` or `h` quantities, without combinations
 or leading zeroes; maximum 366 days (8784h). Unicode string limits count code
@@ -190,7 +191,7 @@ aggregations/arithmetic receive evaluation timestamps and cannot establish the
 age of the original data. Recording-rule sample age describes that rule's output,
 not the age of its upstream inputs. No live server acceptance is claimed.
 
-Normalization will accept 0 or 1 value sample and fail multiple samples before
+Normalization accepts 0 or 1 value sample and fails multiple samples before
 nonfinite filtering. Empty results and NaN/±Inf are missing. Freshness response
 errors or malformed/multiple/future timestamps fail; absent/nonfinite freshness
 marks an otherwise present value stale, never fresh. Age strictly greater than
@@ -215,8 +216,8 @@ and plan together rather than attempting to reconstruct their hashes by hand.
 `LoadSnapshot` requires exact plan hash, request order/parameters and file count;
 files cannot be reused or escape the directory, including through symlinks.
 Response files must be regular files. Extra unreferenced files are ignored.
-It returns bounded raw response bytes, for the same parser as the future API
-client; response semantics are not validated by the current planning library.
+It returns bounded raw response bytes. `ParseResponses` and `LoadModel` validate
+them with the same `ParseResponse` parser used by the HTTP client.
 Use `--now` to reproduce the same plan. There will be no API fallback on missing
 or mismatched snapshots. `--input` replaces only Prometheus access: completed
 rendering will still require webcappi.
@@ -240,15 +241,77 @@ rendering will still require webcappi.
 | Credentials file / generated HTML | 8 KiB / 1 MiB |
 | Total / shared fetch budget / output reserve | 60 s / 20 s / 5 s |
 
-Snapshot and configuration limits are enforced now; response series counts,
-decompression, transport concurrency/deadlines, credentials and generated HTML
-limits belong to their future consumers. The transport contract uses POST form
+Snapshot, configuration, response series counts, decompression, transport
+concurrency/deadlines and credential limits are enforced. Generated HTML belongs
+to the future rendering implementation. The transport uses POST form
 requests with a server `timeout` bounded by remaining shared fetch time. Timeout
 is transport-dependent and is not part of snapshot identity. Only connection
 failure and HTTP 503 retry once, with at most one second backoff within the same
 budget. Retry bytes and attempts count cumulatively; cancellation never extends
 a deadline. Capture receives at most the remaining total time minus the output
 reserve. It cannot renew the total deadline.
+
+## Acquisition and panel models
+
+`LoadConfig` reads and validates bounded configuration. `NewClient` freezes the
+Prometheus URL and authorization, then `Client.Fetch` executes a validated Plan.
+The client sends only form bodies, never queries in the URL, and includes an
+integer-millisecond server timeout rounded down from the shared deadline.
+Only a dial failure or a complete HTTP 503 response retries, once after a
+cancellable one-second backoff. TLS, response-header/body failures, malformed
+gzip/JSON, API errors and other HTTP statuses fail without retry. Identity and
+gzip responses are supported; unknown content encodings fail. Every body read,
+including partial reads and discarded retry bodies, charges the decompressed
+budget. Concurrent reads reserve the remaining allowance; a single total-budget
+probe byte detects overflow. A fatal failure cancels pending/active tasks and
+returns no partial result map. No response is recorded automatically.
+
+The parser follows the [Prometheus HTTP API float result formats](https://prometheus.io/docs/prometheus/latest/querying/api/):
+instant queries accept scalar or vector; range queries require matrix. String
+results, native histograms (including mixed float/histogram results), duplicate
+label identities, invalid label/value types, duplicate/unsorted samples and
+out-of-range/off-grid timestamps fail. Evaluation timestamps must be exact
+nonnegative whole Unix seconds through year 9999 and match the planned instant
+or range grid. Timestamp numeric tokens are limited to 32 bytes and exponents
+to signed 8-bit integers before exact parsing. Float values must be decimal
+strings, with optional exponent, or `NaN`, `Inf`, `+Inf`, `-Inf`; numeric overflow
+fails. Optional warnings/infos must be string arrays; only counts survive
+parsing. Unknown envelope/data metadata is ignored for API extensibility.
+Individual result entries must contain exactly metric and float value(s).
+
+`LoadModel(ctx, config, plan, input)` selects live acquisition or the exact
+snapshot, then calls `Normalize`. Snapshot mode never reads credentials and
+never falls back to HTTP. A canceled context, bad snapshot, acquisition error or
+normalization error returns no model. This is the boundary the future runtime
+must check before capture or output writes; this library never writes output.
+The caller owns the total execution deadline and later output reserve; the
+client separately enforces the shared 20-second fetch ceiling. `FetchStats`
+reports live attempts, decompressed bytes, annotation counts and elapsed time.
+`Diagnostic` exposes only a validated panel ID and a fixed error classification;
+underlying network/filesystem errors and server text are discarded. There is
+no implicit logging.
+
+Models contain leaf panels in configuration order; the configuration retains
+group/layout information. A series identity is its full label set **and** query
+index, so equal labels from different configured queries remain distinct. Sort
+order compares sorted label name/value pairs, then query index. Default legends
+include differing label pairs; an otherwise empty name becomes `Query N`.
+Template misses become `?`; duplicate names receive ` (1)`, ` (2)`, etc., skipping
+names already reserved by another series. No series is silently truncated,
+including empty/nonfinite series or labels appearing only in another bucket.
+
+Line models include the whole planned evaluation grid, with `Present: false`
+at absent/nonfinite points; segments never bridge these gaps. Bar points retain
+one slot per bucket and preserve the plan's partial/boundary metadata. Raw
+missing points use a zero storage value with `Present: false`, never an observed
+zero. Stack bases/tops use independent positive and negative accumulators in
+stable series order. A missing earlier contribution marks every later present
+contribution at that position `StackKnown: false`, conservatively for both signs;
+such points are excluded from renderable segments. Their finite values still
+count as available data. Nonfinite stack sums fail. References do not contribute
+to stacks or availability. Value models preserve the signed numeric value,
+formatted literal prefix/suffix, sign label and stale state. Displayed negative
+zero is removed even when a small negative number rounds to zero.
 
 ## Compatibility and verification
 

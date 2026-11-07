@@ -1,5 +1,47 @@
 # Validation record
 
+## Bounded acquisition and panel data, 2026-11-07
+
+Source-level checks ran on Linux amd64 with Go 1.27.3, on working changes based
+on revision `622c58fc50c108aab6df17012bf315f210629315`.
+The independent standard-library module now includes a Prometheus-only client,
+strict float response parsing and normalized panel models. There is still no
+rendering CLI, capture integration, production image or published version.
+
+Offline loopback tests inspect POST forms, instant/range parameters, shared
+evaluation times, bounded server timeouts, preserved URL prefixes, bearer/basic
+authorization frozen before requests, rejected redirects and redacted failures.
+They cover a maximum of four workers, queued-task cancellation, fatal-response
+cancellation, caller deadlines, cancellation during a one-second retry backoff,
+dial-versus-read/TLS retry classification, HTTP 503 versus other statuses,
+malformed/unsupported compression, decompressed per-response/cumulative limits,
+retry-body accounting, exact-limit probes and the attempt ceiling.
+Synthetic credential/configuration files exercise strict parsing and size limits.
+
+Parser/model tests cover scalar/vector/matrix contracts, empty results,
+pre-filter multiple-value rejection, NaN/infinities, timestamp bounds and exact
+grid membership, duplicate/unordered samples, malformed labels, string/native
+histogram rejection and annotation counts. They exercise freshness age boundaries,
+missing/nonfinite/future freshness, signed values, rounded negative zero, stable
+full-label/query identities and legends, label changes across buckets, panel-wide
+series limits, missing line steps, partial buckets, reference omission,
+independent positive/negative stacks, unknown contributions, stack overflow and
+all-missing/text-only screens. The same synthetic values and gapped histories
+produce equal models through HTTP and a validated snapshot. Snapshot mode also
+succeeds with unavailable live credentials; malformed snapshots return no model.
+
+`make check` and Prometheus `go test -race -mod=readonly ./...` passed.
+The required `make -C renderers/prometheus container-check` was attempted and
+failed with its explicit unavailable message: no production runtime/image exists.
+This is not container verification. No native arm64 execution, live Prometheus,
+capture/browser layout, Kubernetes Job/PVC collection, atomic image output or
+physical gray4/spectra6 display acceptance is claimed. All acquisition tests use
+synthetic loopback responses or local snapshots; they do not validate operator
+PromQL, Prometheus aggregation/counter-reset behavior or upstream sample age.
+No cluster or deployment changes were made. The future runtime must gate capture
+and output replacement on successful `LoadModel`; the current library performs
+no output writes.
+
 ## Configuration and query planning, 2026-11-07
 
 This is source-level implementation work on Linux amd64 with Go 1.27.3.
