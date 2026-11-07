@@ -1,0 +1,901 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "timezone": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "default": "Asia/Tokyo"
+    },
+    "prometheus": {
+      "$ref": "#/$defs/prometheus"
+    },
+    "layout": {
+      "$ref": "#/$defs/layout"
+    },
+    "panels": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/panel"
+      },
+      "minItems": 1,
+      "maxItems": 24
+    },
+    "allMissing": {
+      "enum": [
+        "fail",
+        "display"
+      ],
+      "default": "fail"
+    }
+  },
+  "required": [
+    "version",
+    "prometheus",
+    "layout",
+    "panels"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ARPRT Prometheus configuration",
+  "$defs": {
+    "prometheus": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 8192
+        },
+        "auth": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "enum": [
+                "bearer",
+                "basic"
+              ]
+            },
+            "credentialsFile": {
+              "type": "string",
+              "maxLength": 512,
+              "pattern": "^/[^\\x00]+$"
+            }
+          },
+          "required": [
+            "type",
+            "credentialsFile"
+          ]
+        },
+        "scrapeInterval": {
+          "type": "string",
+          "maxLength": 12,
+          "pattern": "^[1-9][0-9]*(s|m|h)$",
+          "default": "60s"
+        }
+      },
+      "required": []
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "landscape": {
+          "$ref": "#/$defs/grid"
+        },
+        "portrait": {
+          "$ref": "#/$defs/grid"
+        }
+      },
+      "required": [
+        "landscape"
+      ]
+    },
+    "grid": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "areas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024
+          },
+          "minItems": 1,
+          "maxItems": 32
+        },
+        "columns": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 1024
+        },
+        "rows": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 1024
+        },
+        "gap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 32,
+          "default": 8
+        }
+      },
+      "required": [
+        "areas"
+      ]
+    },
+    "panel": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,62}$"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 64
+            },
+            "type": {
+              "const": "value"
+            },
+            "prefix": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 32
+            },
+            "suffix": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 32
+            },
+            "decimals": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6,
+              "default": 0
+            },
+            "query": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192
+            },
+            "signLabels": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "positive": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 64
+                },
+                "negative": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 64
+                },
+                "abs": {
+                  "type": "boolean",
+                  "default": false
+                }
+              },
+              "required": [
+                "positive",
+                "negative"
+              ]
+            },
+            "staleAfter": {
+              "type": "string",
+              "maxLength": 12,
+              "pattern": "^[1-9][0-9]*(s|m|h)$"
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "query"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,62}$"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 64
+            },
+            "type": {
+              "const": "line"
+            },
+            "prefix": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 32
+            },
+            "suffix": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 32
+            },
+            "decimals": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6,
+              "default": 0
+            },
+            "series": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/series"
+              },
+              "minItems": 1,
+              "maxItems": 8
+            },
+            "yAxis": {
+              "$ref": "#/$defs/axis"
+            },
+            "stack": {
+              "type": "boolean",
+              "default": false
+            },
+            "range": {
+              "type": "string",
+              "maxLength": 12,
+              "pattern": "^[1-9][0-9]*(s|m|h)$"
+            },
+            "minStep": {
+              "type": "string",
+              "maxLength": 12,
+              "pattern": "^[1-9][0-9]*(s|m|h)$",
+              "default": "1s"
+            },
+            "referenceLines": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/reference"
+              },
+              "minItems": 0,
+              "maxItems": 8
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "series",
+            "range"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,62}$"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 64
+            },
+            "type": {
+              "const": "bar"
+            },
+            "prefix": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 32
+            },
+            "suffix": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 32
+            },
+            "decimals": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6,
+              "default": 0
+            },
+            "series": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/series"
+              },
+              "minItems": 1,
+              "maxItems": 4
+            },
+            "yAxis": {
+              "$ref": "#/$defs/axis"
+            },
+            "stack": {
+              "type": "boolean",
+              "default": false
+            },
+            "buckets": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "unit": {
+                  "enum": [
+                    "hour",
+                    "day"
+                  ]
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 31
+                },
+                "includeCurrent": {
+                  "type": "boolean",
+                  "default": true
+                }
+              },
+              "required": [
+                "unit",
+                "count"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "series",
+            "buckets"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,62}$"
+            },
+            "type": {
+              "const": "text"
+            },
+            "text": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 512
+            },
+            "format": {
+              "enum": [
+                "plain"
+              ],
+              "default": "plain"
+            },
+            "size": {
+              "enum": [
+                "small",
+                "medium",
+                "large",
+                "xlarge"
+              ],
+              "default": "medium"
+            },
+            "weight": {
+              "enum": [
+                "normal",
+                "bold"
+              ],
+              "default": "normal"
+            },
+            "align": {
+              "enum": [
+                "start",
+                "center",
+                "end"
+              ],
+              "default": "start"
+            },
+            "verticalAlign": {
+              "enum": [
+                "start",
+                "center",
+                "end"
+              ],
+              "default": "center"
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "text"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,62}$"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 64
+            },
+            "type": {
+              "const": "group"
+            },
+            "direction": {
+              "enum": [
+                "row",
+                "column"
+              ],
+              "default": "row"
+            },
+            "wrap": {
+              "type": "boolean",
+              "default": false
+            },
+            "gap": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 32
+            },
+            "panels": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/child"
+              },
+              "minItems": 1,
+              "maxItems": 12
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "panels"
+          ]
+        }
+      ]
+    },
+    "child": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,62}$"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 64
+            },
+            "grow": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 1
+            },
+            "type": {
+              "const": "value"
+            },
+            "prefix": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 32
+            },
+            "suffix": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 32
+            },
+            "decimals": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6,
+              "default": 0
+            },
+            "query": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192
+            },
+            "signLabels": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "positive": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 64
+                },
+                "negative": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 64
+                },
+                "abs": {
+                  "type": "boolean",
+                  "default": false
+                }
+              },
+              "required": [
+                "positive",
+                "negative"
+              ]
+            },
+            "staleAfter": {
+              "type": "string",
+              "maxLength": 12,
+              "pattern": "^[1-9][0-9]*(s|m|h)$"
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "query"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,62}$"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 64
+            },
+            "grow": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 1
+            },
+            "type": {
+              "const": "line"
+            },
+            "prefix": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 32
+            },
+            "suffix": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 32
+            },
+            "decimals": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6,
+              "default": 0
+            },
+            "series": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/series"
+              },
+              "minItems": 1,
+              "maxItems": 8
+            },
+            "yAxis": {
+              "$ref": "#/$defs/axis"
+            },
+            "stack": {
+              "type": "boolean",
+              "default": false
+            },
+            "range": {
+              "type": "string",
+              "maxLength": 12,
+              "pattern": "^[1-9][0-9]*(s|m|h)$"
+            },
+            "minStep": {
+              "type": "string",
+              "maxLength": 12,
+              "pattern": "^[1-9][0-9]*(s|m|h)$",
+              "default": "1s"
+            },
+            "referenceLines": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/reference"
+              },
+              "minItems": 0,
+              "maxItems": 8
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "series",
+            "range"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,62}$"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 64
+            },
+            "grow": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 1
+            },
+            "type": {
+              "const": "bar"
+            },
+            "prefix": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 32
+            },
+            "suffix": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 32
+            },
+            "decimals": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6,
+              "default": 0
+            },
+            "series": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/series"
+              },
+              "minItems": 1,
+              "maxItems": 4
+            },
+            "yAxis": {
+              "$ref": "#/$defs/axis"
+            },
+            "stack": {
+              "type": "boolean",
+              "default": false
+            },
+            "buckets": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "unit": {
+                  "enum": [
+                    "hour",
+                    "day"
+                  ]
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 31
+                },
+                "includeCurrent": {
+                  "type": "boolean",
+                  "default": true
+                }
+              },
+              "required": [
+                "unit",
+                "count"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "series",
+            "buckets"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,62}$"
+            },
+            "grow": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 1
+            },
+            "type": {
+              "const": "text"
+            },
+            "text": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 512
+            },
+            "format": {
+              "enum": [
+                "plain"
+              ],
+              "default": "plain"
+            },
+            "size": {
+              "enum": [
+                "small",
+                "medium",
+                "large",
+                "xlarge"
+              ],
+              "default": "medium"
+            },
+            "weight": {
+              "enum": [
+                "normal",
+                "bold"
+              ],
+              "default": "normal"
+            },
+            "align": {
+              "enum": [
+                "start",
+                "center",
+                "end"
+              ],
+              "default": "start"
+            },
+            "verticalAlign": {
+              "enum": [
+                "start",
+                "center",
+                "end"
+              ],
+              "default": "center"
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "text"
+          ]
+        }
+      ]
+    },
+    "series": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "query": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8192
+        },
+        "legend": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "style": {
+          "enum": [
+            "primary",
+            "secondary",
+            "tertiary",
+            "positive",
+            "negative",
+            "muted"
+          ],
+          "default": "primary"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    },
+    "axis": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": -1e+100,
+          "maximum": 1e+100
+        },
+        "max": {
+          "type": "number",
+          "minimum": -1e+100,
+          "maximum": 1e+100
+        }
+      },
+      "required": []
+    },
+    "reference": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": "number",
+              "minimum": -1e+100,
+              "maximum": 1e+100
+            },
+            "label": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 64
+            },
+            "style": {
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "positive",
+                "negative",
+                "muted"
+              ],
+              "default": "primary"
+            }
+          },
+          "required": [
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "query": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192
+            },
+            "label": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 64
+            },
+            "style": {
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "positive",
+                "negative",
+                "muted"
+              ],
+              "default": "primary"
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      ]
+    }
+  }
+}

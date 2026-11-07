@@ -1,0 +1,291 @@
+# ARPRT Prometheus renderer
+
+An independent Go module for a Prometheus Job renderer provided by ARPRT, an
+unofficial Kubernetes controller for TRMNL BYOS. ARPRT has no affiliation with
+or endorsement by TRMNL.
+
+The configuration, calendar calculations, query planning and bounded synthetic
+snapshot reader are implemented. This directory does **not yet contain a
+rendering executable, HTTP client, capture integration or production image**.
+The display and transport rules below freeze their input contract for further
+implementation; they are not claims of working image generation.
+
+The module pins Go 1.27.3 and uses only the standard library, including embedded
+IANA tzdata. It has no shared renderer SDK or runtime dependency installation.
+
+## Configuration
+
+See [the synthetic example](fixtures/config.json) and
+[config.schema.json](config.schema.json), JSON Schema draft 2020-12. `ParseConfig`
+validates that embedded schema, applies its defaults once, then validates
+cross-field constraints: globally unique IDs, rectangles, exact area membership,
+timezone, bounded durations, variable scope, templates and ordered axis bounds.
+Schema validation by an editor is necessary but does not perform these semantic
+checks. Duplicate keys, nulls, trailing documents, invalid UTF-8 and JSON nesting
+over 64 levels are rejected. No file or network access occurs during parsing.
+
+Root keys are `version` (required, exactly 1), `timezone` (default `Asia/Tokyo`),
+`prometheus`, `layout`, `panels` (all required), and `allMissing` (`fail` by default,
+or `display`). `Local` and unknown timezones fail. Unknown fields and fields
+belonging to another panel type fail, even when supplied as false or zero.
+
+`prometheus` accepts `url`, optional `auth`, and `scrapeInterval` (default `60s`).
+The final URL is required: an explicitly supplied `--prometheus-url` overrides
+`prometheus.url`, including when the configured URL is invalid. Explicitly empty
+overrides fail. Only absolute HTTP(S) URLs without userinfo, query or fragment
+are allowed; dot segments, repeated/escaped separators and control characters
+in paths are rejected. `APIURL` preserves the base path
+when appending `/api/v1/query` or `/api/v1/query_range`. All redirects will be
+rejected. URLs and queries must never appear in routine logs or errors.
+
+`auth` requires `type` (`bearer` or `basic`) and an absolute `credentialsFile`
+path, up to 512 characters. The credential file contract matches iCalendar:
+Bearer is a token using `[A-Za-z0-9._~+/-]+={0,}` with optional surrounding
+whitespace; Basic is a strict JSON object with nonempty UTF-8 `username` and
+`password`, preserving whitespace and rejecting control characters and colons
+in the username. Files are limited to 8 KiB and will be read once before HTTP.
+Capture credentials and clients will remain independent. Credentials are not
+read by the planning library and are never included in a snapshot.
+
+All durations use positive whole `s`, `m` or `h` quantities, without combinations
+or leading zeroes; maximum 366 days (8784h). Unicode string limits count code
+points, not bytes. Titles/sign labels/reference labels are at most 64 characters,
+prefixes/suffixes 32, text 512, legends 128 and input queries 8192. Numeric axis
+bounds must be finite and between -1e100 and 1e100; when both are set, min < max.
+`decimals` is 0–6, default 0. Prefix/suffix strings never trigger unit conversion.
+
+## Panels and placement
+
+Every panel has an `id` matching `^[a-z][a-z0-9-]{0,62}$` and a `type`.
+IDs are globally unique, including group children. A child alone may specify
+`grow` (integer 1–100, default 1). Optional titles belong to non-text panels.
+
+| Type | Fields beyond ID/title |
+| --- | --- |
+| `value` | Required `query`; prefix/suffix/decimals; optional `signLabels` and `staleAfter` |
+| `line` | Required `range`, `series` (1–8 queries); `minStep` (default `1s`); prefix/suffix/decimals, `yAxis`, `referenceLines`, `stack` |
+| `bar` | Required `buckets`, `series` (1–4 queries); prefix/suffix/decimals, `yAxis`, `stack` |
+| `text` | Required `text`; `format`, `size`, `weight`, `align`, `verticalAlign` |
+| `group` | Required `panels` (1–12 non-group children); `direction`, `wrap`, `gap` |
+
+`series` entries require `query` and accept `legend` and `style`. Styles are
+`primary` (default), `secondary`, `tertiary`, `positive`, `negative`, `muted`.
+Legend templates permit only `{{label_name}}` references, without whitespace or
+expressions. The normalization contract uses complete label sets as identities
+and sorts them lexicographically by label name/value, with configured query index
+as a tie breaker. Missing legend labels become `?`; duplicate display names gain
+stable numeric suffixes. Without a template, differing label pairs form the name;
+otherwise the query index supplies a fallback. Returned series across all queries
+and buckets of a panel are limited to 8; configured query count is a separate limit.
+
+`referenceLines` permits at most 8 entries, each with **exactly one** of `value`
+(a finite constant) or `query` (an instant query), plus optional `label` and
+`style`. Reference queries use the value-variable scope and evaluate at `now`.
+`stack` is boolean, default false, on line/bar only. Positive and negative stacks
+have separate zero baselines; missing contributions remain unknown rather than
+observed zero. A missing reference is omitted and does not count as panel data.
+
+`signLabels` requires `positive` and `negative`, with optional `abs` (false by
+default). Zero uses the positive label. Negative zero is normalized before
+formatting. `buckets` requires `unit` (`day` or `hour`) and `count` (1–31).
+`includeCurrent` defaults to true and selects the current partial bucket plus
+the previous count−1; false selects count completed buckets.
+
+`layout.landscape` is required; `layout.portrait` is optional. A Grid has required
+`areas` (1–32 equal-length rows, 1–16 columns). Cells are top-level IDs or `.`.
+Each top-level panel must appear, and each named region must form one rectangle.
+`columns`/`rows` are whitespace-separated tracks of exactly the right count:
+positive decimal `fr`, positive integer `px`, or `auto`; numeric amounts are at
+most 800. No CSS functions or other CSS syntax are accepted. Omitted tracks are
+all `1fr`. `gap` is an integer 0–32 CSS px, default 8.
+
+Omitted portrait places panels in first-appearance order in landscape, scanning
+left to right and then top to bottom, in one column; rows are `auto` except the
+final `1fr`. It inherits landscape gap. A group defaults to `direction: row`,
+`wrap: false`; `column` is also supported. Its omitted gap inherits the active
+orientation's Grid gap. Wrapping uses a 120 px basis. Rendering will prefix CSS
+area identifiers with `p-` so IDs such as `span` remain safe.
+
+Text is always plain, HTML-escaped text. Only exact expressions of the form
+`{{now "2006-01-02 15:04 MST"}}` are supported; the quoted Go time layout is 1–128
+characters without quotes or newlines. No general template execution occurs.
+Unknown, unbalanced or extra template delimiters fail. `format` is only `plain`;
+`size` is `small`, `medium` (default), `large`, `xlarge`; `weight` defaults to
+`normal` (or `bold`); horizontal alignment defaults to `start`, vertical to
+`center` (both also accept `start`, `center`, `end`).
+
+## Clock and query plan
+
+`ParseOptions` accepts required `--config`, optional `--context` (default
+`/arprt/context.json`), `--output` (default `/arprt/output.png`), `--input <dir>`,
+`--prometheus-url`, and `--now <RFC3339>`. An explicit now must use whole seconds.
+Without it, the clock is sampled exactly once and truncated to seconds.
+`BuildPlan` takes that instant explicitly and never reads a clock.
+
+Times are nonnegative Unix seconds through year 9999. One localized `now` is
+shared by every panel, timestamp and text expression. Day boundaries use local
+calendar dates, including 23/25-hour DST days. Zones/dates with a nonexistent
+midnight or skipped calendar date fail explicitly; repeated midnight uses its
+earliest occurrence. Hour buckets are consecutive
+elapsed hours anchored at the current local day's midnight; spring's missing
+hour is skipped, fall's repeated hours remain separate and labels include the
+numeric UTC offset. At half-hour DST transitions, hour labels may end in `:30`.
+Completed buckets use their calendar end; current buckets use `min(end, now)`.
+The plan preserves both that evaluation end and the uncut boundary and partial flag.
+
+| Variable | Scope and replacement |
+| --- | --- |
+| `$__now` | All queries; fixed execution Unix second |
+| `$__today_start` | All queries; local midnight Unix second |
+| `$__today_range` | All queries; elapsed seconds from midnight, with `s` suffix |
+| `$__range` | Line series only; configured period, as seconds with `s` suffix |
+| `$__step` | Line series only; planned step, as seconds with `s` suffix |
+| `$__rate_interval` | Line series only; max(4 × scrapeInterval, step + scrapeInterval) |
+| `$__bucket_start` / `$__bucket_end` | Bar series only; actual start/clipped evaluation Unix seconds |
+| `$__bucket_range` | Bar series only; actual elapsed evaluation duration with `s` suffix |
+
+Tokens use ASCII letters, digits and underscores following `$`. Full tokens are
+matched: `$__now_extra` cannot partially expand as `$__now`. Unknown, malformed
+and out-of-scope variables fail. Other PromQL syntax is the operator's
+responsibility and will be checked by Prometheus. Using a zero-length duration
+variable at exact midnight (or an exact hour boundary) fails planning; the
+renderer never changes a calendar boundary to make a selector legal. Use completed
+buckets or queries based on timestamp subtraction when this case must succeed.
+
+Value and freshness requests are instant evaluations at `now`; line uses
+start=now−range, end=now; each queried reference is instant at `now`; bar uses one
+instant request per configured query per bucket. Order is panel order, then
+query order (bucket-major for bar). Request IDs are
+`<panel>/<role>/<query-index>/<bucket-index>`; bucket index is −1 outside bar.
+Roles are `value`, `freshness`, `range`, `reference`, `bucket`. They identify query
+slots, not yet-normalized returned label sets. Constant references and text
+produce no requests. Every auxiliary request counts against the same budget.
+
+For fixed/fr columns, `PlotWidths` distributes the logical viewport minus gaps,
+then applies group grow ratios, rounds down and reserves 96 px for axes/direct
+labels. Browser CSS must use border-box, zero external padding, `min-width:0` on
+Grid/flex children, and a plot with `min-width:1px`; additional decoration must fit
+inside the reserved area. Auto columns and wrapping groups use a conservative
+1 px sampling width because their content-dependent dimensions cannot be
+predicted before data retrieval. This gives only the two endpoint evaluations;
+use fixed/fr columns and non-wrapping groups for detailed histories. No browser
+measurement or extra capture request is needed before API execution.
+
+The number of intervals is max(1, min(499, plotWidth−1)). Step is the larger of
+`minStep` and ceil(range/intervals), in whole seconds. Thus both endpoints fit
+within 500 evaluations; Prometheus's final returned point can precede `end` if
+step does not divide range. The normalization contract breaks a line whenever
+adjacent finite samples are not exactly one planned step apart, or a nonfinite
+sample occurs. It never bridges missing steps or interpolates gaps.
+
+## Freshness and missing data contract
+
+`staleAfter` defaults to disabled. When enabled it is accepted only for a bare
+named instant vector selector, optionally followed by a nonempty brace-enclosed
+list of double-quoted label matchers. Aggregation, arithmetic, functions, range
+selectors, `offset` and `@` are rejected for this option. The extra query is
+`timestamp(<selector>)` at the same now. This restriction follows the
+[Prometheus 2.42.0 engine's special treatment of timestamp on a selector](https://github.com/prometheus/prometheus/blob/v2.42.0/promql/engine.go#L1216):
+aggregations/arithmetic receive evaluation timestamps and cannot establish the
+age of the original data. Recording-rule sample age describes that rule's output,
+not the age of its upstream inputs. No live server acceptance is claimed.
+
+Normalization will accept 0 or 1 value sample and fail multiple samples before
+nonfinite filtering. Empty results and NaN/±Inf are missing. Freshness response
+errors or malformed/multiple/future timestamps fail; absent/nonfinite freshness
+marks an otherwise present value stale, never fresh. Age strictly greater than
+staleAfter marks it stale. Stale finite values still count as available data.
+If every data panel is missing, `allMissing: fail` preserves the previous output;
+`display` permits empty panels. Text-only screens are valid. Text and reference
+lines never make an otherwise missing data screen available.
+
+## Snapshots and limits
+
+`ExpectedManifest(plan)` describes synthetic files using
+[snapshot.schema.json](snapshot.schema.json). It never records live responses.
+A snapshot directory contains `manifest.json` and files `response-000.json`,
+`response-001.json`, etc. The manifest has `version: 1`, `planHash` and `entries`.
+Each entry has the exact serialized `request` plus `file`. All request fields,
+including unused numeric fields as zero, are required. PlanHash is lowercase
+SHA-256 of Go's compact `encoding/json` serialization of the Plan. The plan
+includes hashes of the defaulted configuration (including URL override) and
+Context, fixed now, geometry, bucket metadata and ordered requests. Keep manifest
+and plan together rather than attempting to reconstruct their hashes by hand.
+
+`LoadSnapshot` requires exact plan hash, request order/parameters and file count;
+files cannot be reused or escape the directory, including through symlinks.
+Response files must be regular files. Extra unreferenced files are ignored.
+It returns bounded raw response bytes, for the same parser as the future API
+client; response semantics are not validated by the current planning library.
+Use `--now` to reproduce the same plan. There will be no API fallback on missing
+or mismatched snapshots. `--input` replaces only Prometheus access: completed
+rendering will still require webcappi.
+
+| Resource | Limit |
+| --- | --- |
+| Configuration / Context | 256 KiB / 1 MiB |
+| Panels | 24 top-level, 48 total including group containers |
+| Grid | 32 rows × 16 columns (including generated portrait) |
+| Group children / grow / gap | 12 / 1–100 / 0–32 px |
+| Line query slots / bar query slots | 8 / 4 |
+| Returned series per panel / line evaluations / bar buckets | 8 / 500 / 31 |
+| Reference lines | 8 per line panel |
+| Duration | 366 days, in positive integer s/m/h |
+| Expanded query | 16 KiB |
+| Snapshot manifest | 1 MiB |
+| Response / cumulative response bytes | 4 MiB / 32 MiB, after decompression |
+| Prometheus attempts | 256 including retries and auxiliary requests |
+| Planned tasks | 128, reserving a retry for every task |
+| Concurrency | 4, including auxiliary queries |
+| Credentials file / generated HTML | 8 KiB / 1 MiB |
+| Total / shared fetch budget / output reserve | 60 s / 20 s / 5 s |
+
+Snapshot and configuration limits are enforced now; response series counts,
+decompression, transport concurrency/deadlines, credentials and generated HTML
+limits belong to their future consumers. The transport contract uses POST form
+requests with a server `timeout` bounded by remaining shared fetch time. Timeout
+is transport-dependent and is not part of snapshot identity. Only connection
+failure and HTTP 503 retry once, with at most one second backoff within the same
+budget. Retry bytes and attempts count cumulatively; cancellation never extends
+a deadline. Capture receives at most the remaining total time minus the output
+reserve. It cannot renew the total deadline.
+
+## Compatibility and verification
+
+The reviewed protocol baseline is
+[ARPRT v0.2.2, revision d53e6f6b71bf1e3bb1c7495ae842aff08c4d1a87](https://github.com/dayflower/arprt/blob/d53e6f6b71bf1e3bb1c7495ae842aff08c4d1a87/notes/PROTOCOL.md).
+`ParseContext` accepts Render Context v1 with device.name and physical 800×480
+gray4/spectra6, and clockwise rotation 0/90/180/270 (omitted means 0).
+Logical dimensions are 480×800 at 90/270 and 800×480 otherwise.
+The planned capture contract follows
+[webcappi revision d86aa33583120ddd90a3ab05b81d5fb5ff27dbde](https://github.com/dayflower/webcappi/blob/d86aa33583120ddd90a3ab05b81d5fb5ff27dbde/notes/API.md):
+raw UTF-8 HTML POST to `/capture`, `html_mode=file`, exact logical viewport,
+`ready_selector=#prometheus-ready`, no profile override, resizing or full-page
+mode. The renderer will wait for fonts and two frames before readiness, validate
+the returned PNG, rotate once and atomically replace output. ARPRT owns final
+palette conversion, dithering and overlays. All runtime writes will remain in
+the output parent; the renderer will not require writable `/tmp`.
+
+```sh
+make -C renderers/prometheus setup
+make -C renderers/prometheus check
+make check
+```
+
+Optional independent schema and browser geometry checks:
+
+```sh
+cd renderers/prometheus
+PROMETHEUS_SCHEMA_PYTHON=python3 go test -run 'Test(ConfigDefaultsAndPortrait|RejectConfig|InputBoundaries)' -v
+PROMETHEUS_BROWSER_IMAGE=your-local-chromium-image go test -run '^TestBrowserPlotWidths$' -v -timeout 240s
+```
+
+The Python check requires an independently installed `jsonschema` with draft
+2020-12 support; it is not a runtime or ordinary-test dependency. The browser
+image must provide `/opt/chrome/chrome`; the experiment is network-disabled and
+uses disposable browser-only `/tmp` and `/work` tmpfs, without exposing credentials.
+It compares geometry of a minimal Grid/flex prototype, not finished renderer HTML
+or image readability. See [VALIDATION.md](VALIDATION.md) for actual evidence.
+`container-check` currently reports unavailable and fails because no production
+image exists. Native arm64, real capture, Prometheus, Kubernetes and physical
+display acceptance remain separate work.

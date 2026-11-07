@@ -1,0 +1,12 @@
+{
+  "version": "v1",
+  "device": {
+    "name": "synthetic-display"
+  },
+  "renderTarget": {
+    "width": 800,
+    "height": 480,
+    "palette": "gray4",
+    "rotation": 0
+  }
+}

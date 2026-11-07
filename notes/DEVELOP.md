@@ -245,6 +245,27 @@ also passed postpublication container checks. Postpublication native arm64
 execution was not performed. See the [Weather publication record](../renderers/weather/VALIDATION.md#2026-11-06-weather-020-publication)
 for the immutable reference and separate cluster/physical-display limits.
 
+## Prometheus development
+
+Prometheus owns an independent standard-library-only Go module under
+`renderers/prometheus/`, with Go 1.27.3 pinned in its module metadata.
+Root setup/check discovers its Makefile. Configuration validation, query
+planning and bounded synthetic snapshot loading are available; HTTP fetching,
+image rendering, production containers and release workflows are not yet
+implemented. No Prometheus release is registered with the coordinator.
+
+```sh
+make -C renderers/prometheus setup
+make -C renderers/prometheus check
+```
+
+Its README defines the complete version-1 configuration, calendar/freshness
+restrictions, deterministic request identity, snapshot format and resource
+budgets. Optional independent schema and Chromium geometry checks have separate
+dependencies and are excluded from ordinary offline tests. The validation record
+distinguishes the minimal browser experiment from actual capture acceptance.
+`container-check` fails explicitly until a production runtime exists.
+
 ## Common release coordinator
 
 `tools/release.py` is a repository-level operator tool for bump/check/publish/status,

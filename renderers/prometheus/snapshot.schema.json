@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ARPRT Prometheus synthetic snapshot manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "planHash", "entries"],
+  "properties": {
+    "version": {"const": 1},
+    "planHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "entries": {
+      "type": "array", "maxItems": 128,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["request", "file"],
+        "properties": {
+          "file": {"type": "string", "pattern": "^response-[0-9]{3}\\.json$"},
+          "request": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "panel", "role", "series", "bucket", "endpoint", "query", "time", "start", "end", "step"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1, "maxLength": 128},
+              "panel": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$"},
+              "role": {"enum": ["value", "freshness", "range", "reference", "bucket"]},
+              "series": {"type": "integer", "minimum": 0, "maximum": 7},
+              "bucket": {"type": "integer", "minimum": -1, "maximum": 30},
+              "endpoint": {"enum": ["/api/v1/query", "/api/v1/query_range"]},
+              "query": {"type": "string", "minLength": 1, "maxLength": 16384},
+              "time": {"type": "integer", "minimum": 0, "maximum": 253402300799},
+              "start": {"type": "integer", "minimum": 0, "maximum": 253402300799},
+              "end": {"type": "integer", "minimum": 0, "maximum": 253402300799},
+              "step": {"type": "integer", "minimum": 0, "maximum": 31622400}
+            }
+          }
+        }
+      }
+    }
+  }
+}

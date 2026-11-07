@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "prometheus": {
+    "url": "http://prometheus.example:9090/metrics"
+  },
+  "layout": {
+    "landscape": {
+      "areas": [
+        "heading heading",
+        "current history",
+        "daily history"
+      ],
+      "columns": "1fr 2fr",
+      "rows": "40px 1fr 1fr"
+    }
+  },
+  "panels": [
+    {
+      "id": "heading",
+      "type": "text",
+      "text": "Example {{now \"2006-01-02 15:04 MST\"}}"
+    },
+    {
+      "id": "current",
+      "type": "group",
+      "panels": [
+        {
+          "id": "power",
+          "type": "value",
+          "query": "example_power_watts",
+          "staleAfter": "10m",
+          "suffix": " W"
+        }
+      ]
+    },
+    {
+      "id": "history",
+      "type": "line",
+      "range": "24h",
+      "series": [
+        {
+          "query": "rate(example_energy_total[$__rate_interval])",
+          "legend": "Power"
+        }
+      ],
+      "referenceLines": [
+        {
+          "value": 100,
+          "label": "Capacity"
+        }
+      ]
+    },
+    {
+      "id": "daily",
+      "type": "bar",
+      "buckets": {
+        "unit": "day",
+        "count": 7
+      },
+      "series": [
+        {
+          "query": "increase(example_energy_total[$__bucket_range])",
+          "legend": "Energy"
+        }
+      ]
+    }
+  ]
+}
