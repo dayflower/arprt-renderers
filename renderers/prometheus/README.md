@@ -4,11 +4,10 @@ An independent Go module for a Prometheus Job renderer provided by ARPRT, an
 unofficial Kubernetes controller for TRMNL BYOS. ARPRT has no affiliation with
 or endorsement by TRMNL.
 
-Configuration, calendar calculations, query planning, bounded HTTP acquisition,
-synthetic snapshot loading and panel data normalization are implemented as a
-library. This directory does **not yet contain a rendering executable, capture
-integration or production image**. Display rules below define the contract for
-further implementation; they are not claims of working image generation.
+Configuration, bounded acquisition, snapshot loading, normalized panel models,
+e-paper HTML/SVG rendering and a Job CLI are implemented. The CLI captures through
+webcappi, validates a static PNG, rotates once and atomically replaces output.
+A production image and release workflows remain future distribution work.
 
 The module pins Go 1.27.3 and uses only the standard library, including embedded
 IANA tzdata. It has no shared renderer SDK or runtime dependency installation.
@@ -104,7 +103,7 @@ Omitted portrait places panels in first-appearance order in landscape, scanning
 left to right and then top to bottom, in one column; rows are `auto` except the
 final `1fr`. It inherits landscape gap. A group defaults to `direction: row`,
 `wrap: false`; `column` is also supported. Its omitted gap inherits the active
-orientation's Grid gap. Wrapping uses a 120 px basis. Rendering will prefix CSS
+orientation's Grid gap. Wrapping uses a 120 px basis. Rendering prefixes CSS
 area identifiers with `p-` so IDs such as `span` remain safe.
 
 Text is always plain, HTML-escaped text. Only exact expressions of the form
@@ -119,7 +118,8 @@ Unknown, unbalanced or extra template delimiters fail. `format` is only `plain`;
 
 `ParseOptions` accepts required `--config`, optional `--context` (default
 `/arprt/context.json`), `--output` (default `/arprt/output.png`), `--input <dir>`,
-`--prometheus-url`, and `--now <RFC3339>`. An explicit now must use whole seconds.
+`--prometheus-url`, and `--now <RFC3339>`, required `--webcappi-url`, and optional
+`--webcappi-token-file` (a separate bounded Bearer credential file). An explicit now must use whole seconds.
 Without it, the clock is sampled exactly once and truncated to seconds.
 `BuildPlan` takes that instant explicitly and never reads a clock.
 
@@ -164,7 +164,7 @@ produce no requests. Every auxiliary request counts against the same budget.
 
 For fixed/fr columns, `PlotWidths` distributes the logical viewport minus gaps,
 then applies group grow ratios, rounds down and reserves 96 px for axes/direct
-labels. Browser CSS must use border-box, zero external padding, `min-width:0` on
+labels. Browser CSS uses border-box, zero external padding, `min-width:0` on
 Grid/flex children, and a plot with `min-width:1px`; additional decoration must fit
 inside the reserved area. Auto columns and wrapping groups use a conservative
 1 px sampling width because their content-dependent dimensions cannot be
@@ -218,9 +218,8 @@ files cannot be reused or escape the directory, including through symlinks.
 Response files must be regular files. Extra unreferenced files are ignored.
 It returns bounded raw response bytes. `ParseResponses` and `LoadModel` validate
 them with the same `ParseResponse` parser used by the HTTP client.
-Use `--now` to reproduce the same plan. There will be no API fallback on missing
-or mismatched snapshots. `--input` replaces only Prometheus access: completed
-rendering will still require webcappi.
+Use `--now` to reproduce the same plan. There is no API fallback on missing
+or mismatched snapshots. `--input` replaces only Prometheus access: rendering still requires webcappi.
 
 | Resource | Limit |
 | --- | --- |
@@ -242,8 +241,7 @@ rendering will still require webcappi.
 | Total / shared fetch budget / output reserve | 60 s / 20 s / 5 s |
 
 Snapshot, configuration, response series counts, decompression, transport
-concurrency/deadlines and credential limits are enforced. Generated HTML belongs
-to the future rendering implementation. The transport uses POST form
+concurrency/deadlines and credential limits are enforced. Generated HTML is limited to 1 MiB. The transport uses POST form
 requests with a server `timeout` bounded by remaining shared fetch time. Timeout
 is transport-dependent and is not part of snapshot identity. Only connection
 failure and HTTP 503 retry once, with at most one second backoff within the same
@@ -282,8 +280,8 @@ Individual result entries must contain exactly metric and float value(s).
 `LoadModel(ctx, config, plan, input)` selects live acquisition or the exact
 snapshot, then calls `Normalize`. Snapshot mode never reads credentials and
 never falls back to HTTP. A canceled context, bad snapshot, acquisition error or
-normalization error returns no model. This is the boundary the future runtime
-must check before capture or output writes; this library never writes output.
+normalization error returns no model. The runtime checks this boundary before capture or output writes; acquisition
+and normalization alone never write output.
 The caller owns the total execution deadline and later output reserve; the
 client separately enforces the shared 20-second fetch ceiling. `FetchStats`
 reports live attempts, decompressed bytes, annotation counts and elapsed time.
@@ -320,14 +318,13 @@ The reviewed protocol baseline is
 `ParseContext` accepts Render Context v1 with device.name and physical 800×480
 gray4/spectra6, and clockwise rotation 0/90/180/270 (omitted means 0).
 Logical dimensions are 480×800 at 90/270 and 800×480 otherwise.
-The planned capture contract follows
+The capture contract follows
 [webcappi revision d86aa33583120ddd90a3ab05b81d5fb5ff27dbde](https://github.com/dayflower/webcappi/blob/d86aa33583120ddd90a3ab05b81d5fb5ff27dbde/notes/API.md):
 raw UTF-8 HTML POST to `/capture`, `html_mode=file`, exact logical viewport,
 `ready_selector=#prometheus-ready`, no profile override, resizing or full-page
-mode. The renderer will wait for fonts and two frames before readiness, validate
-the returned PNG, rotate once and atomically replace output. ARPRT owns final
-palette conversion, dithering and overlays. All runtime writes will remain in
-the output parent; the renderer will not require writable `/tmp`.
+mode. The renderer waits for fonts and two frames, checks geometry before readiness,
+validates the returned PNG, rotates once and atomically replaces output. ARPRT owns final
+palette conversion, dithering and overlays. All runtime writes remain in the output parent; no writable `/tmp` is required.
 
 ```sh
 make -C renderers/prometheus setup
@@ -349,6 +346,97 @@ image must provide `/opt/chrome/chrome`; the experiment is network-disabled and
 uses disposable browser-only `/tmp` and `/work` tmpfs, without exposing credentials.
 It compares geometry of a minimal Grid/flex prototype, not finished renderer HTML
 or image readability. See [VALIDATION.md](VALIDATION.md) for actual evidence.
-`container-check` currently reports unavailable and fails because no production
-image exists. Native arm64, real capture, Prometheus, Kubernetes and physical
-display acceptance remain separate work.
+`container-check` explicitly fails until a production image exists. Real capture
+and completed-HTML geometry have separate evidence in VALIDATION.md. Native
+arm64, live Prometheus, Kubernetes and physical-display acceptance remain unverified.
+
+## CLI and display
+
+```sh
+make -C renderers/prometheus build
+renderers/prometheus/dist/renderer --config renderers/prometheus/examples/history.json \
+  --context renderers/prometheus/fixtures/render-context-v1.json \
+  --webcappi-url http://webcappi.example:8080 --output /absolute/output/dashboard.png
+```
+
+The output parent must already exist and be writable. Context, configuration,
+snapshots and credentials need only read access. Capture and Prometheus use
+independent HTTP transports and credentials; neither follows redirects. Capture
+performs one attempt, with a deadline equal to the original execution deadline
+minus the five-second output reserve. It cannot extend the 60-second total budget.
+Failures report fixed classifications without lower-level URLs, PromQL or bodies.
+
+Text sizes are 16/20/28/36 CSS px; headings are 18 px, value numbers 40–64 px,
+axis labels 13 px and other chart labels 14 px. Display numbers group thousands
+without unit conversion. Text lines, titles, numbers and bounded chart labels
+use explicit ellipsis. Values never shrink below 40 px. Layouts that cannot fit
+their panels, text lines or readable charts do not become ready and fail capture.
+Each chart needs at least 160 px width and 180 px total height. Configuration
+validity alone does not imply that an arbitrary Grid fits the viewport.
+
+Charts use renderer-generated SVG with a nested normalized data plot and fixed
+pixel labels, keeping the planned 96 px horizontal reserve. The browser only
+places/truncates labels after measuring fonts; it never builds queries or alters
+step. Y ticks use a 1/2/5 progression with 3–5 ticks for ordinary finite ranges;
+constant and empty domains expand safely. Explicit axis bounds clip data. Bar
+charts include zero unless explicitly bounded. Positive and negative stacks keep
+separate bases, and unknown contributions stay absent. Missing buckets show a
+dash; missing line steps split paths; isolated points get markers.
+
+Direct series labels occupy the right margin, use stable numeric prefixes and
+are shifted vertically to avoid collisions. Long names/axis units may be
+ellipsized; use short legends and units for a small display. X ticks use local
+hour/day boundaries and show the timezone/offset; colliding tick labels are
+omitted without dropping data. Hour-bucket labels retain UTC offsets. A partial
+bucket has an explicit `*` label, a full-height black outline and a `* partial`
+key. Its final physical-display treatment is still an operator acceptance item.
+
+| Logical style | gray4 | spectra6 |
+| --- | --- | --- |
+| primary | Black, 3 px solid | Blue, 3 px |
+| secondary | Black, 3 px dashed | Red, 3 px |
+| tertiary | Dark gray, 2 px with markers | Green, 3 px |
+| positive / negative | Black fill / white fill with black outline | Green / red |
+| muted | Light gray | Yellow |
+
+Returned series additionally receive eight deterministic dash/marker combinations,
+including when they share a logical style. Gray4 bars also vary opaque fills,
+outlines and interior markers. Fills are opaque, with no gradients,
+external fonts, assets or chart libraries. ARPRT owns final dithering/overlays.
+Stale values retain their number in light gray with an explicit `! Stale` mark.
+
+## Synthetic energy examples and browser checks
+
+The tracked examples split [summary](examples/summary.json),
+[history](examples/history.json) and [daily](examples/daily.json) for readability.
+They use synthetic metric names and public example hosts, without credentials.
+Export deterministic Context/configuration/snapshot/HTML sets for both palettes
+and orientations (fixed now `2026-11-07T12:00:00+09:00`):
+
+```sh
+cd renderers/prometheus
+PROMETHEUS_EXAMPLE_OUTPUT=/absolute/disposable/examples go test -run '^TestExportSyntheticExamples$' -v
+```
+
+The exporter only creates synthetic responses; it cannot record live responses.
+Histories contain a 30-minute gap, remaining energy and reference limits. Daily
+buckets include missing data, negative export values and the partial current day.
+To reproduce an exported set, pass its `config.json`, `context.json` and directory
+as `--config`, `--context` and `--input`, plus the fixed `--now` above and a
+webcappi URL. Snapshot mode still uses capture, and never falls back to the API.
+
+Completed-HTML browser validation is opt-in and excluded from ordinary tests:
+
+```sh
+PROMETHEUS_WEBCAPPI=http://127.0.0.1:8080 \
+PROMETHEUS_WEBCAPPI_TOKEN_FILE=/absolute/synthetic-token \
+PROMETHEUS_LAYOUT_DIR=/absolute/disposable/screenshots \
+go test -run '^TestBrowserDashboard$' -v -timeout 300s
+```
+
+Use a separately provisioned local webcappi with Chromium and CJK fonts; omit the
+token-file variable when capture requires no authentication. This runs 17 cases
+in both palettes and orientations, enforcing production readiness and comparing
+planned/actual plot widths, and optionally saves PNG/HTML for visual inspection.
+Browser geometry, screenshot inspection, stub contracts and production-container
+verification are distinct evidence; see VALIDATION.md.

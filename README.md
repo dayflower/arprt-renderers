@@ -12,7 +12,7 @@ nor these renderers are affiliated with or endorsed by TRMNL.
 | [iCalendar](renderers/ical/README.md) | Job | Display month calendars and agendas | webcappi for capture |
 | [Picsum](renderers/picsum/README.md) | Job | Display photographs | Lorem Picsum, or none with local images |
 | [Weather](renderers/weather/README.md) | Job | Display current weather and forecasts | Open-Meteo, webcappi for capture |
-| [Prometheus](renderers/prometheus/README.md) | Job (in development) | Configurable metric dashboards; acquisition and data model library available | Prometheus, webcappi for capture (planned) |
+| [Prometheus](renderers/prometheus/README.md) | Job (in development) | Configurable metric dashboards; acquisition, chart rendering and Job CLI available | Prometheus, webcappi for capture |
 
 See each renderer's README for setup, configuration, images, releases and
 validation scope.

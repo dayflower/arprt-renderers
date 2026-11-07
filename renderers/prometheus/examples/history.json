@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "timezone": "Asia/Tokyo",
+  "prometheus": {
+    "url": "http://prometheus.example:9090"
+  },
+  "layout": {
+    "landscape": {
+      "areas": [
+        "heading",
+        "data"
+      ],
+      "rows": "32px 1fr"
+    }
+  },
+  "panels": [
+    {
+      "id": "heading",
+      "type": "text",
+      "text": "Energy \u00b7 {{now \"2006-01-02 15:04 MST\"}}"
+    },
+    {
+      "id": "data",
+      "type": "group",
+      "direction": "column",
+      "panels": [
+        {
+          "id": "power-history",
+          "type": "line",
+          "title": "Power history",
+          "range": "24h",
+          "suffix": " W",
+          "series": [
+            {
+              "query": "example_power_watts",
+              "legend": "{{source}}"
+            }
+          ],
+          "referenceLines": [
+            {
+              "value": 100,
+              "label": "Capacity"
+            }
+          ]
+        },
+        {
+          "id": "remaining-history",
+          "type": "line",
+          "title": "Remaining energy",
+          "range": "24h",
+          "suffix": " kWh",
+          "series": [
+            {
+              "query": "example_remaining_kwh",
+              "legend": "{{source}}",
+              "style": "tertiary"
+            }
+          ],
+          "referenceLines": [
+            {
+              "value": 20,
+              "label": "Reserve",
+              "style": "negative"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

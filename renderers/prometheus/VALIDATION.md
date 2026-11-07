@@ -1,5 +1,94 @@
 # Validation record
 
+## E-paper display and Job CLI, 2026-11-07
+
+Source checks and execution ran on Linux amd64 (`x86_64`), Go 1.27.3, on working
+changes based on revision `b07beab8ce6fb3115b428f93b276e7eb7079a7c2`.
+The standard-library module now includes the static `cmd/renderer` CLI,
+renderer-generated HTML/SVG, embedded readiness CSS/JavaScript, an independent
+capture client, PNG validation, clockwise rotation and atomic output replacement.
+No production Prometheus image, release version or publication was created.
+
+### Offline and executable evidence
+
+`make check`, Prometheus race tests and `make -C renderers/prometheus build`
+passed. Tests build and invoke the real CLI against synthetic Prometheus/capture
+loopback servers for gray4/spectra6 and all four rotations. They inspect POST
+forms, HTML capture MIME/readiness/viewport/base-prefix parameters and distinct
+Prometheus/capture credentials. HTTP/capture failures, redirect rejection, bad
+MIME, invalid PNG, wrong dimensions, acquisition failure, cancellation before and
+during capture, and output replacement failure preserve prior bytes. Atomic-write
+tests cover cancellation and rename/unwritable-parent failures with temporary-file
+cleanup. Asymmetric RGBA PNGs verify each rotated corner and white compositing,
+not just the final 800×480 dimensions. Static-PNG tests cover signatures, chunk
+CRCs, truncation, trailing content, APNG rejection and full decoding.
+
+Semantic SVG tests cover isolated points, split missing intervals, finite empty/
+constant/mixed/negative/extreme domains, 1/2/5 ticks, escaped labels, prefixes/
+suffixes/decimals, numeric grouping, omitted unknown stack contributions,
+positive/negative baselines, partial outlines, palette styles and HTML limits.
+Synthetic exports reparse the configuration and reload exact plan-bound snapshots;
+the final CLI also rendered an exported history snapshot through real webcappi.
+No live response recording or API fallback was added.
+
+A disposable restricted CLI harness additionally ran `TestRuntimeCLI` with
+`PROMETHEUS_CLI` and `PROMETHEUS_DEFAULT_PATHS=1`, verifying `/arprt/context.json`,
+`/arprt/output.png` and independent custom paths. It mounted the static CLI and a
+separate static test executable read-only into an existing scratch Weather image
+(`sha256:3cc7564307ec684f6478955e8a344013888ee08495d4739464881020354952e8`).
+Execution used network none, UID/GID 1000, read-only root, all capabilities dropped,
+no-new-privileges and only `/arprt` writable, with read-only Context mounts and
+`TMPDIR=/arprt`. No writable `/tmp`, compiler or runtime installation was used.
+This verifies the CLI under those restrictions, **not** a Prometheus production
+image or its packaging. The required Prometheus `container-check` was attempted
+and explicitly failed because no production image exists; that remains
+separate distribution work.
+
+### Real browser and visual evidence
+
+A disposable local webcappi service used Chromium 156.0.8078.47 and image
+`sha256:69254f3a042acbbe17835d8eaa886193405743ee894b595bda56403ed2d05654`
+on amd64, with a synthetic independent Bearer token. No external source was
+queried. Completed HTML capture tests passed both palettes and logical 800×480 /
+480×800 viewports. The original 16-case, 64-capture matrix covered normal and
+generated/explicit portrait placement, auto/px tracks, grow ratios, wrapping,
+eight line series, line/bar stacks, all missing, Japanese, long text, hour buckets
+and the three energy examples. Strengthened wrapping/Japanese/text cases passed
+again with actual multi-child wrapping, Japanese legends and multiple text lines.
+An additional eight-bar-series case and the affected stacked/daily bar cases
+passed both palettes/orientations after fill/outline/marker improvements.
+
+Readiness waits for fonts and two animation frames, positions fixed-pixel SVG
+labels, resolves direct-label collisions, intentionally ellipsizes labels and
+omits colliding X tick labels, then checks panel/content/label rectangles before
+exposing `#prometheus-ready`. The optional tests additionally compare the Go
+sampling estimate against the **completed** plot width before allowing capture.
+The 96 px reserve is preserved. Geometry success does not establish physical
+panel readability or acceptance of every possible configuration.
+
+Saved PNGs were visually inspected for the energy histories, daily buckets,
+eight series, negative stacks, wrapping and Japanese/text cases in the tested
+palettes/orientations. Inspection found and corrected unsupported SVG text
+`calc()` coordinates, misplaced direct labels, excessive marker density and
+insufficient Y tick counts and text vertical alignment. The final examples show readable ordinary headings,
+40–64 px value numbers, 13 px axes and 14 px chart labels; deliberately long labels
+are ellipsized, and series keep numeric identifiers. Screenshots are disposable
+local artifacts, not golden tests or shipped assets. Reproduce them with the
+README's opt-in capture/export commands.
+
+### Acceptance limits
+
+There was no native arm64 execution, Prometheus production image verification,
+image publication, live Prometheus/numeric comparison, Kubernetes Job/mount/PVC
+collection or physical gray4/spectra6 display check. No cluster changes were made.
+Synthetic API tests do not validate operator PromQL, aggregation/counter resets or
+upstream source age. The current partial-bucket `*` label plus outline is
+provisional; its final physical-display treatment remains the explicit operator
+acceptance decision. Configurations too small for readable charts/text fail
+readiness rather than silently clipping. Longer units/legends may be deliberately
+ellipsized, so operators should use the separate summary/history/daily examples
+and short labels.
+
 ## Bounded acquisition and panel data, 2026-11-07
 
 Source-level checks ran on Linux amd64 with Go 1.27.3, on working changes based

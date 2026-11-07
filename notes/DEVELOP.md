@@ -251,8 +251,8 @@ Prometheus owns an independent standard-library-only Go module under
 `renderers/prometheus/`, with Go 1.27.3 pinned in its module metadata.
 Root setup/check discovers its Makefile. Configuration validation, query
 planning, bounded HTTP/snapshot acquisition and panel normalization are available;
-image rendering, production containers and release workflows are not yet
-implemented. No Prometheus release is registered with the coordinator.
+HTML/SVG rendering, capture, PNG validation and the Job CLI are implemented.
+Production containers and release workflows are not yet implemented. No Prometheus release is registered with the coordinator.
 
 ```sh
 make -C renderers/prometheus setup
@@ -265,9 +265,11 @@ results, model semantics and resource budgets. Loopback tests cover authenticati
 retry/cancellation, concurrency, decompression and cumulative limits; the same
 response parser feeds HTTP and snapshot models. Optional independent schema and
 Chromium geometry checks have separate dependencies and are excluded from
-ordinary offline tests. The validation record
-distinguishes the minimal browser experiment from actual capture acceptance.
-`container-check` fails explicitly until a production runtime exists.
+ordinary offline tests. The validation record distinguishes the minimal geometry experiment, completed
+HTML capture checks, visual inspection and restricted CLI harness evidence.
+`make -C renderers/prometheus build` creates the static CLI. `container-check`
+fails explicitly until a production image exists. See the renderer README for
+synthetic energy snapshots and opt-in completed-HTML browser checks.
 
 ## Common release coordinator
 

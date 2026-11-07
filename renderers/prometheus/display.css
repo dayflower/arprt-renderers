@@ -1,0 +1,29 @@
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff;color:#000;font-family:Arial,"Noto Sans CJK JP",sans-serif;font-variant-numeric:tabular-nums}
+body{overflow:hidden}
+.grid{display:grid;width:100%;height:100%}
+.panel{min-width:0;min-height:0;overflow:hidden;border-bottom:1px solid #555;display:flex;flex-direction:column}
+.group{border:0}
+.group[style*="flex-wrap:wrap"]>.panel{flex-basis:120px!important}
+.group>.panel{min-height:72px}
+.text{flex:1;display:flex;flex-direction:column;max-height:100%;overflow:hidden;min-height:24px}
+.small{font-size:16px}
+.medium{font-size:20px}
+.large{font-size:28px}
+.xlarge{font-size:36px}
+.bold{font-weight:bold}
+.ellipsis{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:100%;min-height:1.2em}
+.text>.ellipsis{flex-shrink:0}
+h2{font-size:18px;line-height:24px;font-weight:bold;margin:0;height:24px;flex-shrink:0}
+.number{font-size:64px;line-height:1.2;display:flex;align-items:center;flex:1;min-height:48px;overflow:hidden}
+.stale{color:#aaa}
+.status{font-size:16px;line-height:20px;flex-shrink:0}
+.chart{width:100%;flex:1;min-height:156px;overflow:visible;font-size:14px}
+.panel:has(>.chart){min-height:180px}
+.panel:has(>.text){min-height:24px}
+.plot{overflow:hidden}
+.axis-label,.direct-label,.x-label{font-size:14px}
+.missing{font-size:16px}
+
+
+.axis-label{font-size:13px}

@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "timezone": "Asia/Tokyo",
+  "prometheus": {
+    "url": "http://prometheus.example:9090"
+  },
+  "layout": {
+    "landscape": {
+      "areas": [
+        "heading",
+        "data"
+      ],
+      "rows": "32px 1fr"
+    },
+    "portrait": {
+      "areas": [
+        "heading",
+        "data"
+      ],
+      "rows": "32px 1fr"
+    }
+  },
+  "panels": [
+    {
+      "id": "heading",
+      "type": "text",
+      "text": "Energy \u00b7 {{now \"2006-01-02 15:04 MST\"}}"
+    },
+    {
+      "id": "data",
+      "type": "group",
+      "panels": [
+        {
+          "id": "current",
+          "type": "value",
+          "title": "Current power",
+          "query": "example_power_watts",
+          "suffix": " W",
+          "staleAfter": "10m"
+        },
+        {
+          "id": "today",
+          "type": "value",
+          "title": "Energy today",
+          "query": "increase(example_energy_kwh_total[$__today_range])",
+          "decimals": 1,
+          "suffix": " kWh"
+        },
+        {
+          "id": "remaining",
+          "type": "value",
+          "title": "Remaining",
+          "query": "example_remaining_kwh",
+          "decimals": 1,
+          "suffix": " kWh"
+        }
+      ],
+      "direction": "column"
+    }
+  ]
+}

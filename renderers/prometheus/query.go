@@ -154,14 +154,16 @@ func copyVars(m map[string]string) map[string]string {
 	return n
 }
 
-// Options is shared by the future rendering CLI and offline planning tests.
+// Options is shared by the rendering CLI and offline planning tests.
 type Options struct {
-	Config        string
-	Context       string
-	Output        string
-	Input         string
-	PrometheusURL *string
-	Now           time.Time
+	Config            string
+	Context           string
+	Output            string
+	Input             string
+	PrometheusURL     *string
+	WebcappiURL       string
+	WebcappiTokenFile string
+	Now               time.Time
 }
 
 func ParseOptions(args []string, clock func() time.Time) (Options, error) {
@@ -172,6 +174,8 @@ func ParseOptions(args []string, clock func() time.Time) (Options, error) {
 	f.StringVar(&o.Context, "context", "/arprt/context.json", "Render Context")
 	f.StringVar(&o.Output, "output", "/arprt/output.png", "output PNG")
 	f.StringVar(&o.Input, "input", "", "snapshot directory")
+	f.StringVar(&o.WebcappiURL, "webcappi-url", "", "capture base URL")
+	f.StringVar(&o.WebcappiTokenFile, "webcappi-token-file", "", "capture Bearer token file")
 	url := f.String("prometheus-url", "", "service base URL override")
 	fixed := f.String("now", "", "RFC3339 execution instant")
 	if e := f.Parse(args); e != nil || f.NArg() != 0 || o.Config == "" {
