@@ -85,7 +85,7 @@ func TestDisplaySemantics(t *testing.T) {
 			t.Fatal(err)
 		}
 		s := string(b)
-		for _, want := range []string{`class="segment"`, `class="partial"`, `! Stale`, `prometheus-ready`, `document.fonts.ready`, `Power`, `No data`} {
+		for _, want := range []string{`class="segment"`, `* partial`, `! Stale`, `prometheus-ready`, `document.fonts.ready`, `Power`, `No data`} {
 			if want == "No data" {
 				continue
 			}
@@ -227,7 +227,7 @@ func TestChartMeaning(t *testing.T) {
 	p.Stack = true
 	m = PanelModel{Buckets: []Bucket{{Start: 0, End: 1, Partial: true}}, Series: []SeriesModel{{Legend: "Negative", Style: "negative", Points: []Point{{Value: -2, Base: 0, Top: -2, Present: true, StackKnown: true}}}, {Legend: "Unknown", Style: "positive", Points: []Point{{Value: 2, Base: 0, Top: 2, Present: true, StackKnown: false}}}}}
 	s = chartSVG(p, m, "gray4", time.UTC)
-	if strings.Count(s, `class="bar"`) != 1 || !strings.Contains(s, `class="partial"`) || !strings.Contains(s, `fill="white"`) || !strings.Contains(s, `class="zero"`) {
+	if strings.Count(s, `class="bar"`) != 1 || strings.Contains(s, `class="partial"`) || !strings.Contains(s, `01/01*</text>`) || !strings.Contains(s, `* partial`) || !strings.Contains(s, `fill="white"`) || !strings.Contains(s, `class="zero"`) {
 		t.Fatal("negative/unknown/partial stack")
 	}
 	// A positive-only line must not introduce a visible zero baseline.

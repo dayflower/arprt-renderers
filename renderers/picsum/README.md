@@ -7,6 +7,17 @@ battery and Wi-Fi overlays belong to the controller. This is maintained by ARPRT
 which is independent, unofficial
 and not affiliated with or endorsed by TRMNL.
 
+## Safe area
+
+Picsum deliberately ignores `renderTarget.safeAreaInsets` introduced by
+[ARPRT v0.8.0](https://github.com/dayflower/arprt/blob/v0.8.0/notes/PROTOCOL.md#safe-area).
+Photographs continue to fill the full logical canvas using the existing centered
+crop, then rotate into the full 800 × 480 output. This avoids adding borders to
+photographic backgrounds. Controller overlays still follow the Device safe area.
+An offline regression compares complete PNG bytes with and without asymmetric
+insets at all four rotations. This is software evidence, not new controller or
+physical-display acceptance.
+
 ## Compatibility and limits
 
 The protocol baseline is **Render Context v1 from ARPRT v0.2.2**, commit

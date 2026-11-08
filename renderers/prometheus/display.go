@@ -149,7 +149,7 @@ func RenderHTML(c Config, target Context, m Model) ([]byte, error) {
 	if b.Len() > HTMLLimit {
 		return nil, Diagnostic{Code: "html_limit"}
 	}
-	return []byte(b.String()), nil
+	return target.layoutHTML([]byte(b.String()))
 }
 func cssAlign(s string) string {
 	switch s {
@@ -344,11 +344,6 @@ func chartSVG(p Panel, m PanelModel, palette string, loc *time.Location) string 
 			}
 		}
 		b.WriteString(`</g>`)
-	}
-	for i, bucket := range m.Buckets {
-		if bucket.Partial {
-			fmt.Fprintf(&b, `<rect class="partial" x="%.4f" y="0" width="%.4f" height="1000" fill="none" stroke="#000" stroke-width="2" vector-effect="non-scaling-stroke"/>`, float64(i)*1000/float64(max(1, n)), 1000/float64(max(1, n)))
-		}
 	}
 	b.WriteString(`</svg>`)
 	for i := range m.Buckets {

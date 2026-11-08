@@ -53,6 +53,8 @@ func checkCLI(t *testing.T, binary string) {
 	}
 	var failed atomic.Bool
 	var captured atomic.Value
+	var expectInsets atomic.Bool
+	expectInsets.Store(true)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if failed.Load() {
 			w.WriteHeader(500)
@@ -62,6 +64,9 @@ func checkCLI(t *testing.T, binary string) {
 			t.Error("incorrect capture contract")
 		}
 		b, _ := io.ReadAll(r.Body)
+		if expectInsets.Load() && !bytes.Contains(b, []byte("left:12px;top:4px;")) {
+			t.Error("CLI omitted safe area")
+		}
 		captured.Store(string(b))
 		if !bytes.Contains(b, []byte("7-Day Forecast")) {
 			t.Error("missing weather HTML")
@@ -86,7 +91,7 @@ func checkCLI(t *testing.T, binary string) {
 	base := []string{"--latitude", "0", "--longitude", "0", "--input", input, "--webcappi-url", server.URL, "--webcappi-token-file", token}
 	for _, palette := range []string{"gray4", "spectra6"} {
 		for _, rotation := range []int{0, 90, 180, 270} {
-			if e := os.WriteFile(contextPath, contextBytes(rotation, palette), 0o644); e != nil {
+			if e := os.WriteFile(contextPath, insetContextBytes(rotation, palette), 0o644); e != nil {
 				t.Fatal(e)
 			}
 			args := append(append([]string{}, base...), "--context", contextPath, "--output", output)
@@ -128,6 +133,8 @@ func checkCLI(t *testing.T, binary string) {
 			t.Fatal("incorrect optional location")
 		}
 	}
+	// Mounted default Contexts deliberately have no safe-area extension.
+	expectInsets.Store(false)
 	if binary != "" {
 		if e := invoke(base); e != nil {
 			t.Fatal(e)

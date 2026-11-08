@@ -16,10 +16,11 @@ type Context struct {
 		Name string `json:"name"`
 	} `json:"device"`
 	Target struct {
-		Width    int    `json:"width"`
-		Height   int    `json:"height"`
-		Palette  string `json:"palette"`
-		Rotation int    `json:"rotation"`
+		Width          int            `json:"width"`
+		Height         int            `json:"height"`
+		Palette        string         `json:"palette"`
+		Rotation       int            `json:"rotation"`
+		SafeAreaInsets safeAreaInsets `json:"safeAreaInsets,omitzero"`
 	} `json:"renderTarget"`
 	Rotation int `json:"-"`
 }
@@ -40,6 +41,9 @@ func ParseContext(b []byte) (Context, error) {
 	c.Rotation = c.Target.Rotation
 	if c.Version != "v1" || strings.TrimSpace(c.Device.Name) == "" || c.Target.Width != 800 || c.Target.Height != 480 || (c.Target.Palette != "gray4" && c.Target.Palette != "spectra6") || (c.Rotation != 0 && c.Rotation != 90 && c.Rotation != 180 && c.Rotation != 270) {
 		return c, errors.New("unsupported Context")
+	}
+	if err := c.validateSafeArea(); err != nil {
+		return c, err
 	}
 	return c, nil
 }

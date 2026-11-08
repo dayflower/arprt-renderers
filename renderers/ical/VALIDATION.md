@@ -459,3 +459,27 @@ Postpublication native arm64 execution was not performed; its native execution
 evidence comes from release CI, while anonymous pulls verify public availability.
 Kubernetes, physical displays and live subscriptions were not retested for this
 release. Publication did not deploy a Screen or change Device assignments.
+
+## 2026-11-08 safe-area source and browser checks
+
+Repository-wide `make check` and this renderer's `container-check` passed.
+The latter exercised the final Linux amd64 production image with network none,
+UID/GID 1000, read-only root, dropped capabilities, and only output storage writable.
+
+`TestBrowserSafeArea` passed 16 synthetic captures through a local
+`webcappi:font-cdp-fix` image on Linux amd64. Cases use both gray4/spectra6
+palettes, all four rotations, and logical insets top 4, bottom 8, left 12,
+right 16 in both month and agenda views. The checks require successful renderer readiness, visible
+content, white pixels outside the safe area, and unchanged 800 × 480 physical
+PNG dimensions with the expected clockwise rotation.
+
+The existing zero-inset `TestLayouts` matrix also passed.
+A separate browser probe confirmed that a 1 × 1 content rectangle reports
+layout overflow instead of successful readiness.
+
+The local browser used `sandbox: false` because this host does not provide
+Chromium's required user namespaces. This setting was confined to the temporary
+capture service; renderer Job restrictions were unchanged. These synthetic
+checks do not establish native arm64 execution, live-source compatibility,
+Kubernetes integration with ARPRT v0.8.0, overlay avoidance, or physical-display
+readability. No renderer release or cluster update was performed.

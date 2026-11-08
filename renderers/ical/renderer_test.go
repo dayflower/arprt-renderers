@@ -48,6 +48,8 @@ func checkRenderer(t *testing.T, binary string) {
 	var failure, hold atomic.Bool
 	started := make(chan struct{}, 1)
 	var captures atomic.Int32
+	var expectInsets atomic.Bool
+	expectInsets.Store(true)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/calendar" {
 			if r.Header.Get("Authorization") != "" {
@@ -80,6 +82,9 @@ func checkRenderer(t *testing.T, binary string) {
 		if !bytes.Contains(body, []byte("Synthetic vendor event")) || r.Header.Get("Authorization") != "Bearer synthetic-capture" || r.URL.Query().Get("ready_selector") != "#ical-ready" {
 			t.Error("incorrect capture contract")
 		}
+		if expectInsets.Load() && !bytes.Contains(body, []byte("left:12px;top:4px;")) {
+			t.Error("CLI omitted safe area")
+		}
 		width, _ := strconv.Atoi(r.URL.Query().Get("width"))
 		height, _ := strconv.Atoi(r.URL.Query().Get("height"))
 		w.Header().Set("Content-Type", "image/png")
@@ -107,7 +112,7 @@ func checkRenderer(t *testing.T, binary string) {
 		}
 		for _, palette := range []string{"gray4", "spectra6"} {
 			for _, rotation := range []int{0, 90, 180, 270} {
-				if err := os.WriteFile(cp, contextBytes(rotation, palette), 0644); err != nil {
+				if err := os.WriteFile(cp, insetContextBytes(rotation, palette), 0644); err != nil {
 					t.Fatal(err)
 				}
 				args := []string{"--config", config, "--context", cp, "--output", output, "--webcappi-url", server.URL, "--webcappi-token-file", token}
@@ -167,6 +172,8 @@ func checkRenderer(t *testing.T, binary string) {
 	if matches, _ := filepath.Glob(filepath.Join(root, ".ical-*.tmp")); len(matches) != 0 {
 		t.Fatal("temporary file leak")
 	}
+	// Mounted default Contexts deliberately have no safe-area extension.
+	expectInsets.Store(false)
 	if binary != "" {
 		args = []string{"--config", config, "--webcappi-url", server.URL, "--webcappi-token-file", token}
 		if err := invoke(context.Background(), args); err != nil {

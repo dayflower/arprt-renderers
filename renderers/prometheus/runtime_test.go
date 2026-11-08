@@ -51,6 +51,8 @@ func TestRuntimeCLI(t *testing.T) {
 		fmt.Fprintf(w, `{"status":"success","data":{"resultType":"scalar","result":[%d,"123"]}}`, ts)
 	}))
 	defer api.Close()
+	var expectInsets atomic.Bool
+	expectInsets.Store(true)
 	cap := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		captureCalls.Add(1)
 		if r.URL.Path != "/capture-prefix/capture" || r.Header.Get("Authorization") != "Bearer capture-only" || r.Header.Get("Content-Type") != "text/html; charset=utf-8" {
@@ -63,6 +65,9 @@ func TestRuntimeCLI(t *testing.T) {
 		b, _ := io.ReadAll(r.Body)
 		if !bytes.Contains(b, []byte(">123</span>")) || bytes.Contains(b, []byte("prometheus-only")) || bytes.Contains(b, []byte(api.URL)) {
 			t.Error("unsafe/wrong HTML")
+		}
+		if expectInsets.Load() && !bytes.Contains(b, []byte("left:12px;top:4px;")) {
+			t.Error("CLI omitted safe area")
 		}
 		w.Header().Set("Content-Type", "image/png")
 		switch mode.Load() {
@@ -104,7 +109,7 @@ func TestRuntimeCLI(t *testing.T) {
 	}
 	for _, palette := range []string{"gray4", "spectra6"} {
 		for _, rotation := range []int{0, 90, 180, 270} {
-			if err := os.WriteFile(contextPath, contextBytes(rotation, palette), 0644); err != nil {
+			if err := os.WriteFile(contextPath, insetContextBytes(rotation, palette), 0644); err != nil {
 				t.Fatal(err)
 			}
 			if err := invoke(base); err != nil {
@@ -141,7 +146,7 @@ func TestRuntimeCLI(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	target, err := ParseContext(contextBytes(270, "spectra6"))
+	target, err := ParseContext(insetContextBytes(270, "spectra6"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,6 +172,8 @@ func TestRuntimeCLI(t *testing.T) {
 	}
 	// The optional restricted-container harness supplies read-only Context files
 	// at the protocol defaults and at an independent custom path.
+	// Mounted default Contexts deliberately have no safe-area extension.
+	expectInsets.Store(false)
 	if os.Getenv("PROMETHEUS_DEFAULT_PATHS") == "1" {
 		defaultArgs := []string{"--config", cfg, "--now", "2026-11-07T12:00:00+09:00", "--webcappi-url", cap.URL + "/capture-prefix", "--webcappi-token-file", captureToken}
 		if err := invoke(defaultArgs); err != nil {

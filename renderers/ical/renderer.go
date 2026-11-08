@@ -56,6 +56,9 @@ func Run(parent context.Context, args []string, command []string, stdout io.Writ
 		return err
 	}
 	body, err := RenderHTML(model)
+	if err == nil {
+		body, err = target.layoutHTML(body)
+	}
 	if err != nil {
 		return diagnostic("", "capture", "resource_limit")
 	}
