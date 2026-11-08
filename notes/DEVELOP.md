@@ -173,7 +173,7 @@ render. A subsequent physical check displayed the live Hatena Bookmark feed on
 both targets with existing rotation and overlay settings: the user reported
 readable gray4 text and rougher Spectra 6 text. This narrow check does not establish
 acceptance of other feeds, rotations, photos or overlays. Broader production-cluster
-behavior remains unverified. RSS 0.1.0 passed native amd64 and arm64 release checks,
+behavior remains unverified. RSS 0.2.0 passed native amd64 and arm64 release checks,
 anonymous tag/digest pulls on both platforms, and postpublication amd64 container
 checks. Postpublication native arm64 execution was not performed.
 
@@ -188,7 +188,7 @@ modules; source CI caches both dependency sets.
 make lint format-check RUFF_PATHS=renderers/ical
 make -C renderers/ical setup
 make -C renderers/ical check
-make -C renderers/ical image VERSION=0.2.0 REVISION=your-source-revision
+make -C renderers/ical image VERSION=0.3.0 REVISION=your-source-revision
 make -C renderers/ical container-check
 ```
 
@@ -208,12 +208,12 @@ cluster file mounts/Secret updates, physical-display readability and live-source
 compatibility have separate scopes in the [validation record](../renderers/ical/VALIDATION.md).
 No stub capture or cross-build substitutes for those acceptance checks.
 
-iCalendar 0.2.0 passed native Linux amd64 and arm64 release builds and offline
+iCalendar 0.3.0 passed native Linux amd64 and arm64 release builds and offline
 container execution at source revision
-`239d294e40c874e5a0b5914be9a3c6a69034ba33`. Anonymous version/digest pulls passed
+`d7c29272551b337e0aacd56daac9e5e9479810c6`. Anonymous version/digest pulls passed
 on both platforms, and the public amd64 digest passed postpublication container
 checks. Postpublication native arm64 execution was not performed. See the
-[iCalendar validation record](../renderers/ical/VALIDATION.md#2026-11-05-icalendar-020-publication)
+[iCalendar validation record](../renderers/ical/VALIDATION.md#2026-11-08-icalendar-030-publication)
 for the immutable reference and separate acceptance scope.
 
 ## Weather development and distribution
@@ -237,12 +237,12 @@ loopback stubs under the Job security restrictions. Real-browser checks are
 opt-in. Live API compatibility, browser layout, cluster execution and physical
 display acceptance have separate scopes in the Weather validation record.
 
-Weather 0.2.0 passed native Linux amd64 and arm64 release builds and offline
+Weather 0.3.0 passed native Linux amd64 and arm64 release builds and offline
 container execution at source revision
-`971599d6be9838df78cfc8cc18bf0f2c8a88daed`. Anonymous version/digest pulls and
+`d7c29272551b337e0aacd56daac9e5e9479810c6`. Anonymous version/digest pulls and
 OCI revision/version labels passed for both platforms. The public amd64 image
 also passed postpublication container checks. Postpublication native arm64
-execution was not performed. See the [Weather publication record](../renderers/weather/VALIDATION.md#2026-11-06-weather-020-publication)
+execution was not performed. See the [Weather publication record](../renderers/weather/VALIDATION.md#2026-11-08-weather-030-publication)
 for the immutable reference and separate cluster/physical-display limits.
 
 ## Prometheus development
@@ -254,9 +254,9 @@ planning, bounded HTTP/snapshot acquisition and panel normalization are availabl
 HTML/SVG rendering, capture, PNG validation and the Job CLI are implemented.
 A static scratch production image, offline container checker and independent
 native amd64/arm64 verification/release workflows are available. Prometheus is
-registered with the release coordinator. Prometheus 0.1.0 passed native amd64/arm64
+registered with the release coordinator. Prometheus 0.2.0 passed native amd64/arm64
 release checks, anonymous tag/digest pulls for both platforms and postpublication
-amd64 container checks. See the [publication record](../renderers/prometheus/VALIDATION.md#2026-11-07-prometheus-010-publication)
+amd64 container checks. See the [publication record](../renderers/prometheus/VALIDATION.md#2026-11-08-prometheus-020-publication)
 for the immutable reference and separate live-source, cluster and physical-test limits.
 
 ```sh

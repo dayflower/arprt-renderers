@@ -314,3 +314,27 @@ key while rejecting the outline.
 Repository-wide `make check` and Prometheus `container-check` passed against the
 updated Linux amd64 production image under the existing Job restrictions.
 No new arm64, Kubernetes or physical-display acceptance was performed.
+
+## 2026-11-08 Prometheus 0.2.0 publication
+
+- Source revision: `d7c29272551b337e0aacd56daac9e5e9479810c6`.
+- Release: [Prometheus 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/prometheus/v0.2.0).
+- Native release verification and publication: [successful workflow](https://github.com/dayflower/arprt-renderers/actions/runs/42460462495).
+- Immutable multi-platform reference:
+  `ghcr.io/dayflower/arprt-renderer-prometheus@sha256:66dc7b6f899561ca175ed3bd577d90ebc78e92950318d628d43ecb3ddf97d2b7`.
+
+The release verified native Linux amd64 and arm64 builds, offline tests and
+production CLI execution under Job security restrictions, then published the
+exact tested image archives without rebuilding. The release index asset contains
+exactly linux/amd64 and linux/arm64 and matches the immutable digest above.
+
+Anonymous version-tag and index-digest pulls passed on both platforms using an
+empty Docker configuration. Explicit platform inspection verified OS/architecture
+and OCI version `0.2.0` and revision `d7c29272551b337e0aacd56daac9e5e9479810c6` labels.
+The public amd64 index reference passed `container-check` with network none,
+UID/GID 1000, read-only root, dropped capabilities and only output storage writable.
+
+Postpublication native arm64 execution was not performed. These publication
+checks add no live-source, real-browser, Kubernetes or physical-display acceptance.
+Earlier browser evidence has its own scope above. Updating the example digest
+pins does not apply resources or change existing Device assignments.

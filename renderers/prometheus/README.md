@@ -9,11 +9,11 @@ e-paper HTML/SVG rendering and a Job CLI are implemented. The CLI captures throu
 webcappi, validates a static PNG, rotates once and atomically replaces output.
 A static scratch image, offline container checks and independent native
 amd64/arm64 verification/release workflows are available.
-[Prometheus 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/prometheus/v0.1.0)
-is published as `ghcr.io/dayflower/arprt-renderer-prometheus:0.1.0`. The verified public multi-platform reference is:
+[Prometheus 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/prometheus/v0.2.0)
+is published as `ghcr.io/dayflower/arprt-renderer-prometheus:0.2.0`. The verified public multi-platform reference is:
 
 ```text
-ghcr.io/dayflower/arprt-renderer-prometheus@sha256:3f51122caa1ca4bbe3953c063932e2792676db49f564f830d054d53b9e356d07
+ghcr.io/dayflower/arprt-renderer-prometheus@sha256:66dc7b6f899561ca175ed3bd577d90ebc78e92950318d628d43ecb3ddf97d2b7
 ```
 
 Native amd64/arm64 release checks and anonymous pulls passed. The public amd64
@@ -522,15 +522,14 @@ loads them for publication without rebuilding. It owns the `release-prometheus`
 concurrency group, `prometheus/vMAJOR.MINOR.PATCH` annotated tags and
 `ghcr.io/dayflower/arprt-renderer-prometheus` package, with no latest tag.
 Guards reject VERSION/tag/checkout/main-ancestry mismatches and used release or
-platform versions. The source VERSION is 0.2.0 (unreleased), preparing the safe-area
-support and partial-bucket outline removal described in the changelog. Prometheus
-0.1.0 remains the published version used by the pinned examples. See
+platform versions. VERSION 0.2.0 is published with safe-area support and partial-bucket outline
+removal as described in the changelog. See
 [release procedure](../../notes/RELEASE.md) and [changelog](CHANGELOG.md).
 
 ## Kubernetes configuration and updates
 
 [screen.yaml](screen.yaml) contains synthetic ConfigMap, separate Prometheus and
-capture Secrets, and an ArprtScreen. It pins the verified public 0.1.0 index
+capture Secrets, and an ArprtScreen. It pins the verified public 0.2.0 index
 digest above. Both platform images were pulled anonymously before updating the
 example; publication does not apply these resources or modify device assignments.
 

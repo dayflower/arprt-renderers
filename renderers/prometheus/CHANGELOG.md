@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 (unreleased)
+## 0.2.0 (2026-11-08)
 
 - Respect ARPRT v0.8.0 logical safe-area insets for dashboard placement and
   plot-width-based query sampling while retaining full-size PNG output.

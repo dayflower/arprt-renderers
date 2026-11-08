@@ -6,9 +6,9 @@ service, and atomically writes the PNG to the output file.
 It displays headlines, optional summaries, categories, sources, bookmark counts,
 optional thumbnails and feed-supplied article dates.
 ARPRT is independent and unofficial, with no affiliation with or endorsement by
-TRMNL. [RSS 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.1.0)
+TRMNL. [RSS 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.2.0)
 is publicly available for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-rss:0.1.0`.
+`ghcr.io/dayflower/arprt-renderer-rss:0.2.0`.
 
 ## Safe area
 
@@ -283,7 +283,7 @@ See [third-party notices](THIRD_PARTY_NOTICES.md) for dependency licenses.
 
 ## Screen configuration
 
-[screen.yaml](screen.yaml) pins the verified multi-platform digest of RSS 0.1.0
+[screen.yaml](screen.yaml) pins the verified multi-platform digest of RSS 0.2.0
 from `ghcr.io/dayflower/arprt-renderer-rss`. It uses synthetic feed and webcappi
 endpoints: replace both before applying it. Anonymous tag and digest pulls were
 verified for Linux amd64 and arm64. To use a development build instead, run
@@ -313,14 +313,14 @@ Ruff checks, fixed-module setup, Go checks and offline release guard tests.
 Separate native Linux amd64 and arm64 runners build the production image,
 check OCI version/revision labels and execute the offline container checker.
 [Normal CI](../../.github/workflows/ci.yaml) also runs shared checks and Picsum
-verification. The RSS 0.1.0 release passed both native jobs; its public amd64 image
+verification. The RSS 0.2.0 release passed both native jobs; its public amd64 image
 also passed the container checker after publication. Anonymous arm64 pulls confirm
 availability, while native arm64 execution was verified before publication.
 
-The independent source VERSION is `0.2.0` (unreleased). This release prepares
+The independently published VERSION is `0.2.0`. This release adds
 ARPRT v0.8.0 safe-area support for feed headings, articles and thumbnails, with
 content fitting inside the inset rectangle and unchanged full-size PNG output.
-RSS 0.1.0 remains the published version used by the pinned Screen example.
+The Screen example pins the verified public 0.2.0 index digest.
 [RSS releases](../../.github/workflows/release-rss.yaml) accept annotated,
 canonical stable `rss/vMAJOR.MINOR.PATCH` tags matching VERSION on `origin/main`.
 They call only RSS verification, transfer the exact tested native image archives

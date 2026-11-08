@@ -316,3 +316,27 @@ capture service; renderer Job restrictions were unchanged. These synthetic
 checks do not establish native arm64 execution, live-source compatibility,
 Kubernetes integration with ARPRT v0.8.0, overlay avoidance, or physical-display
 readability. No renderer release or cluster update was performed.
+
+## 2026-11-08 Weather 0.3.0 publication
+
+- Source revision: `d7c29272551b337e0aacd56daac9e5e9479810c6`.
+- Release: [Weather 0.3.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.3.0).
+- Native release verification and publication: [successful workflow](https://github.com/dayflower/arprt-renderers/actions/runs/42460496763).
+- Immutable multi-platform reference:
+  `ghcr.io/dayflower/arprt-renderer-weather@sha256:4a0aad0cf160b2cf5255b52809b55aa3067272a0ab333dc40c70895941552345`.
+
+The release verified native Linux amd64 and arm64 builds, offline tests and
+production CLI execution under Job security restrictions, then published the
+exact tested image archives without rebuilding. The release index asset contains
+exactly linux/amd64 and linux/arm64 and matches the immutable digest above.
+
+Anonymous version-tag and index-digest pulls passed on both platforms using an
+empty Docker configuration. Explicit platform inspection verified OS/architecture
+and OCI version `0.3.0` and revision `d7c29272551b337e0aacd56daac9e5e9479810c6` labels.
+The public amd64 index reference passed `container-check` with network none,
+UID/GID 1000, read-only root, dropped capabilities and only output storage writable.
+
+Postpublication native arm64 execution was not performed. These publication
+checks add no live-source, real-browser, Kubernetes or physical-display acceptance.
+Earlier browser evidence has its own scope above. Updating the example digest
+pins does not apply resources or change existing Device assignments.
