@@ -119,6 +119,43 @@ func TestDisplaySemantics(t *testing.T) {
 	}
 }
 
+func TestValueSizeHTML(t *testing.T) {
+	c := config(t)
+	target := contextFixture(t)
+	_, m, _ := syntheticModel(t, c, target)
+	for _, size := range []string{"", "small", "medium", "large", "xlarge"} {
+		c.Panels[1].Panels[0].Size = size
+		class := size
+		if size == "" {
+			class = "auto-size"
+		}
+		for _, missing := range []bool{false, true} {
+			t.Run(fmt.Sprintf("size=%s/missing=%t", size, missing), func(t *testing.T) {
+				model := m
+				model.Panels = append([]PanelModel(nil), m.Panels...)
+				if missing {
+					for i := range model.Panels {
+						if model.Panels[i].ID == "power" {
+							model.Panels[i].Value = nil
+						}
+					}
+				}
+				body, err := RenderHTML(c, target, model)
+				if err != nil {
+					t.Fatal(err)
+				}
+				want := `<div class="number ` + class + ` stale"><span class="ellipsis">123 W</span></div>`
+				if missing {
+					want = `<div class="number ` + class + `"><span class="ellipsis">—</span></div>`
+				}
+				if !strings.Contains(string(body), want) {
+					t.Fatalf("missing value markup %s", want)
+				}
+			})
+		}
+	}
+}
+
 // Optional export supplies reproducible snapshots and completed HTML for manual
 // real-capture/visual inspection. It never reads a live service or credentials.
 func TestExportSyntheticExamples(t *testing.T) {

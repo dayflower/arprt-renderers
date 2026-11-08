@@ -101,6 +101,50 @@ func TestConfigDefaultsAndPortrait(t *testing.T) {
 		t.Fatal("nondeterministic defaults")
 	}
 }
+
+func TestValueSizeConfig(t *testing.T) {
+	for _, grouped := range []bool{false, true} {
+		for _, size := range []string{"", "small", "medium", "large", "xlarge"} {
+			t.Run(fmt.Sprintf("grouped=%t/size=%s", grouped, size), func(t *testing.T) {
+				m := fixture(t)
+				p := panel(m, 1)["panels"].([]any)[0].(map[string]any)
+				if !grouped {
+					p["id"] = "current"
+					m["panels"].([]any)[1] = p
+				}
+				if size != "" {
+					p["size"] = size
+				}
+				c, err := parseMap(t, m)
+				if err != nil {
+					t.Fatal(err)
+				}
+				value := c.Panels[1]
+				if grouped {
+					value = value.Panels[0]
+				}
+				if value.Size != size {
+					t.Fatalf("size=%q, want %q", value.Size, size)
+				}
+			})
+		}
+		for _, size := range []any{"", "auto", "64px", 64, nil} {
+			t.Run(fmt.Sprintf("grouped=%t/invalid=%v", grouped, size), func(t *testing.T) {
+				m := fixture(t)
+				p := panel(m, 1)["panels"].([]any)[0].(map[string]any)
+				if !grouped {
+					p["id"] = "current"
+					m["panels"].([]any)[1] = p
+				}
+				p["size"] = size
+				if _, err := parseMap(t, m); err == nil {
+					t.Fatal("accepted invalid value size")
+				}
+			})
+		}
+	}
+}
+
 func TestRejectConfig(t *testing.T) {
 	cases := map[string]func(map[string]any){
 		"version":         func(m map[string]any) { m["version"] = 2 },
@@ -141,6 +185,9 @@ func TestRejectConfig(t *testing.T) {
 		"text expression": func(m map[string]any) { panel(m, 0)["text"] = "{{query \"up\"}}" },
 		"text format":     func(m map[string]any) { panel(m, 0)["format"] = "markdown" },
 		"text size":       func(m map[string]any) { panel(m, 0)["size"] = "10px" },
+		"line size":       func(m map[string]any) { panel(m, 2)["size"] = "large" },
+		"bar size":        func(m map[string]any) { panel(m, 3)["size"] = "large" },
+		"group size":      func(m map[string]any) { panel(m, 1)["size"] = "large" },
 		"bad zone":        func(m map[string]any) { m["timezone"] = "Local" },
 		"unknown zone":    func(m map[string]any) { m["timezone"] = "Nowhere/Example" },
 		"duration":        func(m map[string]any) { panel(m, 2)["range"] = "1d" },

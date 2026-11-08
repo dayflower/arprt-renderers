@@ -107,7 +107,7 @@ IDs are globally unique, including group children. A child alone may specify
 
 | Type | Fields beyond ID/title |
 | --- | --- |
-| `value` | Required `query`; prefix/suffix/decimals; optional `signLabels` and `staleAfter` |
+| `value` | Required `query`; prefix/suffix/decimals; optional `size`, `signLabels` and `staleAfter` |
 | `line` | Required `range`, `series` (1–8 queries); `minStep` (default `1s`); prefix/suffix/decimals, `yAxis`, `referenceLines`, `stack` |
 | `bar` | Required `buckets`, `series` (1–4 queries); prefix/suffix/decimals, `yAxis`, `stack` |
 | `text` | Required `text`; `format`, `size`, `weight`, `align`, `verticalAlign` |
@@ -135,6 +135,34 @@ default). Zero uses the positive label. Negative zero is normalized before
 formatting. `buckets` requires `unit` (`day` or `hour`) and `count` (1–31).
 `includeCurrent` defaults to true and selects the current partial bucket plus
 the previous count−1; false selects count completed buckets.
+
+Value panels, including group children, accept `size` as a fixed font size:
+
+| `size` | Value | Text |
+| --- | --- | --- |
+| `small` | 40 px | 16 px |
+| `medium` | 48 px | 20 px |
+| `large` | 64 px | 28 px |
+| `xlarge` | 80 px | 36 px |
+
+All sizes are CSS pixels. Omitting `size` on a value panel preserves automatic
+shrinking from 64 px down to 40 px to fit the available width. An explicit size
+is fixed, including `large`: it never shrinks. It applies to the complete number
+with its prefix and suffix, including the missing-value dash, but not the title
+or status. Horizontal overflow uses ellipsis; insufficient height fails layout
+readiness instead of clipping the fixed-size content.
+
+For example, a fixed-size value panel:
+
+```json
+{
+  "id": "power",
+  "type": "value",
+  "query": "sum(example_power_watts)",
+  "suffix": " W",
+  "size": "large"
+}
+```
 
 `layout.landscape` is required; `layout.portrait` is optional. A Grid has required
 `areas` (1–32 equal-length rows, 1–16 columns). Cells are top-level IDs or `.`.
@@ -381,8 +409,9 @@ Optional independent schema and browser geometry checks:
 
 ```sh
 cd renderers/prometheus
-PROMETHEUS_SCHEMA_PYTHON=python3 go test -run 'Test(ConfigDefaultsAndPortrait|RejectConfig|InputBoundaries)' -v
+PROMETHEUS_SCHEMA_PYTHON=python3 go test -run 'Test(ConfigDefaultsAndPortrait|ValueSizeConfig|RejectConfig|InputBoundaries)' -v
 PROMETHEUS_BROWSER_IMAGE=your-local-chromium-image go test -run '^TestBrowserPlotWidths$' -v -timeout 240s
+PROMETHEUS_BROWSER_IMAGE=your-local-chromium-image go test -run '^TestBrowserValueSizes$' -v -timeout 180s
 ```
 
 The Python check requires an independently installed `jsonschema` with draft
@@ -390,7 +419,10 @@ The Python check requires an independently installed `jsonschema` with draft
 image must provide `/opt/chrome/chrome`; the experiment is network-disabled and
 uses disposable browser-only `/tmp` and `/work` tmpfs, without exposing credentials.
 It compares geometry of a minimal Grid/flex prototype, not finished renderer HTML
-or image readability. See [VALIDATION.md](VALIDATION.md) for actual evidence.
+or image readability. `TestBrowserValueSizes` uses completed renderer HTML and a
+DevTools pipe to check fixed sizes, automatic shrinking, ellipsis, missing/stale
+values and height overflow in both orientations. Its browser image also needs
+`/bin/sh`. See [VALIDATION.md](VALIDATION.md) for actual evidence.
 Production `image` and `container-check` commands are described below. Real capture
 and completed-HTML geometry have separate evidence in VALIDATION.md. Native
 arm64 release execution passed; live Prometheus, Kubernetes and physical-display
@@ -412,8 +444,9 @@ performs one attempt, with a deadline equal to the original execution deadline
 minus the five-second output reserve. It cannot extend the 60-second total budget.
 Failures report fixed classifications without lower-level URLs, PromQL or bodies.
 
-Text sizes are 16/20/28/36 CSS px; headings are 18 px, value numbers 40–64 px,
-axis labels 13 px and other chart labels 14 px. Display numbers group thousands
+Text sizes are 16/20/28/36 CSS px; headings are 18 px. Value numbers automatically
+shrink within 40–64 px when `size` is omitted or use a fixed 40/48/64/80 px when set.
+Axis labels are 13 px and other chart labels 14 px. Display numbers group thousands
 without unit conversion. Text lines, titles, numbers and bounded chart labels
 use explicit ellipsis. Values never shrink below 40 px. Layouts that cannot fit
 their panels, text lines or readable charts do not become ready and fail capture.

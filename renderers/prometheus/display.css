@@ -16,6 +16,11 @@ body{overflow:hidden}
 .text>.ellipsis{flex-shrink:0}
 h2{font-size:18px;line-height:24px;font-weight:bold;margin:0;height:24px;flex-shrink:0}
 .number{font-size:64px;line-height:1.2;display:flex;align-items:center;flex:1;min-height:48px;overflow:hidden}
+.number:not(.auto-size){min-height:1.2em}
+.number.small{font-size:40px}
+.number.medium{font-size:48px}
+.number.large{font-size:64px}
+.number.xlarge{font-size:80px}
 .stale{color:#aaa}
 .status{font-size:16px;line-height:20px;flex-shrink:0}
 .chart{width:100%;flex:1;min-height:156px;overflow:visible;font-size:14px}
