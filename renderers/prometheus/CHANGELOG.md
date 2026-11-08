@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 (unreleased)
+
+- Respect ARPRT v0.8.0 logical safe-area insets for dashboard placement and
+  plot-width-based query sampling while retaining full-size PNG output.
+- Preserve zero-inset layout and snapshot Context identity, and reject invalid
+  insets or unusable browser geometry.
+- Remove the full-height outline around partial bar buckets; retain the `*`
+  bucket label and `* partial` key.
+
 ## 0.1.0 (2026-11-07)
 
 - Add version-1 dashboards, bounded Prometheus acquisition and deterministic snapshots.

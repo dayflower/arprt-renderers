@@ -522,7 +522,9 @@ loads them for publication without rebuilding. It owns the `release-prometheus`
 concurrency group, `prometheus/vMAJOR.MINOR.PATCH` annotated tags and
 `ghcr.io/dayflower/arprt-renderer-prometheus` package, with no latest tag.
 Guards reject VERSION/tag/checkout/main-ancestry mismatches and used release or
-platform versions. VERSION 0.1.0 is published. See
+platform versions. The source VERSION is 0.2.0 (unreleased), preparing the safe-area
+support and partial-bucket outline removal described in the changelog. Prometheus
+0.1.0 remains the published version used by the pinned examples. See
 [release procedure](../../notes/RELEASE.md) and [changelog](CHANGELOG.md).
 
 ## Kubernetes configuration and updates
