@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-11-07)
 
 - Add version-1 dashboards, bounded Prometheus acquisition and deterministic snapshots.
 - Render text, values, line and calendar-bucket charts for gray4 and spectra6.
@@ -8,4 +8,6 @@
 - Add a static scratch runtime, offline Job-restricted container checks and
   independent native amd64/arm64 verification and release workflows.
 
-No image publication or native arm64 execution is claimed by this changelog.
+Published for Linux amd64 and arm64 after native offline container/CLI checks.
+Anonymous tag/digest pulls passed for both platforms; postpublication container
+checks passed on amd64. See [VALIDATION.md](VALIDATION.md) for acceptance limits.
