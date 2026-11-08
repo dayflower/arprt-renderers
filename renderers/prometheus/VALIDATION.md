@@ -1,6 +1,39 @@
 # Validation record
 
-## 2026-11-08: Unreleased fixed value sizes
+## 2026-11-08 Prometheus 0.3.0 publication
+
+- Release preparation: [PR #45](https://github.com/dayflower/arprt-renderers/pull/45).
+- Source revision: `2d034c88b3ee7d570e9bbd706c684de77c2d1949`.
+- Release: [Prometheus 0.3.0](https://github.com/dayflower/arprt-renderers/releases/tag/prometheus/v0.3.0).
+- Exact-commit main CI: [successful workflow](https://github.com/dayflower/arprt-renderers/actions/runs/42478163812).
+- Native release verification and publication: [successful workflow](https://github.com/dayflower/arprt-renderers/actions/runs/42478319590).
+- Immutable multi-platform reference:
+  `ghcr.io/dayflower/arprt-renderer-prometheus@sha256:02c134052538a1eb4a14b745e3f1e6e5e0b2d052e6979caf90bc00131dec980f`.
+
+Local `make check`, the release-preparation image build and Job-restricted
+container checks passed. Main CI and the release workflow verified native
+Linux amd64 and arm64 builds, offline tests and production CLI execution.
+Publication loaded the exact tested image archives without rebuilding. The
+release index asset contains exactly these two platform manifests:
+
+| Platform | Manifest digest |
+| --- | --- |
+| linux/amd64 | `sha256:2bc71b38cd6ca4263a29f23c2aa5b44009f342fc7f978129ad0ae15a2060e482` |
+| linux/arm64 | `sha256:e093270652c98020cf886e2df49fb36572b49437bd9f25a6339c236b7ff25af5` |
+
+Anonymous version-tag and index-digest pulls passed on both platforms using an
+empty Docker configuration. Explicit platform inspection verified OS/architecture,
+OCI version `0.3.0` and revision `2d034c88b3ee7d570e9bbd706c684de77c2d1949`;
+tag and index references resolved to the same image on each platform.
+The public amd64 index reference passed `container-check` with network none,
+UID/GID 1000, read-only root, dropped capabilities and only output storage writable.
+
+Postpublication native arm64 execution was not performed. The fixed-size Chromium
+checks below are earlier geometry evidence and were not repeated during publication.
+Live Prometheus, Kubernetes and physical-display acceptance remain unverified.
+Updating example digest pins does not apply resources or change device assignments.
+
+## 2026-11-08: Fixed value sizes before 0.3.0
 
 Local Linux amd64 `make check`, production image build and
 `make -C renderers/prometheus container-check` passed. The container checker

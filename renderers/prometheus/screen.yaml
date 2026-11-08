@@ -1,4 +1,4 @@
-# Synthetic example using the verified public Prometheus 0.2.0 index.
+# Synthetic example using the verified public Prometheus 0.3.0 index.
 # Create these resources in the controller namespace.
 apiVersion: v1
 kind: ConfigMap
@@ -60,7 +60,7 @@ spec:
             defaultMode: 0444
       renderer:
         # Pin the verified multi-platform release index.
-        image: ghcr.io/dayflower/arprt-renderer-prometheus@sha256:66dc7b6f899561ca175ed3bd577d90ebc78e92950318d628d43ecb3ddf97d2b7
+        image: ghcr.io/dayflower/arprt-renderer-prometheus@sha256:02c134052538a1eb4a14b745e3f1e6e5e0b2d052e6979caf90bc00131dec980f
         args:
           - --config
           - /etc/prometheus-config/config.json
