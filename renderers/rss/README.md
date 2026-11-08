@@ -317,7 +317,10 @@ verification. The RSS 0.1.0 release passed both native jobs; its public amd64 im
 also passed the container checker after publication. Anonymous arm64 pulls confirm
 availability, while native arm64 execution was verified before publication.
 
-VERSION is independently set to `0.1.0`, the initial published RSS release.
+The independent source VERSION is `0.2.0` (unreleased). This release prepares
+ARPRT v0.8.0 safe-area support for feed headings, articles and thumbnails, with
+content fitting inside the inset rectangle and unchanged full-size PNG output.
+RSS 0.1.0 remains the published version used by the pinned Screen example.
 [RSS releases](../../.github/workflows/release-rss.yaml) accept annotated,
 canonical stable `rss/vMAJOR.MINOR.PATCH` tags matching VERSION on `origin/main`.
 They call only RSS verification, transfer the exact tested native image archives
