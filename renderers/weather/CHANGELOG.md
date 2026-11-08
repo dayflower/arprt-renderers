@@ -1,5 +1,13 @@
 # Weather changelog
 
+## 0.3.0 - unreleased
+
+- Respect ARPRT v0.8.0 logical safe-area insets for current conditions, forecasts
+  and attribution, retaining design padding and full-size PNG output.
+- Remove the summary's decorative minimum height when insets are present,
+  preserving content and font sizes; reject browser overflow before readiness.
+- Preserve the previous layout when safe-area insets are absent or zero.
+
 ## 0.2.0 - 2026-11-06
 
 - Add optional `--location-name` below the Now time and remove the visible
