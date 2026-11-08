@@ -10,7 +10,9 @@ as a Kubernetes Job, which writes the captured PNG to the output file.
 is available for Linux amd64 and arm64 as
 `ghcr.io/dayflower/arprt-renderer-ical:0.2.0`. The immutable multi-platform reference is
 `ghcr.io/dayflower/arprt-renderer-ical@sha256:5b5dc25f8184493ae9638b8c09789ade4d01b92b0c2dbf5365fd329e2a4b5388`.
-The independent [VERSION](VERSION) is 0.2.0; the Screen example pins this digest.
+The independent source [VERSION](VERSION) is 0.3.0 (unreleased), preparing the
+safe-area support described in the [changelog](CHANGELOG.md). The Screen example
+continues to pin the published 0.2.0 digest above.
 See the [changelog](CHANGELOG.md) for changes.
 
 ```sh
