@@ -1,5 +1,12 @@
 # iCalendar changelog
 
+## 0.3.0 (unreleased)
+
+- Respect ARPRT v0.8.0 logical safe-area insets in month and agenda layouts,
+  preserving design padding, full-size PNG output and zero-inset layouts.
+- Fit event rows and omission counts to the available content rectangle; reject
+  browser layouts where required headers or date rows do not fit.
+
 ## 0.2.0
 
 - Always show Today and Tomorrow in agenda view, including empty days, with
