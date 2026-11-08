@@ -126,7 +126,11 @@ func RenderHTML(c Config, target Context, m Model) ([]byte, error) {
 				value = displayNumber(v, p.Decimals, p.Prefix, p.Suffix)
 				stale = pm.Value.Stale
 			}
-			fmt.Fprintf(&b, `<h2 class="ellipsis">%s</h2><div class="number%s"><span class="ellipsis">%s</span></div>`, esc(label), map[bool]string{true: " stale"}[stale], esc(value))
+			size := p.Size
+			if size == "" {
+				size = "auto-size"
+			}
+			fmt.Fprintf(&b, `<h2 class="ellipsis">%s</h2><div class="number %s%s"><span class="ellipsis">%s</span></div>`, esc(label), size, map[bool]string{true: " stale"}[stale], esc(value))
 			if stale {
 				b.WriteString(`<div class="status">! Stale</div>`)
 			}

@@ -4,7 +4,7 @@
   await document.fonts.ready;
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   const fail = () => { document.body.dataset.layoutError = 'overflow'; };
-  for (const element of document.querySelectorAll('.number')) {
+  for (const element of document.querySelectorAll('.number.auto-size')) {
     let size = 64;
     while (size > 40 && element.firstElementChild.scrollWidth > element.clientWidth) {
       element.style.fontSize = --size + 'px';

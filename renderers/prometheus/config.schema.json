@@ -149,6 +149,14 @@
             "type": {
               "const": "value"
             },
+            "size": {
+              "enum": [
+                "small",
+                "medium",
+                "large",
+                "xlarge"
+              ]
+            },
             "prefix": {
               "type": "string",
               "minLength": 0,
@@ -493,6 +501,14 @@
             },
             "type": {
               "const": "value"
+            },
+            "size": {
+              "enum": [
+                "small",
+                "medium",
+                "large",
+                "xlarge"
+              ]
             },
             "prefix": {
               "type": "string",

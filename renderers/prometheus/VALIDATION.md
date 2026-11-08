@@ -1,5 +1,22 @@
 # Validation record
 
+## 2026-11-08: Unreleased fixed value sizes
+
+Local Linux amd64 `make check`, production image build and
+`make -C renderers/prometheus container-check` passed. The container checker
+executed offline tests and the shipped CLI under the existing Job restrictions.
+An independent Python `jsonschema` oracle also passed `TestValueSizeConfig` for
+top-level and grouped values, including omitted sizes and rejected invalid values.
+
+`TestBrowserValueSizes` passed all 18 completed-HTML cases using the local
+`webcappi-test-browser:156.0.8078.47-amd64` Chromium image with networking disabled.
+Both logical orientations verified computed 40/48/64/80 px fixed sizes,
+automatic 64-to-40 px shrinking when omitted, horizontal ellipsis, missing/stale
+values and readiness failure when fixed-size content cannot fit vertically.
+This is geometry evidence, not screenshot or physical-display acceptance.
+Native arm64, live Prometheus, Kubernetes and physical displays were not tested
+for this change; no release or deployment was performed.
+
 ## 2026-11-07: Prometheus 0.1.0 publication
 
 [Prometheus 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/prometheus/v0.1.0)
