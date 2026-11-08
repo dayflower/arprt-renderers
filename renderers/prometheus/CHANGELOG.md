@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-11-08)
 
 - Add fixed `small`/`medium`/`large`/`xlarge` sizes (40/48/64/80 CSS px) to
   value panels, preserving automatic 64-to-40 px shrinking when size is omitted.
