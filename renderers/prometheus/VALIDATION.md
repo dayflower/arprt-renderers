@@ -277,3 +277,40 @@ webcappi capture, actual API response normalization, live Prometheus, Kubernetes
 Job/PVC collection, atomic output replacement, or physical gray4/spectra6 display
 acceptance has been performed for this module. No cluster or deployment changes
 were made.
+
+## 2026-11-08 safe-area source and browser checks
+
+Repository-wide `make check` and this renderer's `container-check` passed.
+The latter exercised the final Linux amd64 production image with network none,
+UID/GID 1000, read-only root, dropped capabilities, and only output storage writable.
+
+`TestBrowserSafeArea` passed 8 synthetic captures through a local
+`webcappi:font-cdp-fix` image on Linux amd64. Cases use both gray4/spectra6
+palettes, all four rotations, and logical insets top 4, bottom 8, left 12,
+right 16. The checks require successful renderer readiness, visible
+content, white pixels outside the safe area, and unchanged 800 × 480 physical
+PNG dimensions with the expected clockwise rotation.
+
+Reduced plot widths and resulting query steps are covered by offline tests.
+Zero insets preserve the serialized Context identity used by snapshots.
+A separate browser probe confirmed that a 1 × 1 content rectangle reports
+layout overflow instead of successful readiness.
+
+The local browser used `sandbox: false` because this host does not provide
+Chromium's required user namespaces. This setting was confined to the temporary
+capture service; renderer Job restrictions were unchanged. These synthetic
+checks do not establish native arm64 execution, live-source compatibility,
+Kubernetes integration with ARPRT v0.8.0, overlay avoidance, or physical-display
+readability. No renderer release or cluster update was performed.
+
+## 2026-11-08 partial-bucket outline removal
+
+Removed the full-height outline around an incomplete bar bucket. The date/hour
+label's `*` and the `* partial` key remain; bucket selection, query intervals and
+bar geometry are unchanged. Earlier outline observations above describe the
+previous appearance. Existing display tests now require the partial label and
+key while rejecting the outline.
+
+Repository-wide `make check` and Prometheus `container-check` passed against the
+updated Linux amd64 production image under the existing Job restrictions.
+No new arm64, Kubernetes or physical-display acceptance was performed.

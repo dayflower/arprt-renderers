@@ -325,6 +325,8 @@ func checkCLI(t *testing.T, binary string) {
 		t.Fatal(err)
 	}
 	var failed atomic.Bool
+	var expectInsets atomic.Bool
+	expectInsets.Store(true)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/feed" {
 			w.Write(fixture(t, "rss2.xml"))
@@ -341,6 +343,9 @@ func checkCLI(t *testing.T, binary string) {
 			t.Error("Bearer token missing")
 		}
 		body, _ := io.ReadAll(r.Body)
+		if expectInsets.Load() && !bytes.Contains(body, []byte("left:12px;top:4px;")) {
+			t.Error("CLI omitted safe area")
+		}
 		if !bytes.Contains(body, []byte("合成ニュース")) && !bytes.Contains(body, []byte("合成RDF")) && !bytes.Contains(body, []byte("Empty feed")) {
 			t.Error("HTML does not include feed title")
 		}
@@ -363,7 +368,7 @@ func checkCLI(t *testing.T, binary string) {
 	}
 	for _, palette := range []string{"gray4", "spectra6"} {
 		for _, r := range []int{0, 90, 180, 270} {
-			if err := os.WriteFile(contextPath, contextBytes(r, palette), 0o644); err != nil {
+			if err := os.WriteFile(contextPath, insetContextBytes(r, palette), 0o644); err != nil {
 				t.Fatal(err)
 			}
 			args := []string{"--context", contextPath, "--output", output, "--input", "fixtures/rss2.xml", "--webcappi-url", server.URL, "--webcappi-token-file", token}
@@ -393,6 +398,8 @@ func checkCLI(t *testing.T, binary string) {
 			}
 		}
 	}
+	// Mounted default Contexts deliberately have no safe-area extension.
+	expectInsets.Store(false)
 	if binary != "" {
 		// The checker mounts the Context at the controller's default read-only path.
 		args := []string{"--input", "fixtures/rss2.xml", "--webcappi-url", server.URL, "--webcappi-token-file", token}

@@ -28,10 +28,11 @@ const htmlLimit = 1 << 20
 type renderContext struct {
 	Version string `json:"version"`
 	Target  struct {
-		Width    int             `json:"width"`
-		Height   int             `json:"height"`
-		Palette  string          `json:"palette"`
-		Rotation json.RawMessage `json:"rotation"`
+		Width          int             `json:"width"`
+		Height         int             `json:"height"`
+		Palette        string          `json:"palette"`
+		Rotation       json.RawMessage `json:"rotation"`
+		SafeAreaInsets safeAreaInsets  `json:"safeAreaInsets,omitzero"`
 	} `json:"renderTarget"`
 	Device struct {
 		Name string `json:"name"`
@@ -57,6 +58,9 @@ func parseContext(data []byte) (renderContext, error) {
 	}
 	if r := c.rotation; r != 0 && r != 90 && r != 180 && r != 270 {
 		return c, errors.New("rotation must be 0, 90, 180 or 270")
+	}
+	if err := c.validateSafeArea(); err != nil {
+		return c, err
 	}
 	return c, nil
 }

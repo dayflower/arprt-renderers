@@ -95,6 +95,9 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 		loadImages(ctx, imageClient, &f, *maxItems)
 	}
 	body, err := renderHTML(f, *title, *maxItems, *summary, location)
+	if err == nil {
+		body, err = target.layoutHTML(body)
+	}
 	if err != nil {
 		return err
 	}

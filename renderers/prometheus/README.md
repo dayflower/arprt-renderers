@@ -23,6 +23,40 @@ for the exact source revision and separate acceptance limits.
 The module pins Go 1.27.3 and uses only the standard library, including embedded
 IANA tzdata. It has no shared renderer SDK or runtime dependency installation.
 
+## Safe area
+
+This renderer supports the optional `renderTarget.safeAreaInsets` extension from
+[ARPRT v0.8.0](https://github.com/dayflower/arprt/blob/v0.8.0/notes/PROTOCOL.md#safe-area)
+while retaining Render Context v1. Omitted objects/edges mean zero. Insets must
+be integers from 0 through 4095 and leave positive logical width and height;
+invalid values fail before acquisition/capture. Existing unknown Context fields
+remain ignored.
+
+Insets follow the upright logical viewing orientation, including 90/270-degree
+targets; they are not rotated a second time. Capture still uses the full logical
+viewport and the PNG remains physical 800 × 480. Existing design padding stays
+inside the safe area, and omitted/zero insets preserve the previous layout.
+Safe area does not reserve space for controller overlays.
+
+The dashboard grid uses the inset rectangle. Plot-width estimates and query
+sampling use its reduced width too. Fixed-pixel grids that no longer fit fail
+the existing browser geometry checks; automatic font/image scaling is not added.
+
+The opt-in `TestBrowserSafeArea` test captures synthetic content with asymmetric
+insets (`top: 4`, `bottom: 8`, `left: 12`, `right: 16`) at all four rotations and
+both palettes, checks white pixels outside the content rectangle, and verifies
+physical output dimensions/rotation. Run it from this renderer's directory:
+
+```sh
+SAFE_AREA_WEBCAPPI=http://127.0.0.1:8080 \
+SAFE_AREA_LAYOUT_DIR=/tmp/safe-area-layout \
+go test -run '^TestBrowserSafeArea$' -v .
+```
+
+Ordinary source/container checks remain offline; the browser test requires a
+separately operated webcappi and is skipped by default. Source/browser checks
+are not Kubernetes or physical-display acceptance.
+
 ## Configuration
 
 See [the synthetic example](fixtures/config.json) and
@@ -400,8 +434,8 @@ are shifted vertically to avoid collisions. Long names/axis units may be
 ellipsized; use short legends and units for a small display. X ticks use local
 hour/day boundaries and show the timezone/offset; colliding tick labels are
 omitted without dropping data. Hour-bucket labels retain UTC offsets. A partial
-bucket has an explicit `*` label, a full-height black outline and a `* partial`
-key. Its final physical-display treatment is still an operator acceptance item.
+bucket has an explicit `*` label and a `* partial` key, without a surrounding
+outline. Its final physical-display treatment is still an operator acceptance item.
 
 | Logical style | gray4 | spectra6 |
 | --- | --- | --- |
@@ -544,7 +578,7 @@ Record each scope independently in [VALIDATION.md](VALIDATION.md):
   successful image survives without temporary-file leaks.
 - On gray4 and spectra6 hardware, check text/axes, eight-series distinctions,
   stale/missing data, signed stacks and rotation/overlays. Decide whether the
-  provisional `* partial` label and outlined current bucket are acceptable.
+  provisional `* partial` label is acceptable.
 - Before claiming arm64 support was executed, obtain passing native arm64 CI;
   a cross-build, pull or workflow definition alone does not establish execution.
 

@@ -10,6 +10,40 @@ TRMNL. [RSS 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss
 is publicly available for Linux amd64 and arm64 as
 `ghcr.io/dayflower/arprt-renderer-rss:0.1.0`.
 
+## Safe area
+
+This renderer supports the optional `renderTarget.safeAreaInsets` extension from
+[ARPRT v0.8.0](https://github.com/dayflower/arprt/blob/v0.8.0/notes/PROTOCOL.md#safe-area)
+while retaining Render Context v1. Omitted objects/edges mean zero. Insets must
+be integers from 0 through 4095 and leave positive logical width and height;
+invalid values fail before acquisition/capture. Existing unknown Context fields
+remain ignored.
+
+Insets follow the upright logical viewing orientation, including 90/270-degree
+targets; they are not rotated a second time. Capture still uses the full logical
+viewport and the PNG remains physical 800 × 480. Existing design padding stays
+inside the safe area, and omitted/zero insets preserve the previous layout.
+Safe area does not reserve space for controller overlays.
+
+The feed heading, articles and thumbnails use the inset rectangle. Existing
+article fitting measures that rectangle and removes trailing articles, then
+optional details, as needed. It does not reduce text size.
+
+The opt-in `TestBrowserSafeArea` test captures synthetic content with asymmetric
+insets (`top: 4`, `bottom: 8`, `left: 12`, `right: 16`) at all four rotations and
+both palettes, checks white pixels outside the content rectangle, and verifies
+physical output dimensions/rotation. Run it from this renderer's directory:
+
+```sh
+SAFE_AREA_WEBCAPPI=http://127.0.0.1:8080 \
+SAFE_AREA_LAYOUT_DIR=/tmp/safe-area-layout \
+go test -run '^TestBrowserSafeArea$' -v .
+```
+
+Ordinary source/container checks remain offline; the browser test requires a
+separately operated webcappi and is skipped by default. Source/browser checks
+are not Kubernetes or physical-display acceptance.
+
 ## Supported input and limits
 
 RSS 2.0 and RSS 1.0/RDF are supported. Atom and XML DTDs are rejected. XML uses

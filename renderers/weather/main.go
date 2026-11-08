@@ -98,6 +98,9 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	view.LocationName = *locationName
 	view.Palette = target.Target.Palette
 	body, err := renderHTML(view)
+	if err == nil {
+		body, err = target.layoutHTML(body)
+	}
 	if err != nil {
 		return err
 	}

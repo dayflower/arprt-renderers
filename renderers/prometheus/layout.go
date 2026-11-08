@@ -107,7 +107,7 @@ func portrait(g Grid) Grid {
 // groups use a single sample interval, avoiding guesses about text measurement.
 // The browser layout uses min-width:0 and a fixed 120 px wrap basis.
 func PlotWidths(c Config, ctx Context) map[string]int {
-	w, _ := ctx.LogicalSize()
+	w, _ := ctx.contentSize()
 	g := c.Layout.Landscape
 	if ctx.Rotation == 90 || ctx.Rotation == 270 {
 		g = *c.Layout.Portrait
