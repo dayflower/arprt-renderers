@@ -1,5 +1,11 @@
 # Picsum changelog
 
+## Unreleased
+
+- Replace `disintegration/imaging` with `nao1215/imaging` v1.0.12, including
+  malformed-palette handling, while retaining EXIF orientation, Lanczos fitting
+  and output rotation.
+
 ## 0.2.0
 
 - Replace the Python/Pillow runtime with a static Go binary in a minimal

@@ -16,7 +16,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/disintegration/imaging"
+	"github.com/nao1215/imaging"
 	_ "golang.org/x/image/webp"
 )
 
