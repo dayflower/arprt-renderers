@@ -1,6 +1,6 @@
 # iCalendar changelog
 
-## 0.3.0 (unreleased)
+## 0.3.0 (2026-11-08)
 
 - Respect ARPRT v0.8.0 logical safe-area insets in month and agenda layouts,
   preserving design padding, full-size PNG output and zero-inset layouts.

@@ -1,6 +1,6 @@
 # Weather changelog
 
-## 0.3.0 - unreleased
+## 0.3.0 - 2026-11-08
 
 - Respect ARPRT v0.8.0 logical safe-area insets for current conditions, forecasts
   and attribution, retaining design padding and full-size PNG output.
