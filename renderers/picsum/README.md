@@ -131,6 +131,9 @@ make -C renderers/picsum container-check IMAGE=registry.example.com/arprt-render
 docker push registry.example.com/arprt-renderer-picsum:0.2.0
 ```
 
+Image decoding with EXIF orientation, Lanczos fitting and RGB rotation use
+`github.com/nao1215/imaging`; module versions are pinned in `go.mod`/`go.sum`.
+
 Builds compile a static Go binary with fixed dependencies in `go.mod`/`go.sum`;
 the Go build image is pinned by digest. The runtime uses `scratch` and contains
 the binary, HTTPS CA certificates and license notices, with no shell, Python,
