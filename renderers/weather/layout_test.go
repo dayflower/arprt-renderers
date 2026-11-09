@@ -10,6 +10,46 @@ import (
 	"time"
 )
 
+func TestForecastTemperatureLabels(t *testing.T) {
+	now := time.Date(2026, 11, 9, 12, 0, 0, 0, time.UTC)
+	for _, tc := range []struct{ unit, symbol string }{{"celsius", "°C"}, {"fahrenheit", "°F"}} {
+		t.Run(tc.unit, func(t *testing.T) {
+			v, err := buildView(encoded(t, syntheticForecast(now, "UTC", tc.symbol)), now, "", tc.unit)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, missing := range []bool{false, true} {
+				if missing {
+					v.Today.High, v.Today.Low = "—", "—"
+					v.Tomorrow.High, v.Tomorrow.Low = "—", "—"
+					for i := range v.Hours {
+						v.Hours[i].Temperature = "—"
+					}
+				}
+				body, err := renderHTML(v)
+				if err != nil {
+					t.Fatal(err)
+				}
+				html := string(body)
+				if !strings.Contains(html, `<time class="date">11/10 (Tue)</time><h2>Tomorrow</h2>`) {
+					t.Fatal("Tomorrow must follow its date")
+				}
+				want := 12
+				if missing {
+					want = 0
+				}
+				if got := strings.Count(html, `<span class="forecast-unit">`+tc.symbol+`</span>`); got != want {
+					t.Fatalf("forecast units: got %d, want %d", got, want)
+				}
+				weekly := strings.Split(html, `<section class="weekly">`)[1]
+				if strings.Contains(weekly, `class="forecast-unit"`) {
+					t.Fatal("weekly temperatures must remain bare")
+				}
+			}
+		})
+	}
+}
+
 // This opt-in test uses a real browser; ordinary tests remain offline.
 func TestBrowserLayouts(t *testing.T) {
 	endpoint := os.Getenv("WEATHER_WEBCAPPI")
