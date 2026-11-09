@@ -10,7 +10,9 @@ is publicly available for Linux amd64 and arm64 as
 `ghcr.io/dayflower/arprt-renderer-weather:0.3.0`. The immutable multi-platform
 reference is
 `ghcr.io/dayflower/arprt-renderer-weather@sha256:4a0aad0cf160b2cf5255b52809b55aa3067272a0ab333dc40c70895941552345`.
-The independent VERSION is 0.3.0, including safe-area support.
+The independent VERSION is 0.4.0, adding explicit forecast temperature units and
+a date-first Tomorrow heading. The published image reference remains 0.3.0 until
+0.4.0 publication and anonymous availability checks complete.
 The examples pin the verified public 0.3.0 image above. See the
 [changelog](CHANGELOG.md) and
 [publication evidence](VALIDATION.md#2026-11-08-weather-030-publication).
