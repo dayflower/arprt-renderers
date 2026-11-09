@@ -1,5 +1,13 @@
 # Weather changelog
 
+## 0.4.0 - 2026-11-09
+
+- Show the Tomorrow date before its heading, for example `11/10 (Tue) Tomorrow`.
+- Add Celsius/Fahrenheit units to Today/Tomorrow high and low values and each
+  hourly temperature, preserving missing values without a unit.
+- Adjust summary temperature sizing, spacing and wrapping to fit both
+  orientations, including three-digit Fahrenheit values.
+
 ## 0.3.0 - 2026-11-08
 
 - Respect ARPRT v0.8.0 logical safe-area insets for current conditions, forecasts
