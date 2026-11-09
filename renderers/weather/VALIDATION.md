@@ -340,3 +340,34 @@ Postpublication native arm64 execution was not performed. These publication
 checks add no live-source, real-browser, Kubernetes or physical-display acceptance.
 Earlier browser evidence has its own scope above. Updating the example digest
 pins does not apply resources or change existing Device assignments.
+
+## 2026-11-09 Weather 0.4.0 publication
+
+- Source revision: `ecb63b7e20a75a5660243bb0495ae302e1430a39`.
+- Release: [Weather 0.4.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.4.0).
+- Native release verification and publication: [successful workflow](https://github.com/dayflower/arprt-renderers/actions/runs/42619241712).
+- Immutable multi-platform reference:
+  `ghcr.io/dayflower/arprt-renderer-weather@sha256:c3c2d550572671ea719df5c364565e07d6fc0e01fbb4e3bdc8a5f05a76e574c7`.
+
+The release verified native Linux amd64 and arm64 builds, offline tests and
+production CLI execution under Job security restrictions, then published the
+exact tested image archives without rebuilding. The release index asset contains
+exactly linux/amd64 and linux/arm64 and matches the immutable digest above.
+
+Anonymous version-tag and index-digest pulls passed on both platforms using an
+empty Docker configuration. Explicit platform inspection verified OS/architecture
+and OCI version `0.4.0` and revision `ecb63b7e20a75a5660243bb0495ae302e1430a39` labels.
+The public amd64 index reference passed `container-check` with network none,
+UID/GID 1000, read-only root, dropped capabilities and only output storage writable.
+
+Before publication, the forecast display changes passed the existing Chromium
+layout matrix through a temporary local Playwright capture adapter on Linux amd64,
+using Arial-compatible Liberation Sans. Cases covered landscape/portrait,
+gray4/spectra6, missing values and three-digit Fahrenheit temperatures. Safe-area
+checks also passed across both palettes and all four rotations. The temporary
+browser used `--no-sandbox`; renderer Job restrictions were unchanged. This is
+synthetic browser evidence, separate from native release container verification.
+
+Postpublication native arm64 execution was not performed. These checks add no
+live-source, Kubernetes or physical-display acceptance. Updating example digest
+pins does not apply resources or change existing Device assignments.
