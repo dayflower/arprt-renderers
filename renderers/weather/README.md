@@ -113,8 +113,10 @@ zero padding. Time uses `03:00`. Date/weekday formatting is independent of futur
 translation. Labels and WMO code names are isolated in the English dictionary in `labels.go`;
 English is the only shipped language, with no locale switch. Temperature unit is
 independent of language: one decimal place, with negative zero normalized. The
-current value and section legends show °C or °F; other temperatures are bare
-numbers without a standalone degree symbol.
+current value, Today/Tomorrow high and low values, hourly temperatures and section
+legends show °C or °F. Weekly temperatures remain bare numbers. Missing forecast values
+remain `—` without a unit. The Tomorrow heading shows the date before `Tomorrow`,
+for example `11/10 (Tue) Tomorrow`.
 Wind uses one decimal place in m/s. Humidity is neither requested nor displayed.
 
 `--location-name "Example City"` adds a plain-text

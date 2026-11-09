@@ -74,16 +74,19 @@ svg.wind { width:23px; height:23px }
 .card { display:flex; flex-direction:column; gap:7px; min-width:0 }
 .card-heading { display:flex; align-items:baseline; gap:8px; white-space:nowrap }
 .card .date { font-size:17px }
-.card-body { display:grid; grid-template-columns:96px minmax(0,1fr); grid-template-rows:auto auto auto; column-gap:12px; row-gap:5px; align-items:center; width:100% }
+.card-body { display:grid; grid-template-columns:96px minmax(0,1fr); grid-template-rows:auto auto auto; column-gap:12px; row-gap:4px; align-items:center; width:100% }
 .card-body>svg { grid-column:1; grid-row:1 / 4; width:96px; height:96px }
 .condition-name { font-size:20px; overflow-wrap:normal }
-.card .range { grid-column:2; font-size:27px; white-space:nowrap }
+.card .range { grid-column:2; font-size:25px; line-height:1; display:flex; flex-wrap:wrap; align-items:baseline; gap:0 3px }
+.card .range>b,.card .range>.low { white-space:nowrap }
+.forecast-unit { font-size:.5em; font-weight:normal }
 .card .range .low { font-weight:normal }
 .card .precip { grid-column:2; font-size:17px; white-space:nowrap }
 .tomorrow .card-heading { justify-content:flex-end }
 .tomorrow .card-body { grid-template-columns:minmax(0,1fr) 96px }
 .tomorrow .card-body>svg { grid-column:2 }
 .tomorrow .condition-name,.tomorrow .range,.tomorrow .precip { grid-column:1; text-align:right }
+.tomorrow .range { justify-content:flex-end }
 .precip { font-size:17px }
 .precip { font-size:15px; white-space:nowrap }
 .low { font-weight:normal }
@@ -124,7 +127,7 @@ footer a { color:black }
  .card h1,.card h2 { font-size:20px }
  .card .date { font-size:16px }
  .card-heading { gap:8px }
- .card-body { grid-template-columns:88px minmax(0,1fr); column-gap:8px; row-gap:5px }
+ .card-body { grid-template-columns:88px minmax(0,1fr); column-gap:8px; row-gap:4px }
  .tomorrow .card-body { grid-template-columns:minmax(0,1fr) 88px }
  .card-body>svg { width:88px; height:88px }
  .condition-name { font-size:17px }
@@ -158,10 +161,10 @@ footer a { color:black }
 .weather-icon[data-kind="snowflake"],.weather-icon[data-kind="regex"] { color:var(--ice) }
 {{end}}
 </style></head><body data-palette="{{.Palette}}"><main>
-<section class="summary"><div class="card"><div class="card-heading"><h1>{{.Labels.Today}}</h1><time class="date">{{.Today.Date}}</time></div><div class="card-body">{{template "icon" .Today.Icon}}<span class="condition-name">{{.Today.Name}}</span><div class="range"><b>{{.Today.High}}</b> / <span class="low">{{.Today.Low}}</span></div><div class="precip" title="{{.Labels.DailyPrecipitation}}">{{.Labels.Precipitation}} {{.Today.Precipitation}}</div></div></div>
+<section class="summary"><div class="card"><div class="card-heading"><h1>{{.Labels.Today}}</h1><time class="date">{{.Today.Date}}</time></div><div class="card-body">{{template "icon" .Today.Icon}}<span class="condition-name">{{.Today.Name}}</span><div class="range"><b>{{.Today.High}}{{if ne .Today.High "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</b><span>/</span><span class="low">{{.Today.Low}}{{if ne .Today.Low "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</span></div><div class="precip" title="{{.Labels.DailyPrecipitation}}">{{.Labels.Precipitation}} {{.Today.Precipitation}}</div></div></div>
 <div class="now"><div class="details"><h2>{{.Labels.Now}}</h2><div class="stamp">{{.CurrentTime}}</div>{{if .LocationName}}<div class="location" title="{{.LocationName}}">{{.LocationName}}</div>{{end}}</div><div class="value">{{.Current}}<span class="unit"> {{.Unit}}</span></div></div>
-<div class="card tomorrow"><div class="card-heading"><h2>{{.Labels.Tomorrow}}</h2><time class="date">{{.Tomorrow.Date}}</time></div><div class="card-body">{{template "icon" .Tomorrow.Icon}}<span class="condition-name">{{.Tomorrow.Name}}</span><div class="range"><b>{{.Tomorrow.High}}</b> / <span class="low">{{.Tomorrow.Low}}</span></div><div class="precip" title="{{.Labels.DailyPrecipitation}}">{{.Labels.Precipitation}} {{.Tomorrow.Precipitation}}</div></div></div></section>
-<section class="hourly"><h2>{{.Labels.Hourly}} <span>{{.Labels.Today}} · {{.Unit}} · {{.Labels.Wind}} m/s · {{.Labels.Precipitation}} %</span></h2><div class="hours">{{range .Hours}}<div class="hour"><time>{{.Time}}</time>{{template "icon" .Icon}}<div class="temperature">{{.Temperature}}</div><div class="precip">{{.Precipitation}}</div><div class="windrow">{{template "wind" .Direction}}<span>{{.Wind}}</span></div></div>{{end}}</div></section>
+<div class="card tomorrow"><div class="card-heading"><time class="date">{{.Tomorrow.Date}}</time><h2>{{.Labels.Tomorrow}}</h2></div><div class="card-body">{{template "icon" .Tomorrow.Icon}}<span class="condition-name">{{.Tomorrow.Name}}</span><div class="range"><b>{{.Tomorrow.High}}{{if ne .Tomorrow.High "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</b><span>/</span><span class="low">{{.Tomorrow.Low}}{{if ne .Tomorrow.Low "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</span></div><div class="precip" title="{{.Labels.DailyPrecipitation}}">{{.Labels.Precipitation}} {{.Tomorrow.Precipitation}}</div></div></div></section>
+<section class="hourly"><h2>{{.Labels.Hourly}} <span>{{.Labels.Today}} · {{.Unit}} · {{.Labels.Wind}} m/s · {{.Labels.Precipitation}} %</span></h2><div class="hours">{{range .Hours}}<div class="hour"><time>{{.Time}}</time>{{template "icon" .Icon}}<div class="temperature">{{.Temperature}}{{if ne .Temperature "—"}}<span class="forecast-unit">{{$.Unit}}</span>{{end}}</div><div class="precip">{{.Precipitation}}</div><div class="windrow">{{template "wind" .Direction}}<span>{{.Wind}}</span></div></div>{{end}}</div></section>
 <section class="weekly"><h2>{{.Labels.Weekly}} <span>{{.Labels.HighLow}} · {{.Unit}} · {{.Labels.Precipitation}} %</span></h2><div class="days">{{range .Days}}<div class="day"><time>{{.Date}}</time>{{template "icon" .Icon}}<div class="precip" title="{{$.Labels.DailyPrecipitation}}">{{.Precipitation}}</div><div class="range"><b>{{.High}}</b><span class="low">{{.Low}}</span></div></div>{{end}}</div></section>
 <footer><span>{{.Labels.Updated}} {{.Updated}}</span><span>{{if .Model}}<span class="model">{{.Labels.Model}}: {{.Model}} · </span>{{end}}<a href="https://open-meteo.com/">{{.Labels.Attribution}}</a></span></footer>
 </main><script>(async()=>{await document.fonts.ready;for(const svg of document.querySelectorAll('svg.weather-icon')){const art=svg.querySelector('.weather-art'),b=art.getBBox();art.setAttribute('transform','translate('+(12-b.x-b.width/2)+' '+(12-b.y-b.height/2)+')')}await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);const main=document.querySelector('main'),bounds=main.getBoundingClientRect();if(main.scrollHeight>main.clientHeight+1||[...main.querySelectorAll('main>*,.now h2,.now .value,.now .stamp,.now .location,.card-heading,.card-body>*,.hour>*,.day>*')].some(el=>{const r=el.getBoundingClientRect();return r.left<bounds.left-1||r.right>bounds.right+1||r.top<bounds.top-1||r.bottom>bounds.bottom+1})){document.body.dataset.layoutError='overflow';return}document.body.id='weather-ready'})();</script></body></html>
