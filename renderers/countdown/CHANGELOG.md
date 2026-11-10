@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-11-11)
 
 - Add a standalone Countdown Job renderer with optional Unicode titles,
   YYYY-MM-DD dates, timezone-aware calendar-day counting and explicit target-day

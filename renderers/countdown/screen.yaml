@@ -1,4 +1,4 @@
-# Synthetic configuration; build/load the local image before using this example.
+# Synthetic configuration; pins the verified public Countdown 0.1.0 index.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -26,8 +26,8 @@ spec:
           configMap:
             name: countdown-config-v1
       renderer:
-        # Local development image; no public Countdown image is published yet.
-        image: arprt-renderer-countdown:dev
+        # Countdown 0.1.0; verified public Linux amd64/arm64 multi-platform image.
+        image: ghcr.io/dayflower/arprt-renderer-countdown@sha256:a6a227dabbc3693da6c37e07c5a1f4a0a303aef274662bb3bf8ee350f54e48c2
         args:
           - --config
           - /etc/countdown/config.json

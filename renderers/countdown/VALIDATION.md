@@ -59,3 +59,46 @@ defines a separate native arm64 runner; its configuration is not evidence of a
 passing run. Real webcappi deployment/authentication, Kubernetes Job scheduling,
 ConfigMap/PVC integration, controller delivery/overlays, final palette conversion
 and readability on gray4/Spectra 6 physical displays remain unverified.
+
+## 2026-11-11 Countdown 0.1.0 publication
+
+[Countdown 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/countdown/v0.1.0)
+was published from source revision `70d30c97c685d38b8a9ffc627a322b25e1730bcf`.
+The exact main-push [CI run](https://github.com/dayflower/arprt-renderers/actions/runs/42910448556)
+and independent [release workflow](https://github.com/dayflower/arprt-renderers/actions/runs/42923914079)
+passed. Release verification built and executed both Linux amd64 and arm64
+natively under the Job restrictions before publishing those exact tested images
+without rebuilding.
+
+The public image tag is `ghcr.io/dayflower/arprt-renderer-countdown:0.1.0`.
+The immutable multi-platform reference is:
+
+```text
+ghcr.io/dayflower/arprt-renderer-countdown@sha256:a6a227dabbc3693da6c37e07c5a1f4a0a303aef274662bb3bf8ee350f54e48c2
+```
+
+Anonymous version-tag and index-digest pulls passed for both platforms using a
+fresh empty Docker configuration. Anonymous registry requests also verified the
+index/manifest/config SHA-256 digests, exactly one image for each platform and
+OCI version/source/revision labels. These pulls establish public availability;
+visibility was verified by anonymous access rather than a package-settings API
+query.
+
+Published config digests match those computed directly from the exact image
+archives tested on the release runners:
+
+| Platform | Manifest digest | Config digest |
+| --- | --- | --- |
+| linux/amd64 | `sha256:06f8400b16d1a5815039deb99328bd0ad0b675a935ba47cc5f399fc834f88d42` | `sha256:af875efbab5fd352db55b413138bb262e1e3d07383b4ec27f1174ab796b2db5b` |
+| linux/arm64 | `sha256:357a36b510d2dfea96642436de90d6dc02fd89c885004e76db4f52615ad32bd0` | `sha256:35acd1d091daf9b4fa29b4d6c1d4f90a125afc31291f1c63b52432343809ee90` |
+
+The public amd64 index digest passed `make -C renderers/countdown container-check
+IMAGE=<immutable-reference>` on the local Linux amd64 host after publication,
+including shipped-CLI execution, default/custom paths, palettes, rotations,
+SIGTERM and previous-output preservation. Postpublication native arm64 execution
+was not performed; anonymous arm64 pulls do not substitute for it.
+
+The Screen example now pins the verified public index. No new webcappi browser,
+Kubernetes/PVC/controller or physical-display acceptance was performed during
+publication. The earlier local Chromium adapter evidence remains separate from
+real webcappi integration, and no deployment has been made.
