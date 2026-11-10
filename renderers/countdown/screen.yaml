@@ -1,0 +1,44 @@
+# Synthetic configuration; build/load the local image before using this example.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: countdown-config-v1
+data:
+  config.json: |
+    {
+      "version": 1,
+      "targetDate": "2027-01-01",
+      "timezone": "Asia/Tokyo"
+    }
+---
+apiVersion: arprt.dayflower.github.io/v1alpha1
+kind: ArprtScreen
+metadata:
+  name: countdown
+spec:
+  refreshInterval: 30m
+  imageProcessing:
+    dithering: none
+  source:
+    job:
+      volumes:
+        - name: config
+          configMap:
+            name: countdown-config-v1
+      renderer:
+        # Local development image; no public Countdown image is published yet.
+        image: arprt-renderer-countdown:dev
+        args:
+          - --config
+          - /etc/countdown/config.json
+          - --webcappi-url
+          - https://webcappi.example.com
+        volumeMounts:
+          - {name: config, mountPath: /etc/countdown, readOnly: true}
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 192Mi

@@ -13,6 +13,7 @@ Release, rather than in this procedure.
 | `ical` | `renderers/ical/` | `ical/vMAJOR.MINOR.PATCH` | `release-ical.yaml` | `ghcr.io/dayflower/arprt-renderer-ical` |
 | `weather` | `renderers/weather/` | `weather/vMAJOR.MINOR.PATCH` | `release-weather.yaml` | `ghcr.io/dayflower/arprt-renderer-weather` |
 | `prometheus` | `renderers/prometheus/` | `prometheus/vMAJOR.MINOR.PATCH` | `release-prometheus.yaml` | `ghcr.io/dayflower/arprt-renderer-prometheus` |
+| `countdown` | `renderers/countdown/` | `countdown/vMAJOR.MINOR.PATCH` | `release-countdown.yaml` | `ghcr.io/dayflower/arprt-renderer-countdown` |
 
 ## Initial setup
 

@@ -13,6 +13,7 @@ nor these renderers are affiliated with or endorsed by TRMNL.
 | [Picsum](renderers/picsum/README.md) | Job | Display photographs | Lorem Picsum, or none with local images |
 | [Weather](renderers/weather/README.md) | Job | Display current weather and forecasts | Open-Meteo, webcappi for capture |
 | [Prometheus](renderers/prometheus/README.md) | Job | Configurable metric dashboards | Prometheus, webcappi for capture |
+| [Countdown](renderers/countdown/README.md) | Job | Display days until a configured date | webcappi for capture |
 
 See each renderer's README for setup, configuration, images, releases and
 validation scope.

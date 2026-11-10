@@ -361,6 +361,49 @@ class PrometheusTests(unittest.TestCase):
                 service.snapshot("prometheus", "0.3.0")
 
 
+class CountdownTests(unittest.TestCase):
+    def test_registered_check_and_publication_evidence(self):
+        self.assertIn("countdown", cli.RENDERERS)
+        args = cli.parser().parse_args(["check", "countdown", "--revision", SHA])
+        self.assertEqual(args.renderer, "countdown")
+        service = FakeRelease()
+        service.jobs = [
+            dict(job, name=job["name"].replace("weather", "countdown"))
+            for job in service.jobs
+        ]
+        result = service.check("countdown", SHA)
+        self.assertEqual(result["tag"], "countdown/v0.3.0")
+        self.assertIn(
+            ("git", "show", SHA + ":renderers/countdown/VERSION"), service.commands
+        )
+        for index in (1, 2, 3):
+            with self.subTest(job=index):
+                service.jobs[index]["conclusion"] = "skipped"
+                with self.assertRaises(cli.Problem):
+                    service.check("countdown", SHA)
+                service.jobs[index]["conclusion"] = "success"
+        tag = "countdown/v0.3.0"
+        with patch.dict(globals(), TAG=tag):
+            service.refs[tag] = SHA
+            service.workflow_runs = [run_record()]
+            service.release = release_record()
+            service.release["body"] = service.release["body"].replace(
+                "weather", "countdown"
+            )
+            service.release["assets"][0]["name"] = "countdown-index.json"
+            original_api = service.api
+            service.api = lambda path, optional=False: original_api(
+                path.replace("release-countdown.yaml", "release-weather.yaml"),
+                optional,
+            )
+            self.assertEqual(
+                service.snapshot("countdown", "0.3.0")["state"], "published"
+            )
+            service.release["assets"][0]["name"] = "weather-index.json"
+            with self.assertRaises(cli.Problem):
+                service.snapshot("countdown", "0.3.0")
+
+
 class PublishTests(unittest.TestCase):
     def publish(self, service, **kwargs):
         with contextlib.redirect_stderr(io.StringIO()):

@@ -15,7 +15,7 @@ from pathlib import Path
 from urllib.parse import quote, urlencode
 
 REPOSITORY = "dayflower/arprt-renderers"
-RENDERERS = ("picsum", "rss", "ical", "weather", "prometheus")
+RENDERERS = ("picsum", "rss", "ical", "weather", "prometheus", "countdown")
 ROOT = Path(__file__).resolve().parents[1]
 VERSION_RE = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)")
 SHA_RE = re.compile(r"[0-9a-f]{40}")

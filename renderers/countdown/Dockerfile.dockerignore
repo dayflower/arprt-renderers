@@ -1,0 +1,8 @@
+**
+!LICENSE
+!renderers/
+!renderers/countdown/
+!renderers/countdown/Dockerfile
+!renderers/countdown/go.mod
+!renderers/countdown/*.go
+!renderers/countdown/THIRD_PARTY_NOTICES.md

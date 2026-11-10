@@ -279,6 +279,29 @@ production image; `container-check` runs a separate static test executable again
 that exact image under the Job security restrictions. See the renderer README
 for synthetic energy snapshots and opt-in completed-HTML browser checks.
 
+## Countdown development
+
+Countdown owns an independent standard-library-only Go module, configuration
+schema, HTML layout, fixtures, image and release tooling under
+`renderers/countdown/`. Its module pins Go 1.27.3 independently. Root setup/check
+discovers its Makefile. Normal CI calls `check-countdown.yaml`; independent
+Countdown releases call only that renderer's verification workflow and publish
+the exact tested native amd64/arm64 images without rebuilding.
+
+```sh
+make -C renderers/countdown setup
+make check
+make -C renderers/countdown image
+make -C renderers/countdown container-check
+```
+
+Ordinary tests are synthetic and offline. They cover date/timezone semantics,
+input validation, capture, output preservation, cancellation and the shipped CLI
+under Job restrictions. Real-browser checks are opt-in. See the renderer
+[README](../renderers/countdown/README.md) for use and
+[validation record](../renderers/countdown/VALIDATION.md) for architecture,
+browser, cluster and physical-display limits. No public image is available yet.
+
 ## Common release coordinator
 
 `tools/release.py` is a repository-level operator tool for bump/check/publish/status,

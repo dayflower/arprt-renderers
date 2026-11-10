@@ -38,3 +38,6 @@ jobs:
 
   prometheus:
     uses: ./.github/workflows/check-prometheus.yaml
+
+  countdown:
+    uses: ./.github/workflows/check-countdown.yaml

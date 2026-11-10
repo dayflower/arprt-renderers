@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ARPRT Countdown configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "targetDate"],
+  "properties": {
+    "version": {"type": "integer", "const": 1},
+    "targetDate": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "Valid Gregorian date in years 0001 through 9999; validated at runtime."
+    },
+    "timezone": {
+      "type": "string",
+      "minLength": 1,
+      "default": "Asia/Tokyo",
+      "description": "IANA timezone identifier or UTC; Local and unknown zones are rejected at runtime."
+    },
+    "title": {
+      "type": "string",
+      "description": "Trimmed at runtime, then limited to 128 Unicode code points; control characters are rejected. Empty means no title."
+    }
+  }
+}
