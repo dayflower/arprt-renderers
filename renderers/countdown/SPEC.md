@@ -4,7 +4,7 @@ Requirements and specification for the Countdown Job renderer.
 ARPRT is an independent, unofficial Kubernetes controller for TRMNL BYOS,
 with no affiliation with or endorsement by TRMNL.
 
-Status: implemented for the unreleased 0.1.0 version. Confirmed requirements
+Status: implemented and published as version 0.1.0. Confirmed requirements
 reflect the design discussion; the detailed behavior below defines the initial
 implementation. This document does not extend the ARPRT protocol.
 
@@ -224,5 +224,6 @@ example, VERSION, changelog and validation record live under this directory.
 Renderer verification/release workflows, normal CI integration and release
 coordinator registration follow the repository guides. Releases use independent
 `countdown/vMAJOR.MINOR.PATCH` tags and
-`ghcr.io/dayflower/arprt-renderer-countdown` images. Version 0.1.0 is unreleased;
-no public image or deployment acceptance is claimed.
+`ghcr.io/dayflower/arprt-renderer-countdown` images. Version 0.1.0 is published;
+see [the validation record](VALIDATION.md) for verification evidence. Publication
+does not establish deployment or physical-display acceptance.

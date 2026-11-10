@@ -300,7 +300,8 @@ input validation, capture, output preservation, cancellation and the shipped CLI
 under Job restrictions. Real-browser checks are opt-in. See the renderer
 [README](../renderers/countdown/README.md) for use and
 [validation record](../renderers/countdown/VALIDATION.md) for architecture,
-browser, cluster and physical-display limits. No public image is available yet.
+browser, cluster and physical-display limits. Countdown 0.1.0 is published for
+Linux amd64/arm64; its renderer documents record the verified public digest.
 
 ## Common release coordinator
 

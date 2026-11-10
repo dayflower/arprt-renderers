@@ -4,8 +4,15 @@ A standalone Go Job renderer that displays calendar days until one configured
 date. ARPRT is an independent, unofficial Kubernetes controller for TRMNL BYOS,
 with no affiliation with or endorsement by TRMNL.
 
-Version [0.1.0](VERSION) is implemented but unreleased. No public image is
-available. The renderer sends self-contained HTML to a separately operated
+[Countdown 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/countdown/v0.1.0)
+is published for Linux amd64 and arm64 as `ghcr.io/dayflower/arprt-renderer-countdown:0.1.0`.
+The verified public multi-platform reference is:
+
+```text
+ghcr.io/dayflower/arprt-renderer-countdown@sha256:a6a227dabbc3693da6c37e07c5a1f4a0a303aef274662bb3bf8ee350f54e48c2
+```
+
+The renderer sends self-contained HTML to a separately operated
 webcappi, validates capture, rotates once and atomically writes an opaque RGB PNG.
 There is no target-data API, persistent state or runtime dependency installation.
 
@@ -134,5 +141,7 @@ The independent module pins Go 1.27.3 and uses only the standard library.
 Normal CI calls `check-countdown.yaml`; `countdown/vMAJOR.MINOR.PATCH` releases
 call only Countdown checks and publish the exact tested native amd64/arm64 images
 without rebuilding. The renderer is registered with the common release
-coordinator. The Screen example uses a local development image and synthetic
-capture endpoint; build/load the image and replace the endpoint before use.
+coordinator. The Screen example pins the verified public multi-platform digest
+and uses a synthetic capture endpoint; replace the endpoint before use. See the
+[publication record](VALIDATION.md#2026-11-11-countdown-010-publication) for
+verification evidence and limits.
