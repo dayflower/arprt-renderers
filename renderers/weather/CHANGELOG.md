@@ -1,5 +1,11 @@
 # Weather changelog
 
+## 0.5.0 - 2026-11-12
+
+- Start the eight three-hour forecast slots at the slot containing the current
+  time in the forecast location timezone, continuing into tomorrow.
+- Preserve unavailable slots when next-day forecast data are missing.
+
 ## 0.4.0 - 2026-11-09
 
 - Show the Tomorrow date before its heading, for example `11/10 (Tue) Tomorrow`.
