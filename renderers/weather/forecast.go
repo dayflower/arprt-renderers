@@ -240,11 +240,14 @@ func buildView(data []byte, now time.Time, model, unit string) (dashboard, error
 	}
 	v.Today = v.Days[0]
 	v.Tomorrow = v.Days[1]
-	for hour := 0; hour < 24; hour += 3 {
+	for slot := 0; slot < 8; slot++ {
+		hour := local.Hour()/3*3 + slot*3
+		date := today.AddDate(0, 0, hour/24)
+		hour %= 24
 		h := hourView{Time: fmt.Sprintf("%02d:00", hour), Temperature: "—", Wind: "—", Precipitation: "—", Icon: weatherIcon(nil), Direction: windIcon{Missing: true}}
 		for i, stamp := range hourly.Times {
 			at := time.Unix(stamp, 0).In(location)
-			if at.Format("2006-01-02") != today.Format("2006-01-02") || at.Hour() != hour || at.Minute() != 0 {
+			if at.Format("2006-01-02") != date.Format("2006-01-02") || at.Hour() != hour || at.Minute() != 0 {
 				continue
 			}
 			code, temp, speed, direction := hourly.value("weather_code", i), hourly.value("temperature_2m", i), hourly.value("wind_speed_10m", i), hourly.value("wind_direction_10m", i)

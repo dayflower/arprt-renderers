@@ -42,7 +42,7 @@ func syntheticForecast(now time.Time, zone, unit string) map[string]any {
 	for _, key := range hourlyFields {
 		hourly[key] = []any{}
 	}
-	for at := start; at.Before(start.AddDate(0, 0, 1)); at = at.Add(time.Hour) {
+	for at := start; at.Before(start.AddDate(0, 0, 2)); at = at.Add(time.Hour) {
 		hourly["time"] = append(hourly["time"].([]int64), at.Unix())
 		for _, key := range hourlyFields {
 			value := map[string]any{"weather_code": 2, "temperature_2m": 18.5, "wind_speed_10m": 2.3, "wind_direction_10m": 0, "precipitation_probability": at.Hour() * 4}[key]
@@ -93,14 +93,65 @@ func TestForecastLocalDaysAndDST(t *testing.T) {
 				}
 			}
 			for i, h := range v.Hours {
-				want := fmt.Sprintf("%.1f", float64(i*3))
-				if h.Temperature != want || h.Time != fmt.Sprintf("%02d:00", i*3) {
+				loc, _ := time.LoadLocation(tc.zone)
+				hour := (now.In(loc).Hour()/3*3 + i*3) % 24
+				want := fmt.Sprintf("%.1f", float64(hour))
+				if h.Temperature != want || h.Time != fmt.Sprintf("%02d:00", hour) {
 					t.Fatal(h)
 				}
 			}
 		})
 	}
 }
+func TestHourlyRollingWindow(t *testing.T) {
+	for _, tc := range []struct {
+		name, zone, instant    string
+		firstHour, nextDaySlot int
+	}{
+		{"midnight", "UTC", "2026-11-05T00:00:00Z", 0, 8},
+		{"before boundary", "UTC", "2026-11-05T14:59:59Z", 12, 4},
+		{"at boundary", "UTC", "2026-11-05T15:00:00Z", 15, 3},
+		{"month rollover", "UTC", "2026-11-30T23:59:59Z", 21, 1},
+		{"year rollover", "Asia/Tokyo", "2026-12-31T14:30:00Z", 21, 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			now, _ := time.Parse(time.RFC3339, tc.instant)
+			f := syntheticForecast(now, tc.zone, "°C")
+			hourly := f["hourly"].(map[string]any)
+			for i := range hourly["temperature_2m"].([]any) {
+				hourly["temperature_2m"].([]any)[i] = i
+			}
+			v, err := buildView(encoded(t, f), now, "", "celsius")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(v.Hours) != 8 {
+				t.Fatal(v.Hours)
+			}
+			for i, h := range v.Hours {
+				hour := tc.firstHour + i*3
+				if h.Time != fmt.Sprintf("%02d:00", hour%24) || h.Temperature != fmt.Sprintf("%.1f", float64(hour)) {
+					t.Fatalf("slot %d: %+v", i, h)
+				}
+			}
+			// Missing tomorrow data must not reuse today's values.
+			for _, key := range hourlyFields {
+				hourly[key] = hourly[key].([]any)[:24]
+			}
+			hourly["time"] = hourly["time"].([]int64)[:24]
+			v, err = buildView(encoded(t, f), now, "", "celsius")
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, h := range v.Hours[tc.nextDaySlot:] {
+				if h.Temperature != "—" || h.Precipitation != "—" || h.Wind != "—" {
+					t.Fatal("reused past forecast", h)
+				}
+			}
+		})
+	}
+}
+
 func TestForecastMissingAndMalformed(t *testing.T) {
 	now := time.Date(2026, 11, 5, 12, 0, 0, 0, time.UTC)
 	for _, name := range []string{"short", "missing", "unknown", "null-array"} {
@@ -292,7 +343,7 @@ func TestPrecipitationProbability(t *testing.T) {
 		t.Fatal("daily maximum", v.Days)
 	}
 	for i, h := range v.Hours {
-		if h.Precipitation != fmt.Sprintf("%d%%", i*12) {
+		if h.Precipitation != fmt.Sprintf("%d%%", ((12+i*3)%24)*4) {
 			t.Fatal("hourly selection", h)
 		}
 	}
@@ -329,7 +380,11 @@ func TestPrecipitationProbability(t *testing.T) {
 			case "null-array":
 				m[key] = nil
 			case "null-value":
-				m[key].([]any)[0] = nil
+				index := 0
+				if section == "hourly" {
+					index = now.Hour() / 3 * 3
+				}
+				m[key].([]any)[index] = nil
 			}
 			v, e := buildView(encoded(t, f), now, "jma_msm", "celsius")
 			if e != nil {
