@@ -5,16 +5,16 @@ with embedded weather and wind SVGs, captures it through a separately operated
 webcappi service, and atomically writes an opaque RGB PNG. ARPRT is independent
 and unofficial, with no affiliation with or endorsement by TRMNL.
 
-[Weather 0.4.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.4.0)
+[Weather 0.5.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.5.0)
 is publicly available for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-weather:0.4.0`. The immutable multi-platform
+`ghcr.io/dayflower/arprt-renderer-weather:0.5.0`. The immutable multi-platform
 reference is
-`ghcr.io/dayflower/arprt-renderer-weather@sha256:c3c2d550572671ea719df5c364565e07d6fc0e01fbb4e3bdc8a5f05a76e574c7`.
-The independent VERSION is 0.4.0, including safe-area support, explicit forecast
-temperature units and a date-first Tomorrow heading.
-The examples pin the verified public 0.4.0 image above. See the
+`ghcr.io/dayflower/arprt-renderer-weather@sha256:771d3381b41d29f2d706adb94a7fbaa5cce1275cef14506865fed274e22200fe`.
+The independent VERSION is 0.5.0, including hourly forecasts that start at the
+current three-hour slot and continue into tomorrow.
+The examples pin the verified public 0.5.0 image above. See the
 [changelog](CHANGELOG.md) and
-[publication evidence](VALIDATION.md#2026-11-09-weather-040-publication).
+[publication evidence](VALIDATION.md#2026-11-12-weather-050-publication).
 The local development image remains `arprt-renderer-weather:dev`.
 
 ## Safe area
@@ -195,7 +195,7 @@ contents, coordinates, response bodies, Context device data and endpoint URLs ar
 not logged. Configure Job egress for Open-Meteo, DNS and the trusted capture service.
 
 [screen.yaml](screen.yaml) pins the verified public multi-platform digest of
-Weather 0.4.0 and uses synthetic coordinates and a synthetic capture endpoint.
+Weather 0.5.0 and uses synthetic coordinates and a synthetic capture endpoint.
 Replace the capture URL before use. For local development, build/load
 `arprt-renderer-weather:dev` and replace the image reference. Refresh is managed by ARPRT, initially
 every 30 minutes; the renderer does not run a scheduler or persist a cache. For
@@ -214,7 +214,7 @@ CLI arguments. See Kubernetes documentation on
 [Secret environment variables](https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#define-container-environment-variables-using-secret-data)
 and [arguments using environment variables](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#use-environment-variables-to-define-arguments).
 
-This example pins the verified public Weather 0.4.0 multi-platform digest,
+This example pins the verified public Weather 0.5.0 multi-platform digest,
 including support for `--location-name`. Replace the synthetic capture URL.
 Create the Secret and Screen in the same controller namespace; Secret references
 cannot cross namespaces. Quote coordinate values under `stringData` as strings.

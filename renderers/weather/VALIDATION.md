@@ -371,3 +371,39 @@ synthetic browser evidence, separate from native release container verification.
 Postpublication native arm64 execution was not performed. These checks add no
 live-source, Kubernetes or physical-display acceptance. Updating example digest
 pins does not apply resources or change existing Device assignments.
+
+## 2026-11-12 Weather 0.5.0 publication
+
+- Source revision: `b81f646f686c41b88cfccb35f397112331dedfd6`.
+- Release: [Weather 0.5.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.5.0).
+- Native release verification and publication: [successful workflow](https://github.com/dayflower/arprt-renderers/actions/runs/43215007079).
+- Immutable multi-platform reference:
+  `ghcr.io/dayflower/arprt-renderer-weather@sha256:771d3381b41d29f2d706adb94a7fbaa5cce1275cef14506865fed274e22200fe`.
+
+The release verified native Linux amd64 and arm64 builds, offline tests and
+production CLI execution under Job security restrictions, then published the
+exact tested image archives without rebuilding. The release index asset contains
+exactly linux/amd64 and linux/arm64 and matches the immutable digest above.
+
+Hourly forecasts now start at the three-hour slot containing the execution time
+in the forecast location timezone and continue into tomorrow. Offline regression
+tests cover slot boundaries, local date/month/year rollovers, and missing
+next-day data. Repository-wide `make check` and local amd64 image/container
+checks passed before publication; the exact source also passed main CI.
+
+Anonymous version-tag and index-digest pulls passed on both platforms using an
+empty Docker configuration. Explicit platform inspection verified OS/architecture
+and OCI version `0.5.0`, revision `b81f646f686c41b88cfccb35f397112331dedfd6`
+and repository source labels. The public amd64 index reference passed
+`container-check` with network none, UID/GID 1000, read-only root, dropped
+capabilities and only output storage writable.
+
+| Platform | Manifest digest |
+| --- | --- |
+| linux/amd64 | `sha256:3bf4ba59e61c1ea980d16d64eea84ac9b29894bef4cb01fd66b295267fa20a9c` |
+| linux/arm64 | `sha256:346acaf0b28aabe22fb6953ea0cc20dfb8de34addeff4a1b80475a3f3b09438b` |
+
+Postpublication native arm64 execution was not performed. These checks add no
+live-source, real-browser, Kubernetes or physical-display acceptance. Earlier
+browser evidence has its own scope above. Updating example digest pins does not
+apply resources or change existing Device assignments.
