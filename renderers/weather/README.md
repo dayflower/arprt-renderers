@@ -100,8 +100,10 @@ relabeled as current forecasts. The renderer samples the execution clock once.
 - Now: model-based current temperature and its valid local time, not a station
   observation. An optional user-supplied place name appears below its local time. Missing values or samples over two hours from execution time, or
   outside today's local date, display a dash.
-- Hourly Forecast: today's 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00 and
-  21:00, including past hours. Each slot shows a weather icon, temperature, wind
+- Hourly Forecast: eight three-hour slots starting with the slot containing the
+  execution time in the forecast location timezone, continuing into tomorrow.
+  For example, 14:30 starts at 12:00, followed by 15:00, 18:00, 21:00 and
+  tomorrow's 00:00 through 09:00. Each slot shows a weather icon, temperature, wind
   direction icon, wind speed and precipitation probability.
 - Tomorrow: date, English weather name/icon and API daily high/low and maximum precipitation probability.
 - 7-Day Forecast: today through six days later, including Today and Tomorrow; each day includes
