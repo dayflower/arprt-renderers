@@ -9,8 +9,8 @@ spec:
   source:
     job:
       renderer:
-        # Weather 0.4.0; verified public Linux amd64/arm64 multi-platform image.
-        image: ghcr.io/dayflower/arprt-renderer-weather@sha256:c3c2d550572671ea719df5c364565e07d6fc0e01fbb4e3bdc8a5f05a76e574c7
+        # Weather 0.5.0; verified public Linux amd64/arm64 multi-platform image.
+        image: ghcr.io/dayflower/arprt-renderer-weather@sha256:771d3381b41d29f2d706adb94a7fbaa5cce1275cef14506865fed274e22200fe
         args:
           - --latitude
           - '35.0'
