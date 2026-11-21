@@ -17,8 +17,8 @@ spec:
   source:
     job:
       renderer:
-        # Pin the Picsum 0.2.0 multi-platform image.
-        image: ghcr.io/dayflower/arprt-renderer-picsum@sha256:3efae210201cd37cb0b730892d5ab69edd73b20cbc6e1d35f2e4a9eb8ec14f34
+        # Pin the verified public Picsum 0.2.2 multi-platform image.
+        image: ghcr.io/dayflower/arprt-renderer-picsum@sha256:2fed45dad62da82caa58f85c1fe874c1f09b2af0afec653e1e2076ab3265ee1d
         # Set to ["--palette", "bw"] for black-and-white photo output.
         args: ["--palette", "gray4"]
         resources:
