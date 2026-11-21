@@ -5,16 +5,16 @@ with embedded weather and wind SVGs, captures it through a separately operated
 webcappi service, and atomically writes an opaque RGB PNG. ARPRT is independent
 and unofficial, with no affiliation with or endorsement by TRMNL.
 
-[Weather 0.5.0](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.5.0)
+[Weather 0.6.1](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.6.1)
 is publicly available for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-weather:0.5.0`. The immutable multi-platform
+`ghcr.io/dayflower/arprt-renderer-weather:0.6.1`. The immutable multi-platform
 reference is
-`ghcr.io/dayflower/arprt-renderer-weather@sha256:771d3381b41d29f2d706adb94a7fbaa5cce1275cef14506865fed274e22200fe`.
-The independent VERSION is 0.5.0, including hourly forecasts that start at the
-current three-hour slot and continue into tomorrow.
-The examples pin the verified public 0.5.0 image above. See the
+`ghcr.io/dayflower/arprt-renderer-weather@sha256:6854433aa46bc963c300ae604b3d777d9b373be54713d8cf08ff948adae895ce`.
+Weather 0.6.1 adds the daily, hourly and weekly layouts, with a shared Now
+header and a current weather icon when available.
+The examples pin the verified public 0.6.1 image above. See the
 [changelog](CHANGELOG.md) and
-[publication evidence](VALIDATION.md#2026-11-12-weather-050-publication).
+[publication evidence](VALIDATION.md#2026-11-21-weather-061-publication).
 The local development image remains `arprt-renderer-weather:dev`.
 
 ## Safe area
@@ -71,7 +71,7 @@ renderers/weather/dist/renderer --latitude 35.0 --longitude 135.0 \
 | `--location-name` | Optional display-only place name alongside current conditions (since 0.2.0) |
 | `--model` | Omitted: Open-Meteo automatic selection; otherwise one model ID |
 | `--temperature-unit` | `celsius`; accepts `celsius` or `fahrenheit` |
-| `--layout` | `full`; accepts `full`, `daily`, `hourly` or `weekly` in development builds |
+| `--layout` | `full`; accepts `full`, `daily`, `hourly` or `weekly` since Weather 0.6.1 |
 | `--context` | `/arprt/context.json`, read-only Render Context v1 |
 | `--output` | `/arprt/output.png`; parent must already exist |
 | `--webcappi-url` | Required HTTP(S) base URL without credentials/query/fragment |
@@ -109,7 +109,7 @@ weather icon when available. In `full`, the two summaries are side by side in
 both orientations. In the other layouts, the
 enlarged summaries are side by side in landscape and stacked in portrait.
 The hourly and weekly forecast bands share the same content and height across
-layouts. For an `ArprtScreen` using a renderer image built from this source,
+layouts. For an `ArprtScreen` using Weather 0.6.1,
 append these entries to its existing `spec.source.job.renderer.args` list:
 
 ```yaml
@@ -223,7 +223,7 @@ contents, coordinates, response bodies, Context device data and endpoint URLs ar
 not logged. Configure Job egress for Open-Meteo, DNS and the trusted capture service.
 
 [screen.yaml](screen.yaml) pins the verified public multi-platform digest of
-Weather 0.5.0 and uses synthetic coordinates and a synthetic capture endpoint.
+Weather 0.6.1 and uses synthetic coordinates and a synthetic capture endpoint.
 Replace the capture URL before use. For local development, build/load
 `arprt-renderer-weather:dev` and replace the image reference. Refresh is managed by ARPRT, initially
 every 30 minutes; the renderer does not run a scheduler or persist a cache. For
@@ -242,7 +242,7 @@ CLI arguments. See Kubernetes documentation on
 [Secret environment variables](https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#define-container-environment-variables-using-secret-data)
 and [arguments using environment variables](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#use-environment-variables-to-define-arguments).
 
-This example pins the verified public Weather 0.5.0 multi-platform digest,
+This example pins the verified public Weather 0.6.1 multi-platform digest,
 including support for `--location-name`. Replace the synthetic capture URL.
 Create the Secret and Screen in the same controller namespace; Secret references
 cannot cross namespaces. Quote coordinate values under `stringData` as strings.

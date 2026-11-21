@@ -408,7 +408,7 @@ live-source, real-browser, Kubernetes or physical-display acceptance. Earlier
 browser evidence has its own scope above. Updating example digest pins does not
 apply resources or change existing Device assignments.
 
-## 2026-11-21 Weather layout modes (unreleased)
+## 2026-11-21 Weather 0.6.1 layout modes
 
 - `make check` and `make -C renderers/weather container-check` passed. The
   latter ran the rebuilt Linux amd64 image under the offline Job restrictions
@@ -428,8 +428,9 @@ apply resources or change existing Device assignments.
 
 The browser used synthetic forecasts and a disposable loopback webcappi instance.
 Captures from the standard matrix are ignored local files under
-`dist/shared-header-previews/`. Native arm64 execution, live Open-Meteo requests,
-Kubernetes/PVC integration and physical displays remain unverified for this change.
+`dist/shared-header-previews/`. See the publication record below for native
+arm64 execution. Live Open-Meteo requests, Kubernetes/PVC integration and
+physical displays remain unverified for this change.
 
 The current weather icon uses `current.weather_code` from the temperature's
 model sample. Offline tests cover temperature-only snapshots, weather-only
@@ -437,3 +438,25 @@ samples, null and malformed codes, unknown codes and freshness limits. The
 standard Chromium checks verify the icon kind and bounds in the shared Now
 header and cover a missing current sample. The safe-area checks include rain in
 the Now header. Captures are under `dist/now-weather-previews/`.
+
+## 2026-11-21 Weather 0.6.1 publication
+
+- [Weather 0.6.1 release](https://github.com/dayflower/arprt-renderers/releases/tag/weather/v0.6.1)
+- [Native release verification and publication](https://github.com/dayflower/arprt-renderers/actions/runs/44909432497)
+- Source revision `0a5274d67687b2b9ea34f2dcbc43bd19034e48ab`
+- Immutable image reference `ghcr.io/dayflower/arprt-renderer-weather@sha256:6854433aa46bc963c300ae604b3d777d9b373be54713d8cf08ff948adae895ce`
+
+The release workflow built and checked the Linux amd64 and arm64 images on native
+runners under Job restrictions, then published those tested images. Anonymous
+version-tag and index-digest pulls passed for both platforms. The image labels
+matched the release version, source repository and revision.
+
+| Platform | Manifest digest |
+| --- | --- |
+| linux/amd64 | `sha256:3e28bac7ede7ace6d7ebc5177b419d723341961b63de705f3bb7bac7e0811083` |
+| linux/arm64 | `sha256:438a0a7d939cdbb32b1ff07b7b01b52c1e72228fdeecaba0f4472e24409483df` |
+
+The public index digest passed the offline container checker on native Linux
+amd64 after publication. The separate Chromium layout checks are recorded above.
+Postpublication native arm64 execution, live Open-Meteo requests, Kubernetes/PVC
+integration and physical-display tests were outside this verification.

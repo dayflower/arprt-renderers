@@ -111,24 +111,24 @@ running container.
 
 ## Images and Kubernetes usage
 
-[Picsum **0.2.0**](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.2.0) is available for Linux amd64 and arm64,
+[Picsum **0.2.2**](https://github.com/dayflower/arprt-renderers/releases/tag/picsum/v0.2.2) is available for Linux amd64 and arm64,
 independently versioned from ARPRT. Pull the public image:
 
 ```sh
-docker pull ghcr.io/dayflower/arprt-renderer-picsum:0.2.0
+docker pull ghcr.io/dayflower/arprt-renderer-picsum:0.2.2
 ```
 
 The Screen examples pin the immutable multi-platform reference:
 
-`ghcr.io/dayflower/arprt-renderer-picsum@sha256:3efae210201cd37cb0b730892d5ab69edd73b20cbc6e1d35f2e4a9eb8ec14f34`
+`ghcr.io/dayflower/arprt-renderer-picsum@sha256:2fed45dad62da82caa58f85c1fe874c1f09b2af0afec653e1e2076ab3265ee1d`
 
 To build/push a custom image, use your own registry and update
 `spec.source.job.renderer.image`:
 
 ```sh
-make -C renderers/picsum image IMAGE=registry.example.com/arprt-renderer-picsum:0.2.0
-make -C renderers/picsum container-check IMAGE=registry.example.com/arprt-renderer-picsum:0.2.0
-docker push registry.example.com/arprt-renderer-picsum:0.2.0
+make -C renderers/picsum image IMAGE=registry.example.com/arprt-renderer-picsum:0.2.2
+make -C renderers/picsum container-check IMAGE=registry.example.com/arprt-renderer-picsum:0.2.2
+docker push registry.example.com/arprt-renderer-picsum:0.2.2
 ```
 
 Image decoding with EXIF orientation, Lanczos fitting and RGB rotation use
@@ -140,10 +140,15 @@ the binary, HTTPS CA certificates and license notices, with no shell, Python,
 package manager or runtime dependency installation. Third-party licenses are
 recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and shipped in the image.
 Release builds add OCI version, source repository, MIT license and source revision
-labels. The release records the image index digest and source revision. CI
-uses native amd64 and arm64 runners; anonymous pulls have been verified for
-both. See [validation scope](../../notes/DEVELOP.md#validation-scope) for the
-specific checks performed.
+labels. The release records the image index digest and source revision. The
+[0.2.2 release workflow](https://github.com/dayflower/arprt-renderers/actions/runs/44909447807)
+checked the exact published images on native Linux amd64 and arm64 at revision
+`0a5274d67687b2b9ea34f2dcbc43bd19034e48ab`. Anonymous tag and digest
+pulls passed on both platforms, with matching OCI version, source and revision
+labels. The public digest passed the offline container checker after publication
+on native Linux amd64. Postpublication native arm64 execution, live Picsum
+requests, Kubernetes/PVC integration and physical-display tests were outside
+this verification.
 
 Allow DNS and outbound HTTPS to `picsum.photos` and its redirect CDN
 `fastly.picsum.photos`, plus image-pull access from cluster nodes to your registry.
