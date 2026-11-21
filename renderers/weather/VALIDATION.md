@@ -407,3 +407,33 @@ Postpublication native arm64 execution was not performed. These checks add no
 live-source, real-browser, Kubernetes or physical-display acceptance. Earlier
 browser evidence has its own scope above. Updating example digest pins does not
 apply resources or change existing Device assignments.
+
+## 2026-11-21 Weather layout modes (unreleased)
+
+- `make check` and `make -C renderers/weather container-check` passed. The
+  latter ran the rebuilt Linux amd64 image under the offline Job restrictions
+  and checked the default, each explicit layout and invalid argument handling.
+- Real Chromium captures through webcappi 0.1.7 (Chrome for Testing 156.0.8078.47)
+  passed all 64 standard-viewport cases across the four layouts, both palettes,
+  both orientations and the normal, missing-data, Fahrenheit and mixed
+  precipitation fixtures. The checks verified placement of the shared top Now
+  header, side-by-side summaries in `full`, forecast-band heights and enlarged
+  summary artwork measuring at least 1.5 times the `full` icon baseline along
+  its long edge. Inspection of the `full` PNGs confirmed that both forecast
+  bands retained their visible heights after the header change.
+- All 32 browser safe-area cases passed across layouts, palettes and rotations.
+  The local CLI also produced 800 × 480 PNGs with larger insets (26 px at the top
+  and bottom, 38 px at the left and 36 px at the right) for `daily` and `hourly`
+  in landscape and `hourly` and `weekly` in portrait.
+
+The browser used synthetic forecasts and a disposable loopback webcappi instance.
+Captures from the standard matrix are ignored local files under
+`dist/shared-header-previews/`. Native arm64 execution, live Open-Meteo requests,
+Kubernetes/PVC integration and physical displays remain unverified for this change.
+
+The current weather icon uses `current.weather_code` from the temperature's
+model sample. Offline tests cover temperature-only snapshots, weather-only
+samples, null and malformed codes, unknown codes and freshness limits. The
+standard Chromium checks verify the icon kind and bounds in the shared Now
+header and cover a missing current sample. The safe-area checks include rain in
+the Now header. Captures are under `dist/now-weather-previews/`.

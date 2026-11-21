@@ -22,16 +22,18 @@ func TestBrowserSafeArea(t *testing.T) {
 	if endpoint == "" {
 		t.Skip("set SAFE_AREA_WEBCAPPI for real-browser safe-area checks")
 	}
-	for _, view := range []string{"default"} {
+	for _, layout := range []layoutMode{layoutFull, layoutDaily, layoutHourly, layoutWeekly} {
 		for _, palette := range []string{"gray4", "spectra6"} {
 			for _, rotation := range []int{0, 90, 180, 270} {
-				t.Run(fmt.Sprintf("%s-%s-%d", view, palette, rotation), func(t *testing.T) {
+				t.Run(fmt.Sprintf("%s-%s-%d", layout, palette, rotation), func(t *testing.T) {
 					target, err := parseContext(insetContextBytes(rotation, palette))
 					if err != nil {
 						t.Fatal(err)
 					}
 					now := time.Date(2026, 11, 5, 12, 0, 0, 0, time.UTC)
-					v, err := buildView(encoded(t, syntheticForecast(now, "UTC", "°C")), now, "ecmwf_ifs025", "celsius")
+					forecast := syntheticForecast(now, "UTC", "°C")
+					forecast["current"].(map[string]any)["weather_code"] = 63
+					v, err := buildView(encoded(t, forecast), now, "ecmwf_ifs025", "celsius", layout)
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -48,7 +50,7 @@ func TestBrowserSafeArea(t *testing.T) {
 						if err := os.MkdirAll(dir, 0755); err != nil {
 							t.Fatal(err)
 						}
-						if err := os.WriteFile(filepath.Join(dir, fmt.Sprintf("weather-%s-%s-%d.html", view, palette, rotation)), body, 0644); err != nil {
+						if err := os.WriteFile(filepath.Join(dir, fmt.Sprintf("weather-%s-%s-%d.html", layout, palette, rotation)), body, 0644); err != nil {
 							t.Fatal(err)
 						}
 					}
@@ -122,7 +124,7 @@ func TestBrowserSafeArea(t *testing.T) {
 						if err := os.MkdirAll(dir, 0755); err != nil {
 							t.Fatal(err)
 						}
-						prefix := filepath.Join(dir, fmt.Sprintf("weather-%s-%s-%d", view, palette, rotation))
+						prefix := filepath.Join(dir, fmt.Sprintf("weather-%s-%s-%d", layout, palette, rotation))
 						if err := os.WriteFile(prefix+".png", output, 0644); err != nil {
 							t.Fatal(err)
 						}

@@ -28,9 +28,10 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	output := flags.String("output", "/arprt/output.png", "Output PNG path")
 	latitude := flags.Float64("latitude", math.NaN(), "Required latitude (-90 to 90)")
 	longitude := flags.Float64("longitude", math.NaN(), "Required longitude (-180 to 180)")
-	locationName := flags.String("location-name", "", "Optional display name below the current local time")
+	locationName := flags.String("location-name", "", "Optional display name for current conditions")
 	model := flags.String("model", "", "Optional single Open-Meteo model identifier")
 	unit := flags.String("temperature-unit", "celsius", "celsius or fahrenheit")
+	layout := flags.String("layout", string(layoutFull), "Weather layout: full, daily, hourly, or weekly")
 	input := flags.String("input", "", "Read an Open-Meteo JSON snapshot instead of requesting the API")
 	webcappi := flags.String("webcappi-url", "", "Required webcappi base URL")
 	tokenFile := flags.String("webcappi-token-file", "", "Read-only Bearer token file")
@@ -55,6 +56,12 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	}
 	if *unit != "celsius" && *unit != "fahrenheit" {
 		return errors.New("temperature-unit must be celsius or fahrenheit")
+	}
+	mode := layoutMode(*layout)
+	switch mode {
+	case layoutFull, layoutDaily, layoutHourly, layoutWeekly:
+	default:
+		return errors.New("layout must be full, daily, hourly, or weekly")
 	}
 	if _, err := captureURL(*webcappi, 800, 480); err != nil {
 		return err
@@ -91,7 +98,7 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	if err != nil {
 		return errors.New("weather input failed")
 	}
-	view, err := buildView(data, now, *model, *unit)
+	view, err := buildView(data, now, *model, *unit, mode)
 	if err != nil {
 		return err
 	}

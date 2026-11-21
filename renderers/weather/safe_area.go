@@ -68,7 +68,6 @@ func (c renderContext) layoutHTML(body []byte) ([]byte, error) {
 	if i != (safeAreaInsets{}) {
 		w, h := c.contentSize()
 		style := fmt.Sprintf("body{position:absolute;left:%dpx;top:%dpx;width:%dpx!important;height:%dpx!important;overflow:hidden}</style>", i.Left, i.Top, w, h)
-		style = "body .summary{min-height:0}" + style
 		body = bytes.Replace(body, []byte("</style>"), []byte(style), 1)
 	}
 	if len(body) > htmlLimit {

@@ -15,11 +15,12 @@ import (
 
 const forecastLimit = 2 << 20
 
+var currentFields = []string{"temperature_2m", "weather_code"}
 var hourlyFields = []string{"weather_code", "temperature_2m", "wind_direction_10m", "wind_speed_10m", "precipitation_probability"}
 var dailyFields = []string{"weather_code", "temperature_2m_max", "temperature_2m_min", "precipitation_probability_max"}
 
 func forecastURL(lat, lon float64, model, unit string) string {
-	q := url.Values{"latitude": {strconv.FormatFloat(lat, 'f', -1, 64)}, "longitude": {strconv.FormatFloat(lon, 'f', -1, 64)}, "current": {"temperature_2m"}, "daily": {strings.Join(dailyFields, ",")}, "hourly": {strings.Join(hourlyFields, ",")}, "forecast_days": {"7"}, "timezone": {"auto"}, "timeformat": {"unixtime"}, "temperature_unit": {unit}, "wind_speed_unit": {"ms"}}
+	q := url.Values{"latitude": {strconv.FormatFloat(lat, 'f', -1, 64)}, "longitude": {strconv.FormatFloat(lon, 'f', -1, 64)}, "current": {strings.Join(currentFields, ",")}, "daily": {strings.Join(dailyFields, ",")}, "hourly": {strings.Join(hourlyFields, ",")}, "forecast_days": {"7"}, "timezone": {"auto"}, "timeformat": {"unixtime"}, "temperature_unit": {unit}, "wind_speed_unit": {"ms"}}
 	if model != "" {
 		q.Set("models", model)
 	}
@@ -151,17 +152,22 @@ type hourView struct {
 	Direction                              windIcon
 }
 type dashboard struct {
+	Layout                                                   layoutMode
 	Palette                                                  string
 	Labels                                                   labels
 	Today, Tomorrow                                          dayView
 	Days                                                     []dayView
 	Hours                                                    []hourView
+	CurrentIcon                                              *icon
 	Current, CurrentTime, Updated, LocationName, Model, Unit string
 }
 
-func buildView(data []byte, now time.Time, model, unit string) (dashboard, error) {
+func (v dashboard) ShowHourly() bool { return v.Layout == layoutFull || v.Layout == layoutHourly }
+func (v dashboard) ShowWeekly() bool { return v.Layout == layoutFull || v.Layout == layoutWeekly }
+
+func buildView(data []byte, now time.Time, model, unit string, layout layoutMode) (dashboard, error) {
 	var f forecast
-	var v dashboard
+	v := dashboard{Layout: layout}
 	if len(data) > forecastLimit || json.Unmarshal(data, &f) != nil {
 		return v, errors.New("invalid forecast JSON")
 	}
@@ -188,7 +194,7 @@ func buildView(data []byte, now time.Time, model, unit string) (dashboard, error
 	for _, group := range []struct {
 		units  map[string]string
 		fields []string
-	}{{f.HourlyUnits, hourlyFields}, {f.DailyUnits, dailyFields}, {f.CurrentUnits, []string{"temperature_2m"}}} {
+	}{{f.HourlyUnits, hourlyFields}, {f.DailyUnits, dailyFields}, {f.CurrentUnits, currentFields}} {
 		for _, key := range group.fields {
 			expected := ""
 			switch key {
@@ -233,7 +239,9 @@ func buildView(data []byte, now time.Time, model, unit string) (dashboard, error
 			d.Low = number(low, "")
 			probability := daily.value("precipitation_probability_max", i)
 			d.Precipitation = percent(probability)
-			meaningful = meaningful || code != nil || high != nil || low != nil || probability != nil
+			if day < 2 || v.ShowWeekly() {
+				meaningful = meaningful || code != nil || high != nil || low != nil || probability != nil
+			}
 			break
 		}
 		v.Days = append(v.Days, d)
@@ -257,14 +265,16 @@ func buildView(data []byte, now time.Time, model, unit string) (dashboard, error
 			h.Temperature = number(temp, "")
 			h.Wind = number(speed, "")
 			h.Direction = windDirection(direction, speed)
-			meaningful = meaningful || code != nil || temp != nil || speed != nil || direction != nil || probability != nil
+			if v.ShowHourly() {
+				meaningful = meaningful || code != nil || temp != nil || speed != nil || direction != nil || probability != nil
+			}
 			break
 		}
 		v.Hours = append(v.Hours, h)
 	}
 	if len(f.Current) > 0 {
 		var stamp *int64
-		var temp *float64
+		var temp, code *float64
 		if json.Unmarshal(f.Current["time"], &stamp) != nil || stamp == nil || *stamp < 0 || *stamp > 253402214400 {
 			return v, errors.New("invalid current time")
 		}
@@ -273,10 +283,19 @@ func buildView(data []byte, now time.Time, model, unit string) (dashboard, error
 				return v, errors.New("invalid current temperature")
 			}
 		}
+		if raw, ok := f.Current["weather_code"]; ok {
+			if json.Unmarshal(raw, &code) != nil || code != nil && !validValue("weather_code", *code) {
+				return v, errors.New("invalid current weather code")
+			}
+		}
 		at := time.Unix(*stamp, 0)
-		if temp != nil && at.In(location).Format("2006-01-02") == today.Format("2006-01-02") && math.Abs(now.Sub(at).Seconds()) <= 2*3600 {
+		if (temp != nil || code != nil) && at.In(location).Format("2006-01-02") == today.Format("2006-01-02") && math.Abs(now.Sub(at).Seconds()) <= 2*3600 {
 			v.Current = number(temp, "")
 			v.CurrentTime = at.In(location).Format("15:04")
+			if code != nil {
+				art := weatherIcon(code)
+				v.CurrentIcon = &art
+			}
 			meaningful = true
 		}
 	}

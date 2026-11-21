@@ -1,5 +1,14 @@
 # Weather changelog
 
+## Unreleased
+
+- Add `--layout daily`, `--layout hourly` and `--layout weekly` with larger
+  Today and Tomorrow artwork. The default `full` layout includes both forecast
+  bands and compact daily summaries.
+- Use the same top Now header in all four layouts.
+- Show the current weather icon next to the temperature when Open-Meteo
+  supplies a current weather code.
+
 ## 0.5.0 - 2026-11-12
 
 - Start the eight three-hour forecast slots at the slot containing the current
