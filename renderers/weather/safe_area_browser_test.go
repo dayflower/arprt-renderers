@@ -31,7 +31,9 @@ func TestBrowserSafeArea(t *testing.T) {
 						t.Fatal(err)
 					}
 					now := time.Date(2026, 11, 5, 12, 0, 0, 0, time.UTC)
-					v, err := buildView(encoded(t, syntheticForecast(now, "UTC", "°C")), now, "ecmwf_ifs025", "celsius", layout)
+					forecast := syntheticForecast(now, "UTC", "°C")
+					forecast["current"].(map[string]any)["weather_code"] = 63
+					v, err := buildView(encoded(t, forecast), now, "ecmwf_ifs025", "celsius", layout)
 					if err != nil {
 						t.Fatal(err)
 					}

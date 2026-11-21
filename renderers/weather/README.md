@@ -104,8 +104,9 @@ relabeled as current forecasts. The renderer samples the execution clock once.
 | `hourly` | Enlarged summaries and eight three-hour slots |
 | `weekly` | Enlarged summaries and a seven-day forecast that includes Today and Tomorrow |
 
-All layouts start with the same compact Now header. In `full`, the two
-summaries are side by side in both orientations. In the other layouts, the
+All layouts start with the same compact Now header, including the current
+weather icon when available. In `full`, the two summaries are side by side in
+both orientations. In the other layouts, the
 enlarged summaries are side by side in landscape and stacked in portrait.
 The hourly and weekly forecast bands share the same content and height across
 layouts. For an `ArprtScreen` using a renderer image built from this source,
@@ -119,9 +120,12 @@ append these entries to its existing `spec.source.job.renderer.args` list:
 ## Display and time rules
 
 - Today: date, English weather name/icon and API daily high/low and maximum precipitation probability.
-- Now: model-based current temperature and its valid local time, not a station
-  observation. An optional user-supplied place name appears with the current conditions. Missing values or samples over two hours from execution time, or
-  outside today's local date, display a dash.
+- Now: temperature and a weather icon from the same Open-Meteo model sample
+  (`current.temperature_2m` and `current.weather_code`). The header shows the
+  sample's local time if either value is available. The temperature displays a
+  dash when unavailable, and the weather icon is omitted when its code is
+  missing. Samples over two hours from execution time or outside today's local
+  date are treated as unavailable.
 - Hourly Forecast: eight three-hour slots starting with the slot containing the
   execution time in the forecast location timezone, continuing into tomorrow.
   For example, 14:30 starts at 12:00, followed by 15:00, 18:00, 21:00 and
@@ -281,8 +285,8 @@ go test -run '^TestBrowserLayouts$' -v -timeout 360s
 
 This captures synthetic normal, missing-data, Fahrenheit and precipitation cases
 for all layouts with both palettes in both orientations. It checks bounds, the
-shared forecast-band heights and the drawn summary artwork, including that the
-enlarged icons are at least 1.5 times the long edge of the same artwork in
+Now icon, the shared forecast-band heights and the drawn summary artwork. The
+enlarged icons must be at least 1.5 times the long edge of the same artwork in
 `full` at standard dimensions. Screenshots still need visual inspection. See
 [VALIDATION.md](VALIDATION.md) for actual scope and limits.
 

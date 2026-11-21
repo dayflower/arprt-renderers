@@ -82,7 +82,8 @@ svg.wind { width:23px; height:23px }
 .now .location { grid-area:1 / 1; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .now h2 { grid-area:1 / 2; font-size:16px }
 .now .stamp { grid-area:1 / 3; font-size:15px; white-space:nowrap }
-.now .value { grid-area:1 / 4; font-size:30px; font-weight:bold; line-height:1.15; white-space:nowrap }
+.now .value { grid-area:1 / 4; display:flex; align-items:center; gap:6px; font-size:30px; font-weight:bold; line-height:1.15; white-space:nowrap }
+.now .value .weather-icon { width:28px; height:28px }
 .unit { font-size:18px; font-weight:normal }
 
 /* Leave the existing forecast bands their natural height and give the summary the rest. */
@@ -170,7 +171,7 @@ footer a { color:black }
 .weather-icon[data-kind="snowflake"],.weather-icon[data-kind="regex"] { color:var(--ice) }
 {{end}}
 </style></head><body data-palette="{{.Palette}}" data-layout="{{.Layout}}"{{if ne .Layout "full"}} class="expanded"{{end}}><main>
-<header class="now">{{if .LocationName}}<div class="location" title="{{.LocationName}}">{{.LocationName}}</div>{{end}}<h2>{{.Labels.Now}}</h2><div class="stamp">{{.CurrentTime}}</div><div class="value">{{.Current}}<span class="unit"> {{.Unit}}</span></div></header>
+<header class="now">{{if .LocationName}}<div class="location" title="{{.LocationName}}">{{.LocationName}}</div>{{end}}<h2>{{.Labels.Now}}</h2><div class="stamp">{{.CurrentTime}}</div><div class="value">{{with .CurrentIcon}}{{template "icon" .}}{{end}}<span>{{.Current}}<span class="unit"> {{.Unit}}</span></span></div></header>
 <section class="summary"><div class="card"><div class="card-heading"><h1>{{.Labels.Today}}</h1><time class="date">{{.Today.Date}}</time></div>{{template "icon" .Today.Icon}}<span class="condition-name">{{.Today.Name}}</span><div class="range"><b>{{.Today.High}}{{if ne .Today.High "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</b><span class="low">{{.Today.Low}}{{if ne .Today.Low "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</span></div><div class="precip" title="{{.Labels.DailyPrecipitation}}">{{.Labels.Precipitation}} {{.Today.Precipitation}}</div></div>
 <div class="card tomorrow"><div class="card-heading"><time class="date">{{.Tomorrow.Date}}</time><h2>{{.Labels.Tomorrow}}</h2></div>{{template "icon" .Tomorrow.Icon}}<span class="condition-name">{{.Tomorrow.Name}}</span><div class="range"><b>{{.Tomorrow.High}}{{if ne .Tomorrow.High "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</b><span class="low">{{.Tomorrow.Low}}{{if ne .Tomorrow.Low "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</span></div><div class="precip" title="{{.Labels.DailyPrecipitation}}">{{.Labels.Precipitation}} {{.Tomorrow.Precipitation}}</div></div></section>
 {{if .ShowHourly}}<section class="hourly"><h2>{{.Labels.Hourly}} <span>{{.Labels.Today}} · {{.Unit}} · {{.Labels.Wind}} m/s · {{.Labels.Precipitation}} %</span></h2><div class="hours">{{range .Hours}}<div class="hour"><time>{{.Time}}</time>{{template "icon" .Icon}}<div class="temperature">{{.Temperature}}{{if ne .Temperature "—"}}<span class="forecast-unit">{{$.Unit}}</span>{{end}}</div><div class="precip">{{.Precipitation}}</div><div class="windrow">{{template "wind" .Direction}}<span>{{.Wind}}</span></div></div>{{end}}</div></section>{{end}}

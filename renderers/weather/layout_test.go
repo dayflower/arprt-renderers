@@ -102,9 +102,13 @@ func TestBrowserLayouts(t *testing.T) {
 			unit, symbol = "fahrenheit", "°F"
 		}
 		f := syntheticForecast(now, "America/New_York", symbol)
+		f["current"].(map[string]any)["weather_code"] = 3
+		currentKind := "cloud"
 		f["daily"].(map[string]any)["precipitation_probability_max"].([]any)[0] = 100
 		f["hourly"].(map[string]any)["precipitation_probability"].([]any)[0] = 100
 		if name == "precipitation" {
+			f["current"].(map[string]any)["weather_code"] = 63
+			currentKind = "cloud-rain"
 			codes := []int{61, 63, 65, 96, 71, 45, 51}
 			d := f["daily"].(map[string]any)
 			for i, code := range codes {
@@ -117,6 +121,7 @@ func TestBrowserLayouts(t *testing.T) {
 			}
 		}
 		if name == "missing" {
+			currentKind = ""
 			delete(f, "hourly")
 			delete(f["daily"].(map[string]any), "precipitation_probability_max")
 			delete(f["daily"].(map[string]any), "weather_code")
@@ -172,6 +177,11 @@ if (document.body.dataset.layout === 'full') {
 }
 if (document.querySelector('footer').textContent.includes('America/New_York')) throw new Error('Timezone is still visible');
 `
+			check += fmt.Sprintf(`
+const currentIcon = now.querySelector('.value .weather-icon');
+if ((currentIcon?.dataset.kind ?? '') !== %q) throw new Error('Unexpected current weather');
+if (currentIcon && outside(currentIcon, now.getBoundingClientRect())) throw new Error('Current weather icon overflow');
+`, currentKind)
 			check += `const colored=document.body.dataset.palette==='spectra6';const black='rgb(0, 0, 0)',red='rgb(192, 0, 0)',blue='rgb(0, 0, 192)',yellow='rgb(224, 176, 0)',ice='rgb(64, 168, 216)';for(const e of document.querySelectorAll('.range b,.low,.precip,.now .value,.hour .temperature,.windrow,footer')){const expected=colored?(e.matches('.range b')?red:e.matches('.low,.precip')?blue:black):black;if(getComputedStyle(e).color!==expected)throw new Error('Incorrect text color');}for(const e of document.querySelectorAll('.weather-icon')){const kind=e.dataset.kind;const expected=colored?(kind==='sun'?red:kind==='cloud-lightning'?yellow:['snowflake','regex'].includes(kind)?ice:['cloud-drizzle','cloud-hail','cloud-rain','cloud-rain-wind'].includes(kind)?blue:black):black;if(getComputedStyle(e.querySelector('.weather-art')).stroke!==expected)throw new Error('Incorrect weather stroke');}`
 			check += `
 if (document.body.classList.contains('expanded')) {

@@ -430,3 +430,10 @@ The browser used synthetic forecasts and a disposable loopback webcappi instance
 Captures from the standard matrix are ignored local files under
 `dist/shared-header-previews/`. Native arm64 execution, live Open-Meteo requests,
 Kubernetes/PVC integration and physical displays remain unverified for this change.
+
+The current weather icon uses `current.weather_code` from the temperature's
+model sample. Offline tests cover temperature-only snapshots, weather-only
+samples, null and malformed codes, unknown codes and freshness limits. The
+standard Chromium checks verify the icon kind and bounds in the shared Now
+header and cover a missing current sample. The safe-area checks include rain in
+the Now header. Captures are under `dist/now-weather-previews/`.

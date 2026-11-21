@@ -109,6 +109,64 @@ func TestLayoutRequiresVisibleForecast(t *testing.T) {
 	}
 }
 
+func TestCurrentWeather(t *testing.T) {
+	now := time.Date(2026, 11, 5, 0, 30, 0, 0, time.UTC)
+	for _, tc := range []struct {
+		name                     string
+		fields                   map[string]any
+		age                      time.Duration
+		temperature, kind, stamp string
+		invalid                  bool
+	}{
+		{"clear", map[string]any{"temperature_2m": 18.5, "weather_code": 0}, 0, "18.5", "sun", "00:30", false},
+		{"weather only", map[string]any{"weather_code": 63}, 0, "—", "cloud-rain", "00:30", false},
+		{"legacy temperature only", map[string]any{"temperature_2m": 18.5}, 0, "18.5", "", "00:30", false},
+		{"null code", map[string]any{"temperature_2m": 18.5, "weather_code": nil}, 0, "18.5", "", "00:30", false},
+		{"unknown code", map[string]any{"weather_code": 999}, 0, "—", "circle-question-mark", "00:30", false},
+		{"outside local day", map[string]any{"temperature_2m": 18.5, "weather_code": 63}, time.Hour, "—", "", "—", false},
+		{"too far in the future", map[string]any{"weather_code": 63}, -3 * time.Hour, "—", "", "—", false},
+		{"fractional code", map[string]any{"weather_code": 1.5}, 0, "", "", "", true},
+		{"string code", map[string]any{"weather_code": "63"}, 0, "", "", "", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := syntheticForecast(now, "UTC", "°C")
+			if tc.name == "weather only" {
+				delete(f, "daily")
+				delete(f, "hourly")
+			}
+			tc.fields["time"] = now.Add(-tc.age).Unix()
+			f["current"] = tc.fields
+			v, err := buildView(encoded(t, f), now, "", "celsius", layoutDaily)
+			if tc.invalid {
+				if err == nil || err.Error() != "invalid current weather code" {
+					t.Fatalf("invalid current weather code: %v", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			kind := ""
+			if v.CurrentIcon != nil {
+				kind = v.CurrentIcon.Kind
+			}
+			if v.Current != tc.temperature || kind != tc.kind || v.CurrentTime != tc.stamp {
+				t.Fatalf("got temperature %q, icon %q and time %q", v.Current, kind, v.CurrentTime)
+			}
+			body, err := renderHTML(v)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, header, _ := strings.Cut(string(body), `<header class="now">`)
+			header, _, _ = strings.Cut(header, "</header>")
+			if strings.Contains(header, `<svg class="weather-icon"`) != (tc.kind != "") ||
+				(tc.kind != "" && !strings.Contains(header, `data-kind="`+tc.kind+`"`)) {
+				t.Errorf("unexpected current weather markup: %s", header)
+			}
+		})
+	}
+}
+
 func TestForecastLocalDaysAndDST(t *testing.T) {
 	for _, tc := range []struct{ zone, instant, date string }{{"Asia/Tokyo", "2026-11-04T23:00:00Z", "11/5 (Thu)"}, {"America/New_York", "2026-11-05T01:00:00Z", "11/4 (Wed)"}, {"America/New_York", "2026-03-06T16:00:00Z", "3/6 (Fri)"}, {"America/New_York", "2026-03-08T16:00:00Z", "3/8 (Sun)"}, {"America/New_York", "2026-10-30T16:00:00Z", "10/30 (Fri)"}, {"America/New_York", "2026-11-01T16:00:00Z", "11/1 (Sun)"}, {"Asia/Kathmandu", "2026-11-04T20:00:00Z", "11/5 (Thu)"}} {
 		t.Run(tc.zone+tc.instant, func(t *testing.T) {
@@ -434,7 +492,7 @@ func TestPrecipitationProbability(t *testing.T) {
 	}
 	u, _ := url.Parse(forecastURL(0, 0, "", "celsius"))
 	q := u.Query()
-	if !strings.Contains(q.Get("hourly"), "precipitation_probability") || !strings.Contains(q.Get("daily"), "precipitation_probability_max") || q.Get("current") != "temperature_2m" {
+	if !strings.Contains(q.Get("hourly"), "precipitation_probability") || !strings.Contains(q.Get("daily"), "precipitation_probability_max") || q.Get("current") != "temperature_2m,weather_code" {
 		t.Fatal("incorrect precipitation API request", q)
 	}
 }
