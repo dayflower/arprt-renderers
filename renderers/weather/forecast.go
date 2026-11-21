@@ -151,6 +151,7 @@ type hourView struct {
 	Direction                              windIcon
 }
 type dashboard struct {
+	Layout                                                   layoutMode
 	Palette                                                  string
 	Labels                                                   labels
 	Today, Tomorrow                                          dayView
@@ -159,9 +160,12 @@ type dashboard struct {
 	Current, CurrentTime, Updated, LocationName, Model, Unit string
 }
 
-func buildView(data []byte, now time.Time, model, unit string) (dashboard, error) {
+func (v dashboard) ShowHourly() bool { return v.Layout == layoutFull || v.Layout == layoutHourly }
+func (v dashboard) ShowWeekly() bool { return v.Layout == layoutFull || v.Layout == layoutWeekly }
+
+func buildView(data []byte, now time.Time, model, unit string, layout layoutMode) (dashboard, error) {
 	var f forecast
-	var v dashboard
+	v := dashboard{Layout: layout}
 	if len(data) > forecastLimit || json.Unmarshal(data, &f) != nil {
 		return v, errors.New("invalid forecast JSON")
 	}
@@ -233,7 +237,9 @@ func buildView(data []byte, now time.Time, model, unit string) (dashboard, error
 			d.Low = number(low, "")
 			probability := daily.value("precipitation_probability_max", i)
 			d.Precipitation = percent(probability)
-			meaningful = meaningful || code != nil || high != nil || low != nil || probability != nil
+			if day < 2 || v.ShowWeekly() {
+				meaningful = meaningful || code != nil || high != nil || low != nil || probability != nil
+			}
 			break
 		}
 		v.Days = append(v.Days, d)
@@ -257,7 +263,9 @@ func buildView(data []byte, now time.Time, model, unit string) (dashboard, error
 			h.Temperature = number(temp, "")
 			h.Wind = number(speed, "")
 			h.Direction = windDirection(direction, speed)
-			meaningful = meaningful || code != nil || temp != nil || speed != nil || direction != nil || probability != nil
+			if v.ShowHourly() {
+				meaningful = meaningful || code != nil || temp != nil || speed != nil || direction != nil || probability != nil
+			}
 			break
 		}
 		v.Hours = append(v.Hours, h)

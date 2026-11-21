@@ -33,9 +33,9 @@ inside the safe area, and omitted/zero insets preserve the previous layout.
 Safe area does not reserve space for controller overlays.
 
 Current conditions, hourly/daily forecasts and attribution use the inset
-rectangle. With nonzero insets, the summary drops its decorative minimum height
-while retaining its content and font sizes. Browser readiness rejects overflow
-instead of publishing a clipped forecast.
+rectangle. With nonzero insets, `full` drops its decorative summary minimum
+height. The other layouts size the summary artwork to the remaining space.
+Browser readiness rejects overflow instead of publishing a clipped forecast.
 
 The opt-in `TestBrowserSafeArea` test captures synthetic content with asymmetric
 insets (`top: 4`, `bottom: 8`, `left: 12`, `right: 16`) at all four rotations and
@@ -68,9 +68,10 @@ renderers/weather/dist/renderer --latitude 35.0 --longitude 135.0 \
 | --- | --- |
 | `--latitude` | Required finite WGS84 latitude, -90 through 90 |
 | `--longitude` | Required finite WGS84 longitude, -180 through 180 |
-| `--location-name` | Optional display-only place name below Now time (since 0.2.0) |
+| `--location-name` | Optional display-only place name alongside current conditions (since 0.2.0) |
 | `--model` | Omitted: Open-Meteo automatic selection; otherwise one model ID |
 | `--temperature-unit` | `celsius`; accepts `celsius` or `fahrenheit` |
+| `--layout` | `full`; accepts `full`, `daily`, `hourly` or `weekly` in development builds |
 | `--context` | `/arprt/context.json`, read-only Render Context v1 |
 | `--output` | `/arprt/output.png`; parent must already exist |
 | `--webcappi-url` | Required HTTP(S) base URL without credentials/query/fragment |
@@ -94,11 +95,30 @@ validated. Snapshots are not converted. The synthetic
 [fixture](fixtures/forecast.json) is dated November 5, 2026; old data are not
 relabeled as current forecasts. The renderer samples the execution clock once.
 
+## Layouts
+
+| Layout | Content |
+| --- | --- |
+| `full` | Existing dashboard with Today, Tomorrow, Now, Hourly Forecast and 7-Day Forecast |
+| `daily` | Enlarged Today and Tomorrow summaries with a compact Now header |
+| `hourly` | Enlarged summaries and Now header above the existing eight-slot Hourly Forecast |
+| `weekly` | Enlarged summaries and Now header above the existing 7-Day Forecast, including Today and Tomorrow |
+
+The enlarged summaries are side by side in landscape and stacked in portrait.
+The hourly and weekly forecast bands keep the same content and height as in
+`full`. For an `ArprtScreen` using a renderer image built from this source,
+append these entries to its existing `spec.source.job.renderer.args` list:
+
+```yaml
+- --layout
+- hourly
+```
+
 ## Display and time rules
 
 - Today: date, English weather name/icon and API daily high/low and maximum precipitation probability.
 - Now: model-based current temperature and its valid local time, not a station
-  observation. An optional user-supplied place name appears below its local time. Missing values or samples over two hours from execution time, or
+  observation. An optional user-supplied place name appears with the current conditions. Missing values or samples over two hours from execution time, or
   outside today's local date, display a dash.
 - Hourly Forecast: eight three-hour slots starting with the slot containing the
   execution time in the forecast location timezone, continuing into tomorrow.
@@ -117,14 +137,15 @@ translation. Labels and WMO code names are isolated in the English dictionary in
 English is the only shipped language, with no locale switch. Temperature unit is
 independent of language: one decimal place, with negative zero normalized. The
 current value, Today/Tomorrow high and low values, hourly temperatures and section
-legends show °C or °F. Weekly temperatures remain bare numbers. Missing forecast values
-remain `—` without a unit. The Tomorrow heading shows the date before `Tomorrow`,
-for example `11/10 (Tue) Tomorrow`.
+legends show °C or °F. The enlarged summaries share a unit when both the high
+and low are available. Weekly temperatures remain bare numbers. Missing forecast
+values remain `—` without a unit. In `full`, the Tomorrow heading shows the date
+before `Tomorrow`, for example `11/10 (Tue) Tomorrow`.
 Wind uses one decimal place in m/s. Humidity is neither requested nor displayed.
 
-`--location-name "Example City"` adds a plain-text
-place name beneath the Now time in both orientations. Omission or whitespace
-leaves no location row. Surrounding whitespace is trimmed; the name accepts
+`--location-name "Example City"` adds a plain-text place name beneath the Now
+time in `full` or on the left side of the header in the other layouts. Omission
+or whitespace leaves the location empty. Surrounding whitespace is trimmed; the name accepts
 up to 128 Unicode characters without control characters. Long names fit on one
 line with an ellipsis; the full text remains in the HTML title. The name is
 display-only and does not change coordinates, model or timezone, and is never
@@ -143,8 +164,9 @@ Wind arrows point toward the direction the wind travels: a northerly wind points
 down. The API's incoming bearing is rotated 180 degrees. A speed that rounds to
 0.0 m/s displays a calm circle. Missing direction displays a dash while preserving
 available speed. WMO codes map to embedded icons; unknown codes display
-an unknown icon/name. Individual missing values display `—`. Seven daily and eight
-hourly slots are always retained. A response with no displayable data fails.
+an unknown icon/name. Individual missing values display `—`. When shown, the
+weekly band keeps seven daily slots and the hourly band keeps eight hourly slots.
+A response with no data displayable in the selected layout fails.
 Malformed arrays, times, values and inverted daily high/low pairs fail.
 
 Since Weather 0.2.0, the Render Context palette is used automatically: `gray4`
@@ -255,9 +277,12 @@ WEATHER_WEBCAPPI=http://127.0.0.1:8080 WEATHER_LAYOUT_DIR=/tmp/weather-layouts \
   go test -run '^TestBrowserLayouts$' -v -timeout 180s
 ```
 
-This captures synthetic normal, missing-data, Fahrenheit and precipitation cases with both palettes in both
-orientations and checks element bounds before readiness. Screenshots still need
-visual inspection. See [VALIDATION.md](VALIDATION.md) for actual scope and limits.
+This captures synthetic normal, missing-data, Fahrenheit and precipitation cases
+for all layouts with both palettes in both orientations. It checks bounds, the
+shared forecast-band heights and the drawn summary artwork, including that the
+enlarged icons are at least 1.5 times the long edge of the same artwork in
+`full` at standard dimensions. Screenshots still need visual inspection. See
+[VALIDATION.md](VALIDATION.md) for actual scope and limits.
 
 Normal CI calls `check-weather.yaml` for scoped source checks and native Linux
 amd64/arm64 image execution. Independent annotated `weather/vMAJOR.MINOR.PATCH`

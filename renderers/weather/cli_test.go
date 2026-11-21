@@ -53,9 +53,11 @@ func checkCLI(t *testing.T, binary string) {
 	}
 	var failed atomic.Bool
 	var captured atomic.Value
+	var captureRequests atomic.Int32
 	var expectInsets atomic.Bool
 	expectInsets.Store(true)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captureRequests.Add(1)
 		if failed.Load() {
 			w.WriteHeader(500)
 			return
@@ -68,7 +70,7 @@ func checkCLI(t *testing.T, binary string) {
 			t.Error("CLI omitted safe area")
 		}
 		captured.Store(string(b))
-		if !bytes.Contains(b, []byte("7-Day Forecast")) {
+		if !bytes.Contains(b, []byte("<h1>Today</h1>")) {
 			t.Error("missing weather HTML")
 		}
 		width, _ := strconv.Atoi(r.URL.Query().Get("width"))
@@ -103,6 +105,9 @@ func checkCLI(t *testing.T, binary string) {
 			}
 
 			html := captured.Load().(string)
+			if !strings.Contains(html, `<section class="hourly">`) || !strings.Contains(html, `<section class="weekly">`) || strings.Contains(html, `data-layout=`) {
+				t.Fatal("omitting --layout must keep the full layout")
+			}
 			if !strings.Contains(html, `data-palette="`+palette+`"`) || strings.Contains(html, "--warm:") != (palette == "spectra6") {
 				t.Fatal("capture HTML does not match the target palette")
 			}
@@ -123,6 +128,28 @@ func checkCLI(t *testing.T, binary string) {
 				t.Fatal("prior output replaced")
 			}
 		}
+	}
+	args := append(append([]string{}, base...), "--context", contextPath, "--output", output)
+	for _, layout := range []layoutMode{layoutFull, layoutDaily, layoutHourly, layoutWeekly} {
+		if err := invoke(append(args, "--layout", string(layout))); err != nil {
+			t.Fatalf("%s: %v", layout, err)
+		}
+		html := captured.Load().(string)
+		if strings.Contains(html, `<section class="hourly">`) != (layout == layoutFull || layout == layoutHourly) ||
+			strings.Contains(html, `<section class="weekly">`) != (layout == layoutFull || layout == layoutWeekly) ||
+			strings.Contains(html, `data-layout="`+string(layout)+`"`) != (layout != layoutFull) {
+			t.Fatalf("unexpected forecast sections for %s", layout)
+		}
+	}
+	lastPNG := mustRead(t, output)
+	requests := captureRequests.Load()
+	for _, invalid := range []string{"", "focus", "unknown"} {
+		if err := invoke(append(args, "--layout", invalid)); err == nil {
+			t.Fatalf("accepted --layout %q", invalid)
+		}
+	}
+	if requests != captureRequests.Load() || !bytes.Equal(lastPNG, mustRead(t, output)) {
+		t.Fatal("invalid layout sent a capture request or changed the output")
 	}
 	for _, name := range []string{"   ", strings.Repeat("湾", 128)} {
 		args := append(append([]string{}, base...), "--context", contextPath, "--output", output, "--location-name", name)

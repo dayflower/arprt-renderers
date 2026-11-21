@@ -1,5 +1,11 @@
 # Weather changelog
 
+## Unreleased
+
+- Add `--layout daily`, `--layout hourly` and `--layout weekly` with larger
+  Today and Tomorrow artwork and a compact Now header. The default `full`
+  layout keeps the existing dashboard.
+
 ## 0.5.0 - 2026-11-12
 
 - Start the eight three-hour forecast slots at the slot containing the current

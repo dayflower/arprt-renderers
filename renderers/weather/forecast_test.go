@@ -76,11 +76,44 @@ func TestForecastURL(t *testing.T) {
 		}
 	}
 }
+
+func TestLayoutRequiresVisibleForecast(t *testing.T) {
+	now := time.Date(2026, 11, 5, 12, 0, 0, 0, time.UTC)
+	for _, source := range []string{"current", "hourly", "later days"} {
+		t.Run(source, func(t *testing.T) {
+			f := syntheticForecast(now, "UTC", "°C")
+			if source != "current" {
+				delete(f, "current")
+			}
+			if source != "hourly" {
+				delete(f, "hourly")
+			}
+			if source == "later days" {
+				for _, field := range dailyFields {
+					values := f["daily"].(map[string]any)[field].([]any)
+					values[0], values[1] = nil, nil
+				}
+			} else {
+				delete(f, "daily")
+			}
+			data := encoded(t, f)
+			for _, layout := range []layoutMode{layoutFull, layoutDaily, layoutHourly, layoutWeekly} {
+				_, err := buildView(data, now, "", "celsius", layout)
+				want := source == "current" || layout == layoutFull ||
+					(source == "hourly" && layout == layoutHourly) || (source == "later days" && layout == layoutWeekly)
+				if (err == nil) != want {
+					t.Errorf("%s: got %v, want success %t", layout, err, want)
+				}
+			}
+		})
+	}
+}
+
 func TestForecastLocalDaysAndDST(t *testing.T) {
 	for _, tc := range []struct{ zone, instant, date string }{{"Asia/Tokyo", "2026-11-04T23:00:00Z", "11/5 (Thu)"}, {"America/New_York", "2026-11-05T01:00:00Z", "11/4 (Wed)"}, {"America/New_York", "2026-03-06T16:00:00Z", "3/6 (Fri)"}, {"America/New_York", "2026-03-08T16:00:00Z", "3/8 (Sun)"}, {"America/New_York", "2026-10-30T16:00:00Z", "10/30 (Fri)"}, {"America/New_York", "2026-11-01T16:00:00Z", "11/1 (Sun)"}, {"Asia/Kathmandu", "2026-11-04T20:00:00Z", "11/5 (Thu)"}} {
 		t.Run(tc.zone+tc.instant, func(t *testing.T) {
 			now, _ := time.Parse(time.RFC3339, tc.instant)
-			v, err := buildView(encoded(t, syntheticForecast(now, tc.zone, "°C")), now, "", "celsius")
+			v, err := buildView(encoded(t, syntheticForecast(now, tc.zone, "°C")), now, "", "celsius", layoutFull)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -121,7 +154,7 @@ func TestHourlyRollingWindow(t *testing.T) {
 			for i := range hourly["temperature_2m"].([]any) {
 				hourly["temperature_2m"].([]any)[i] = i
 			}
-			v, err := buildView(encoded(t, f), now, "", "celsius")
+			v, err := buildView(encoded(t, f), now, "", "celsius", layoutFull)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -139,7 +172,7 @@ func TestHourlyRollingWindow(t *testing.T) {
 				hourly[key] = hourly[key].([]any)[:24]
 			}
 			hourly["time"] = hourly["time"].([]int64)[:24]
-			v, err = buildView(encoded(t, f), now, "", "celsius")
+			v, err = buildView(encoded(t, f), now, "", "celsius", layoutFull)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -172,7 +205,7 @@ func TestForecastMissingAndMalformed(t *testing.T) {
 			case "null-array":
 				d["temperature_2m_min"] = nil
 			}
-			v, e := buildView(encoded(t, f), now, "jma_msm", "celsius")
+			v, e := buildView(encoded(t, f), now, "jma_msm", "celsius", layoutFull)
 			if e != nil {
 				t.Fatal(e)
 			}
@@ -216,19 +249,19 @@ func TestForecastMissingAndMalformed(t *testing.T) {
 			case "timestamp":
 				h["time"].([]int64)[0] = -1
 			}
-			if _, e := buildView(encoded(t, f), now, "", "celsius"); e == nil {
+			if _, e := buildView(encoded(t, f), now, "", "celsius", layoutFull); e == nil {
 				t.Fatal("accepted malformed forecast")
 			}
 		})
 	}
 	f := syntheticForecast(now, "UTC", "°F")
-	v, e := buildView(encoded(t, f), now, "", "fahrenheit")
+	v, e := buildView(encoded(t, f), now, "", "fahrenheit", layoutFull)
 	if e != nil || v.Unit != "°F" {
 		t.Fatal(v, e)
 	}
 	f = syntheticForecast(now, "UTC", "°C")
 	f["daily"].(map[string]any)["temperature_2m_min"].([]any)[0] = -0.01
-	v, e = buildView(encoded(t, f), now, "", "celsius")
+	v, e = buildView(encoded(t, f), now, "", "celsius", layoutFull)
 	if e != nil || v.Today.Low != "0.0" {
 		t.Fatal(v, e)
 	}
@@ -306,7 +339,7 @@ func TestForecastHTTP(t *testing.T) {
 }
 func TestLayout(t *testing.T) {
 	now := time.Date(2026, 11, 5, 12, 0, 0, 0, time.UTC)
-	v, e := buildView(encoded(t, syntheticForecast(now, "UTC", "°C")), now, `<script>alert(1)</script>`, "celsius")
+	v, e := buildView(encoded(t, syntheticForecast(now, "UTC", "°C")), now, `<script>alert(1)</script>`, "celsius", layoutFull)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -335,7 +368,7 @@ func TestLayout(t *testing.T) {
 func TestPrecipitationProbability(t *testing.T) {
 	now := time.Date(2026, 11, 5, 12, 0, 0, 0, time.UTC)
 	f := syntheticForecast(now, "UTC", "°C")
-	v, err := buildView(encoded(t, f), now, "", "celsius")
+	v, err := buildView(encoded(t, f), now, "", "celsius", layoutFull)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -362,13 +395,13 @@ func TestPrecipitationProbability(t *testing.T) {
 		for _, bad := range []float64{-1, 101} {
 			f := syntheticForecast(now, "UTC", "°C")
 			f[section].(map[string]any)[key].([]any)[0] = bad
-			if _, e := buildView(encoded(t, f), now, "", "celsius"); e == nil {
+			if _, e := buildView(encoded(t, f), now, "", "celsius", layoutFull); e == nil {
 				t.Fatal("invalid probability", key, bad)
 			}
 		}
 		f := syntheticForecast(now, "UTC", "°C")
 		f[units].(map[string]string)[key] = "mm"
-		if _, e := buildView(encoded(t, f), now, "", "celsius"); e == nil {
+		if _, e := buildView(encoded(t, f), now, "", "celsius", layoutFull); e == nil {
 			t.Fatal("invalid probability units", key)
 		}
 		for _, missing := range []string{"absent", "null-array", "null-value"} {
@@ -386,7 +419,7 @@ func TestPrecipitationProbability(t *testing.T) {
 				}
 				m[key].([]any)[index] = nil
 			}
-			v, e := buildView(encoded(t, f), now, "jma_msm", "celsius")
+			v, e := buildView(encoded(t, f), now, "jma_msm", "celsius", layoutFull)
 			if e != nil {
 				t.Fatal(e)
 			}
