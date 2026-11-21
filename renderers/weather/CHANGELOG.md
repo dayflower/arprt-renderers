@@ -3,8 +3,9 @@
 ## Unreleased
 
 - Add `--layout daily`, `--layout hourly` and `--layout weekly` with larger
-  Today and Tomorrow artwork and a compact Now header. The default `full`
-  layout keeps the existing dashboard.
+  Today and Tomorrow artwork. The default `full` layout includes both forecast
+  bands and compact daily summaries.
+- Use the same top Now header in all four layouts.
 
 ## 0.5.0 - 2026-11-12
 

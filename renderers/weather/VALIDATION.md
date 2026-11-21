@@ -416,9 +416,11 @@ apply resources or change existing Device assignments.
 - Real Chromium captures through webcappi 0.1.7 (Chrome for Testing 156.0.8078.47)
   passed all 64 standard-viewport cases across the four layouts, both palettes,
   both orientations and the normal, missing-data, Fahrenheit and mixed
-  precipitation fixtures. The checks measured the drawn summary artwork at
-  least 1.5 times the corresponding `full` artwork along its long edge and
-  verified the forecast-band heights. Representative PNGs were inspected.
+  precipitation fixtures. The checks verified placement of the shared top Now
+  header, side-by-side summaries in `full`, forecast-band heights and enlarged
+  summary artwork measuring at least 1.5 times the `full` icon baseline along
+  its long edge. Inspection of the `full` PNGs confirmed that both forecast
+  bands retained their visible heights after the header change.
 - All 32 browser safe-area cases passed across layouts, palettes and rotations.
   The local CLI also produced 800 × 480 PNGs with larger insets (26 px at the top
   and bottom, 38 px at the left and 36 px at the right) for `daily` and `hourly`
@@ -426,5 +428,5 @@ apply resources or change existing Device assignments.
 
 The browser used synthetic forecasts and a disposable loopback webcappi instance.
 Captures from the standard matrix are ignored local files under
-`dist/layout-mode-previews/`. Native arm64 execution, live Open-Meteo requests,
+`dist/shared-header-previews/`. Native arm64 execution, live Open-Meteo requests,
 Kubernetes/PVC integration and physical displays remain unverified for this change.

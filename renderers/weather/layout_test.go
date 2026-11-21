@@ -146,16 +146,37 @@ func TestBrowserLayouts(t *testing.T) {
 		for _, palette := range []string{"gray4", "spectra6"} {
 			v.Palette = palette
 			// Fail readiness if a visible slot extends outside the canvas.
-			check := `for(const svg of document.querySelectorAll('svg.weather-icon')){const b=svg.getBBox();if(Math.abs(b.x+b.width/2-12)>.1||Math.abs(b.y+b.height/2-12)>.1)throw new Error('Weather art is not centered');}for(const e of document.querySelectorAll('main>*,.now h2,.now .value,.now .stamp,.now .location,.card-heading,.card-body>*,.hour>*,.day>*')){const r=e.getBoundingClientRect();if(r.bottom>innerHeight||r.right>innerWidth||r.left<0||r.top<0)throw new Error('Layout overflow');}for(const s of document.querySelectorAll('.summary,.hourly,.weekly')){const r=s.getBoundingClientRect();for(const e of s.querySelectorAll('.card-heading,.card-body>*,.hour>*,.day>*'))if(e.getBoundingClientRect().bottom>r.bottom+1)throw new Error('Section overflow');}for(const e of document.querySelectorAll('.day .range,.hour>*,.card-body>*')){const r=e.getBoundingClientRect(),p=(e.matches('.card-body > *')&&document.body.classList.contains('expanded')?e.closest('.card'):e.parentElement).getBoundingClientRect();if(r.left<p.left-1||r.right>p.right+1)throw new Error('Slot overflow');}`
-			check += `const place=document.querySelector('.now .location');if(place){const r=place.getBoundingClientRect(),s=document.querySelector('.now .stamp').getBoundingClientRect();if(!document.body.classList.contains('expanded')&&r.top<s.bottom-1)throw new Error('Location must be below time');const p=document.querySelector('.now').getBoundingClientRect();if(r.left<p.left||r.right>p.right)throw new Error('Location overflow');}if(document.querySelector('footer').textContent.includes('America/New_York'))throw new Error('Timezone is still visible');`
+			check := `
+for (const svg of document.querySelectorAll('svg.weather-icon')) {
+ const b = svg.getBBox();
+ if (Math.abs(b.x + b.width/2 - 12) > .1 || Math.abs(b.y + b.height/2 - 12) > .1) throw new Error('Weather art is not centered');
+}
+for (const e of document.querySelectorAll('main > *, .now > *, .card > *, .hour > *, .day > *')) {
+ const r = e.getBoundingClientRect();
+ if (r.bottom > innerHeight || r.right > innerWidth || r.left < 0 || r.top < 0) throw new Error('Layout overflow');
+}
+for (const e of document.querySelectorAll('.card > *, .hour > *, .day > *')) {
+ if (outside(e, e.parentElement.getBoundingClientRect())) throw new Error('Card or slot overflow');
+}
+const now = document.querySelector('header.now');
+const summary = document.querySelector('.summary');
+if (main.firstElementChild !== now || now.getBoundingClientRect().bottom > summary.getBoundingClientRect().top) throw new Error('Now must be above the summary');
+const place = now.querySelector('.location');
+if (place && (place.getBoundingClientRect().right > now.querySelector('h2').getBoundingClientRect().left || outside(place, now.getBoundingClientRect()))) {
+ throw new Error('Location must fit to the left of Now');
+}
+if (document.body.dataset.layout === 'full') {
+ const [today, tomorrow] = summary.querySelectorAll('.card');
+ const a = today.getBoundingClientRect(), b = tomorrow.getBoundingClientRect();
+ if (Math.abs(a.top - b.top) > 1 || a.right > b.left + 1) throw new Error('Full summaries must be side by side');
+}
+if (document.querySelector('footer').textContent.includes('America/New_York')) throw new Error('Timezone is still visible');
+`
 			check += `const colored=document.body.dataset.palette==='spectra6';const black='rgb(0, 0, 0)',red='rgb(192, 0, 0)',blue='rgb(0, 0, 192)',yellow='rgb(224, 176, 0)',ice='rgb(64, 168, 216)';for(const e of document.querySelectorAll('.range b,.low,.precip,.now .value,.hour .temperature,.windrow,footer')){const expected=colored?(e.matches('.range b')?red:e.matches('.low,.precip')?blue:black):black;if(getComputedStyle(e).color!==expected)throw new Error('Incorrect text color');}for(const e of document.querySelectorAll('.weather-icon')){const kind=e.dataset.kind;const expected=colored?(kind==='sun'?red:kind==='cloud-lightning'?yellow:['snowflake','regex'].includes(kind)?ice:['cloud-drizzle','cloud-hail','cloud-rain','cloud-rain-wind'].includes(kind)?blue:black):black;if(getComputedStyle(e.querySelector('.weather-art')).stroke!==expected)throw new Error('Incorrect weather stroke');}`
 			check += `
 if (document.body.classList.contains('expanded')) {
  const portrait = innerWidth < innerHeight;
  const baselineSize = portrait ? 88 : 96;
- const summary = document.querySelector('.summary');
- const now = document.querySelector('.now');
- if (now.getBoundingClientRect().bottom > summary.getBoundingClientRect().top) throw new Error('Now overlaps the summary');
  for (const svg of summary.querySelectorAll('svg.weather-icon')) {
   const art = svg.querySelector('.weather-art');
   const geometry = art.getBBox();

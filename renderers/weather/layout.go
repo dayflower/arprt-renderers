@@ -71,43 +71,36 @@ var page = template.Must(template.New("weather").Parse(`<!doctype html>
 <style>
 * { box-sizing:border-box }
 html,body { margin:0; width:100%; height:100%; background:white; color:black }
-body { padding:10px 18px; font-family:Arial,sans-serif; font-variant-numeric:tabular-nums }
+body { --icon-limit:96px; padding:10px 18px; font-family:Arial,sans-serif; font-variant-numeric:tabular-nums }
 main { height:100%; display:flex; flex-direction:column; gap:4px }
-.summary,.hourly,.weekly,footer { flex-shrink:0 }
+.now,.hourly,.weekly,footer { flex-shrink:0 }
 h1,h2,p { margin:0 }
 h1,h2 { font-size:18px }
-.card h1,.card h2 { font-size:22px }
 svg { width:36px; height:36px; vertical-align:middle; flex-shrink:0 }
 svg.wind { width:23px; height:23px }
-.summary { display:grid; grid-template-columns:1fr 164px 1fr; gap:16px; align-items:center; min-height:140px }
-.card { display:flex; flex-direction:column; gap:7px; min-width:0 }
-.card-heading { display:flex; align-items:baseline; gap:8px; white-space:nowrap }
-.card .date { font-size:17px }
-.card-body { display:grid; grid-template-columns:96px minmax(0,1fr); grid-template-rows:auto auto auto; column-gap:12px; row-gap:4px; align-items:center; width:100% }
-.card-body>svg { grid-column:1; grid-row:1 / 4; width:96px; height:96px }
-.condition-name { font-size:20px; overflow-wrap:normal }
-.card .range { grid-column:2; font-size:25px; line-height:1; display:flex; flex-wrap:wrap; align-items:baseline; gap:0 3px }
+.now { display:grid; grid-template-columns:minmax(0,1fr) auto auto auto; align-items:center; gap:10px; padding-bottom:7px; border-bottom:2px solid }
+.now .location { grid-area:1 / 1; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.now h2 { grid-area:1 / 2; font-size:16px }
+.now .stamp { grid-area:1 / 3; font-size:15px; white-space:nowrap }
+.now .value { grid-area:1 / 4; font-size:30px; font-weight:bold; line-height:1.15; white-space:nowrap }
+.unit { font-size:18px; font-weight:normal }
+
+/* Leave the existing forecast bands their natural height and give the summary the rest. */
+.summary { flex:1; min-height:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:minmax(0,1fr) }
+.card { container-type:size; display:grid; grid-template-columns:auto minmax(0,1fr); grid-template-rows:minmax(0,1fr) repeat(4,auto) minmax(0,1fr); gap:1px 9px; align-items:center; padding-right:7px }
+.tomorrow { border-left:1px solid; padding:0 0 0 7px }
+.card-heading { grid-area:2 / 2; display:flex; align-items:baseline; flex-wrap:wrap; gap:0 8px }
+.card-heading h1,.card-heading h2 { font-size:clamp(16px,19cqh,18px) }
+.card .date { font-size:clamp(13px,16cqh,15px); white-space:nowrap }
+.card>svg { grid-area:1 / 1 / -1 / 2; width:min(var(--icon-limit),54cqw,100cqh); height:min(var(--icon-limit),54cqw,100cqh) }
+.condition-name { grid-area:3 / 2; font-size:clamp(15px,18cqh,18px); overflow-wrap:anywhere }
+.card .range { grid-area:4 / 2; font-size:clamp(18px,24cqh,24px); line-height:1; display:flex; flex-wrap:wrap; align-items:baseline; gap:0 3px }
 .card .range>b,.card .range>.low { white-space:nowrap }
+.card .range .low::before { content:"/ " }
 .forecast-unit { font-size:.5em; font-weight:normal }
-.card .range .low { font-weight:normal }
-.card .precip { grid-column:2; font-size:17px; white-space:nowrap }
-.tomorrow .card-heading { justify-content:flex-end }
-.tomorrow .card-body { grid-template-columns:minmax(0,1fr) 96px }
-.tomorrow .card-body>svg { grid-column:2 }
-.tomorrow .condition-name,.tomorrow .range,.tomorrow .precip { grid-column:1; text-align:right }
-.tomorrow .range { justify-content:flex-end }
-.precip { font-size:17px }
+.card .precip { grid-area:5 / 2; font-size:clamp(14px,17cqh,16px) }
 .precip { font-size:15px; white-space:nowrap }
 .low { font-weight:normal }
-.now { display:flex; flex-direction:column; min-width:0; text-align:center; border-left:1px solid; border-right:1px solid }
-.now .details { display:contents }
-.now .value { order:1 }
-.now .stamp { order:2 }
-.now .location { order:3; max-width:100% }
-.now .value { font-size:40px; font-weight:bold; line-height:1.15 }
-.unit { font-size:18px; font-weight:normal }
-.stamp { font-size:15px }
-.now .location { font-size:16px; margin-top:4px; padding:0 6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0 }
 .hourly,.weekly { border-top:2px solid; padding-top:7px }
 .hours { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); margin-top:6px }
 .hour { text-align:center; border-right:1px dotted; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:16px }
@@ -126,22 +119,11 @@ footer { margin-top:auto; font-size:12px; display:flex; gap:10px; justify-conten
 footer a { color:black }
 .model { overflow-wrap:anywhere }
 @media(orientation:portrait) {
- body { padding:14px }
+ body { --icon-limit:88px; padding:14px }
  main { gap:8px }
- .summary { grid-template-columns:1fr 1fr; gap:12px; min-height:0 }
- .now { grid-column:1 / -1; grid-row:1; border:0; border-bottom:2px solid; padding-bottom:7px; display:grid; grid-template-columns:1fr 1fr; align-items:center }
- .now .details { display:block; grid-column:1; min-width:0 }
- .now .value { grid-column:2; grid-row:1; font-size:36px }
- .card { gap:6px }
- .card h1,.card h2 { font-size:20px }
- .card .date { font-size:16px }
- .card-heading { gap:8px }
- .card-body { grid-template-columns:88px minmax(0,1fr); column-gap:8px; row-gap:4px }
- .tomorrow .card-body { grid-template-columns:minmax(0,1fr) 88px }
- .card-body>svg { width:88px; height:88px }
+ .card { column-gap:7px }
  .condition-name { font-size:17px }
- .card .range { font-size:22px }
- .card .precip { font-size:16px }
+ .card .range { font-size:21px }
  .hours { grid-template-columns:repeat(4,minmax(0,1fr)); row-gap:10px }
  .hour:nth-child(4n) { border:0 }
  .hour { font-size:15px }
@@ -158,32 +140,17 @@ footer a { color:black }
  footer { font-size:11px; gap:3px }
 }
 
-{{if ne .Layout "full"}}
-/* The summary gets the space left by the forecast band and footer. */
 .expanded { --icon-limit:192px }
 .expanded[data-layout="daily"] { --icon-limit:204px }
-.expanded .now { display:grid; grid-template-columns:minmax(0,1fr) auto auto auto; align-items:center; gap:10px; padding:0 0 7px; border:0; border-bottom:2px solid }
-.expanded .now .details { display:contents }
-.expanded .now .location { grid-area:1 / 1; padding:0; margin:0; font-weight:bold; text-align:left }
-.expanded .now h2 { grid-area:1 / 2; font-size:16px }
-.expanded .now .stamp { grid-area:1 / 3; white-space:nowrap }
-.expanded .now .value { grid-area:1 / 4; font-size:30px; white-space:nowrap }
-.expanded .summary { flex:1; min-height:0; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:minmax(0,1fr); gap:0; align-items:stretch }
-.expanded .card { container-type:size; display:grid; grid-template-columns:auto minmax(0,1fr); grid-template-rows:minmax(0,1fr) repeat(4,auto) minmax(0,1fr); gap:4px 9px; align-items:center; padding-right:7px }
-.expanded .tomorrow { border-left:1px solid; padding:0 0 0 7px }
-.expanded .card-heading { grid-area:2 / 2; flex-direction:column; gap:1px; white-space:normal }
+.expanded .card { row-gap:4px }
+.expanded .card-heading { flex-direction:column; flex-wrap:nowrap; gap:1px }
 .expanded .tomorrow .card-heading h2 { order:-1 }
 .expanded .card-heading h1,.expanded .card-heading h2 { font-size:clamp(17px,8cqw,29px); overflow-wrap:anywhere }
-.expanded .card .date { font-size:16px; white-space:nowrap }
-.expanded .card-body { display:contents }
-.expanded .card-body>svg { grid-area:1 / 1 / -1 / 2; width:min(var(--icon-limit),54cqw,100cqh); height:min(var(--icon-limit),54cqw,100cqh) }
-.expanded .card-body>:not(svg) { grid-column:2; text-align:left }
-.expanded .condition-name { grid-row:3; font-size:clamp(16px,5.5cqw,22px); overflow-wrap:anywhere }
-.expanded .card .range { grid-row:4; justify-content:flex-start; font-size:clamp(20px,8cqw,38px) }
+.expanded .card .date { font-size:16px }
+.expanded .condition-name { font-size:clamp(16px,5.5cqw,22px) }
+.expanded .card .range { font-size:clamp(20px,8cqw,38px) }
 .expanded .card .range:has(.low > .forecast-unit) b .forecast-unit { display:none }
-.expanded .card .range > span:not(.low) { display:none }
-.expanded .card .range .low::before { content:"/ " }
-.expanded .card .precip { grid-row:5; font-size:clamp(16px,5.3cqw,21px) }
+.expanded .card .precip { font-size:clamp(16px,5.3cqw,21px) }
 @media(orientation:portrait) {
  .expanded { --icon-limit:188px }
  .expanded[data-layout="daily"] { --icon-limit:220px }
@@ -191,7 +158,7 @@ footer a { color:black }
  .expanded .card { column-gap:16px; padding:0 6px }
  .expanded .tomorrow { border-left:0; border-top:1px solid }
 }
-{{end}}{{if eq .Palette "spectra6"}}
+{{if eq .Palette "spectra6"}}
 /* Limit accents to forecast values and artwork; keep structure and headings black. */
 :root { --warm:#c00000; --cool:#0000c0; --lightning:#e0b000; --ice:#40a8d8 }
 .range b { color:var(--warm) }
@@ -202,26 +169,35 @@ footer a { color:black }
 .weather-icon[data-kind="cloud-rain"],.weather-icon[data-kind="cloud-rain-wind"] { color:var(--cool) }
 .weather-icon[data-kind="snowflake"],.weather-icon[data-kind="regex"] { color:var(--ice) }
 {{end}}
-</style></head><body data-palette="{{.Palette}}"{{if ne .Layout "full"}} class="expanded" data-layout="{{.Layout}}"{{end}}><main>
-{{if ne .Layout "full"}}{{template "now" .}}{{end -}}
-<section class="summary"><div class="card"><div class="card-heading"><h1>{{.Labels.Today}}</h1><time class="date">{{.Today.Date}}</time></div><div class="card-body">{{template "icon" .Today.Icon}}<span class="condition-name">{{.Today.Name}}</span><div class="range"><b>{{.Today.High}}{{if ne .Today.High "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</b><span>/</span><span class="low">{{.Today.Low}}{{if ne .Today.Low "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</span></div><div class="precip" title="{{.Labels.DailyPrecipitation}}">{{.Labels.Precipitation}} {{.Today.Precipitation}}</div></div></div>
-{{if eq .Layout "full"}}{{template "now" .}}{{end}}
-<div class="card tomorrow"><div class="card-heading"><time class="date">{{.Tomorrow.Date}}</time><h2>{{.Labels.Tomorrow}}</h2></div><div class="card-body">{{template "icon" .Tomorrow.Icon}}<span class="condition-name">{{.Tomorrow.Name}}</span><div class="range"><b>{{.Tomorrow.High}}{{if ne .Tomorrow.High "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</b><span>/</span><span class="low">{{.Tomorrow.Low}}{{if ne .Tomorrow.Low "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</span></div><div class="precip" title="{{.Labels.DailyPrecipitation}}">{{.Labels.Precipitation}} {{.Tomorrow.Precipitation}}</div></div></div></section>
+</style></head><body data-palette="{{.Palette}}" data-layout="{{.Layout}}"{{if ne .Layout "full"}} class="expanded"{{end}}><main>
+<header class="now">{{if .LocationName}}<div class="location" title="{{.LocationName}}">{{.LocationName}}</div>{{end}}<h2>{{.Labels.Now}}</h2><div class="stamp">{{.CurrentTime}}</div><div class="value">{{.Current}}<span class="unit"> {{.Unit}}</span></div></header>
+<section class="summary"><div class="card"><div class="card-heading"><h1>{{.Labels.Today}}</h1><time class="date">{{.Today.Date}}</time></div>{{template "icon" .Today.Icon}}<span class="condition-name">{{.Today.Name}}</span><div class="range"><b>{{.Today.High}}{{if ne .Today.High "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</b><span class="low">{{.Today.Low}}{{if ne .Today.Low "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</span></div><div class="precip" title="{{.Labels.DailyPrecipitation}}">{{.Labels.Precipitation}} {{.Today.Precipitation}}</div></div>
+<div class="card tomorrow"><div class="card-heading"><time class="date">{{.Tomorrow.Date}}</time><h2>{{.Labels.Tomorrow}}</h2></div>{{template "icon" .Tomorrow.Icon}}<span class="condition-name">{{.Tomorrow.Name}}</span><div class="range"><b>{{.Tomorrow.High}}{{if ne .Tomorrow.High "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</b><span class="low">{{.Tomorrow.Low}}{{if ne .Tomorrow.Low "—"}}<span class="forecast-unit">{{.Unit}}</span>{{end}}</span></div><div class="precip" title="{{.Labels.DailyPrecipitation}}">{{.Labels.Precipitation}} {{.Tomorrow.Precipitation}}</div></div></section>
 {{if .ShowHourly}}<section class="hourly"><h2>{{.Labels.Hourly}} <span>{{.Labels.Today}} · {{.Unit}} · {{.Labels.Wind}} m/s · {{.Labels.Precipitation}} %</span></h2><div class="hours">{{range .Hours}}<div class="hour"><time>{{.Time}}</time>{{template "icon" .Icon}}<div class="temperature">{{.Temperature}}{{if ne .Temperature "—"}}<span class="forecast-unit">{{$.Unit}}</span>{{end}}</div><div class="precip">{{.Precipitation}}</div><div class="windrow">{{template "wind" .Direction}}<span>{{.Wind}}</span></div></div>{{end}}</div></section>{{end}}
 {{if .ShowWeekly}}<section class="weekly"><h2>{{.Labels.Weekly}} <span>{{.Labels.HighLow}} · {{.Unit}} · {{.Labels.Precipitation}} %</span></h2><div class="days">{{range .Days}}<div class="day"><time>{{.Date}}</time>{{template "icon" .Icon}}<div class="precip" title="{{$.Labels.DailyPrecipitation}}">{{.Precipitation}}</div><div class="range"><b>{{.High}}</b><span class="low">{{.Low}}</span></div></div>{{end}}</div></section>{{end}}
 <footer><span>{{.Labels.Updated}} {{.Updated}}</span><span>{{if .Model}}<span class="model">{{.Labels.Model}}: {{.Model}} · </span>{{end}}<a href="https://open-meteo.com/">{{.Labels.Attribution}}</a></span></footer>
-</main><script>(async()=>{await document.fonts.ready;for(const svg of document.querySelectorAll('svg.weather-icon')){const art=svg.querySelector('.weather-art'),b=art.getBBox();art.setAttribute('transform','translate('+(12-b.x-b.width/2)+' '+(12-b.y-b.height/2)+')')}await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);const main=document.querySelector('main'),bounds=main.getBoundingClientRect();if(main.scrollHeight>main.clientHeight+1||[...main.querySelectorAll('main>*,.now h2,.now .value,.now .stamp,.now .location,.card-heading,.card-body>*,.hour>*,.day>*')].some(el=>{const r=el.getBoundingClientRect();return r.left<bounds.left-1||r.right>bounds.right+1||r.top<bounds.top-1||r.bottom>bounds.bottom+1})){document.body.dataset.layoutError='overflow';return}{{if ne .Layout "full"}}
-const expandedOverflow = [...main.querySelectorAll('.card')].some(card => {
+</main><script>(async()=>{
+await document.fonts.ready;
+for (const svg of document.querySelectorAll('svg.weather-icon')) {
+ const art = svg.querySelector('.weather-art'), b = art.getBBox();
+ art.setAttribute('transform', 'translate(' + (12-b.x-b.width/2) + ' ' + (12-b.y-b.height/2) + ')');
+}
+await new Promise(requestAnimationFrame);
+await new Promise(requestAnimationFrame);
+function outside(el, bounds) {
+ const r = el.getBoundingClientRect();
+ return r.left < bounds.left - 1 || r.right > bounds.right + 1 || r.top < bounds.top - 1 || r.bottom > bounds.bottom + 1;
+}
+const main = document.querySelector('main'), bounds = main.getBoundingClientRect();
+const pageOverflow = main.scrollHeight > main.clientHeight + 1 ||
+ [...main.querySelectorAll('main > *, .now > *, .hour > *, .day > *')].some(el => outside(el, bounds));
+const summaryOverflow = [...main.querySelectorAll('.card')].some(card => {
  const bounds = card.getBoundingClientRect();
- return [...card.querySelectorAll('.card-heading > *, .card-body > *')].some(el => {
-  const r = el.getBoundingClientRect();
-  return r.left < bounds.left - 1 || r.right > bounds.right + 1 || r.top < bounds.top - 1 || r.bottom > bounds.bottom + 1 ||
-   (el instanceof HTMLElement && el.scrollWidth > el.clientWidth + 1);
- });
+ return [...card.querySelectorAll('.card > *, .card-heading > *')].some(el =>
+  outside(el, bounds) || (el instanceof HTMLElement && el.scrollWidth > el.clientWidth + 1));
 });
-if (expandedOverflow) { document.body.dataset.layoutError = 'overflow'; return; }
-{{end}}document.body.id='weather-ready'})();</script></body></html>
-{{define "now"}}<div class="now"><div class="details"><h2>{{.Labels.Now}}</h2><div class="stamp">{{.CurrentTime}}</div>{{if .LocationName}}<div class="location" title="{{.LocationName}}">{{.LocationName}}</div>{{end}}</div><div class="value">{{.Current}}<span class="unit"> {{.Unit}}</span></div></div>{{end}}
+if (pageOverflow || summaryOverflow) { document.body.dataset.layoutError = 'overflow'; return; }
+document.body.id='weather-ready'})();</script></body></html>
 {{define "wind"}}{{if .Missing}}<span aria-label="Wind direction unavailable">—</span>{{else}}<svg class="wind" viewBox="0 0 32 32" role="img" aria-label="{{if .Calm}}Calm{{else}}Wind travel direction{{end}}">{{if .Calm}}<circle cx="16" cy="16" r="7" fill="none" stroke="black" stroke-width="2.5"/>{{else}}<path d="M16 3 L24 15 L18 13 L18 28 L14 28 L14 13 L8 15 Z" transform="rotate({{.Angle}} 16 16)" fill="black"/>{{end}}</svg>{{end}}{{end}}
 {{define "icon"}}<svg class="weather-icon" data-kind="{{.Kind}}" viewBox="0 0 24 24" role="img" aria-label="{{.Name}}"><title>{{.Name}}</title><g class="weather-art" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{{.Artwork}}</g></svg>{{end}}`))
 

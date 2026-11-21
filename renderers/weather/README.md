@@ -33,9 +33,9 @@ inside the safe area, and omitted/zero insets preserve the previous layout.
 Safe area does not reserve space for controller overlays.
 
 Current conditions, hourly/daily forecasts and attribution use the inset
-rectangle. With nonzero insets, `full` drops its decorative summary minimum
-height. The other layouts size the summary artwork to the remaining space.
-Browser readiness rejects overflow instead of publishing a clipped forecast.
+rectangle. The summaries size their artwork to the space left by the Now
+header, forecast bands and attribution. Browser readiness rejects overflow
+instead of publishing a clipped forecast.
 
 The opt-in `TestBrowserSafeArea` test captures synthetic content with asymmetric
 insets (`top: 4`, `bottom: 8`, `left: 12`, `right: 16`) at all four rotations and
@@ -99,14 +99,16 @@ relabeled as current forecasts. The renderer samples the execution clock once.
 
 | Layout | Content |
 | --- | --- |
-| `full` | Existing dashboard with Today, Tomorrow, Now, Hourly Forecast and 7-Day Forecast |
-| `daily` | Enlarged Today and Tomorrow summaries with a compact Now header |
-| `hourly` | Enlarged summaries and Now header above the existing eight-slot Hourly Forecast |
-| `weekly` | Enlarged summaries and Now header above the existing 7-Day Forecast, including Today and Tomorrow |
+| `full` | Compact Today and Tomorrow summaries, eight three-hour slots and a seven-day forecast |
+| `daily` | Enlarged Today and Tomorrow summaries |
+| `hourly` | Enlarged summaries and eight three-hour slots |
+| `weekly` | Enlarged summaries and a seven-day forecast that includes Today and Tomorrow |
 
-The enlarged summaries are side by side in landscape and stacked in portrait.
-The hourly and weekly forecast bands keep the same content and height as in
-`full`. For an `ArprtScreen` using a renderer image built from this source,
+All layouts start with the same compact Now header. In `full`, the two
+summaries are side by side in both orientations. In the other layouts, the
+enlarged summaries are side by side in landscape and stacked in portrait.
+The hourly and weekly forecast bands share the same content and height across
+layouts. For an `ArprtScreen` using a renderer image built from this source,
 append these entries to its existing `spec.source.job.renderer.args` list:
 
 ```yaml
@@ -143,11 +145,11 @@ values remain `—` without a unit. In `full`, the Tomorrow heading shows the da
 before `Tomorrow`, for example `11/10 (Tue) Tomorrow`.
 Wind uses one decimal place in m/s. Humidity is neither requested nor displayed.
 
-`--location-name "Example City"` adds a plain-text place name beneath the Now
-time in `full` or on the left side of the header in the other layouts. Omission
-or whitespace leaves the location empty. Surrounding whitespace is trimmed; the name accepts
-up to 128 Unicode characters without control characters. Long names fit on one
-line with an ellipsis; the full text remains in the HTML title. The name is
+`--location-name "Example City"` adds a plain-text place name on the left side
+of the Now header. Omission or whitespace leaves the location empty. The
+renderer trims surrounding whitespace and accepts up to 128 Unicode characters
+without control characters. Long names fit on one line with an ellipsis, with
+the full text available in the HTML title. The name is
 display-only and does not change coordinates, model or timezone, and is never
 sent to Open-Meteo. The timezone identifier is no longer displayed, but all
 times still use the forecast location timezone. This option and display change
@@ -178,9 +180,9 @@ borders and background retain their black/white appearance. Icons use one
 stroke color each; pinned Lucide source files are unchanged. ARPRT still owns
 final device palette conversion and dithering.
 
-Landscape places Today/Now/Tomorrow above the hourly and weekly strips. Portrait
-places Now above Today/Tomorrow, hourly slots in two rows and weekly days in aligned
-date, weather, probability and high/low columns. Hourly slots emphasize larger
+Landscape displays each forecast band in a single row. Portrait displays hourly
+slots in two rows and weekly days in aligned date, weather, probability and
+high/low columns. Hourly slots emphasize larger
 weather icons and temperatures, followed by probability and wind; humidity is omitted. No external fonts, images, styles or browser data requests are made.
 Only HTML-escaped text crosses into the page; SVG markup comes from pinned, embedded Lucide assets; wind arrows remain
 renderer-authored. The capture service needs an installed sans-serif font.
@@ -274,7 +276,7 @@ Optional real-browser checks:
 ```sh
 cd renderers/weather
 WEATHER_WEBCAPPI=http://127.0.0.1:8080 WEATHER_LAYOUT_DIR=/tmp/weather-layouts \
-  go test -run '^TestBrowserLayouts$' -v -timeout 180s
+go test -run '^TestBrowserLayouts$' -v -timeout 360s
 ```
 
 This captures synthetic normal, missing-data, Fahrenheit and precipitation cases
@@ -309,12 +311,9 @@ model selection, while explicit `jma_seamless` returned null probabilities. Omit
 `--model` to use automatic selection when probability availability matters. No
 secondary model is fetched to fill an explicitly selected model's missing fields.
 
-Today and Tomorrow have wider summary columns and larger headings, weather icons
-and high/low temperatures. Now occupies a narrower landscape column and a compact
-portrait header. Portrait stacks probability below each summary temperature range.
-
-Today/Tomorrow weather artwork uses a 96 px square in landscape and 88 px in
-portrait, with condition text and numbers beside it. Before capture readiness,
+The Today and Tomorrow cards put the date, condition, temperature range and
+precipitation probability beside the weather artwork. In `full`, the icon boxes
+are capped at 96 px in landscape and 88 px in portrait. Before capture readiness,
 the renderer centers each weather drawing inside its SVG using its actual
 geometry bounds. This keeps sun, cloud and precipitation artwork visually aligned
 in the weekly strip despite different internal whitespace. Wind arrows are not
@@ -346,7 +345,3 @@ hail, according to the dashboard's chosen visual mapping. Heavy rain uses
 condition names and accessible descriptions retain their weather-code meaning,
 independent of the upstream icon names. Related conditions still share artwork,
 including freezing precipitation and rain/snow showers.
-
-Tomorrow mirrors Today: its weather artwork sits at the right edge, with the
-heading, condition, temperatures and precipitation aligned toward the right in
-both orientations.

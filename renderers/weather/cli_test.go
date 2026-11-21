@@ -105,7 +105,7 @@ func checkCLI(t *testing.T, binary string) {
 			}
 
 			html := captured.Load().(string)
-			if !strings.Contains(html, `<section class="hourly">`) || !strings.Contains(html, `<section class="weekly">`) || strings.Contains(html, `data-layout=`) {
+			if !strings.Contains(html, `<section class="hourly">`) || !strings.Contains(html, `<section class="weekly">`) || !strings.Contains(html, `data-layout="full"`) {
 				t.Fatal("omitting --layout must keep the full layout")
 			}
 			if !strings.Contains(html, `data-palette="`+palette+`"`) || strings.Contains(html, "--warm:") != (palette == "spectra6") {
@@ -137,8 +137,11 @@ func checkCLI(t *testing.T, binary string) {
 		html := captured.Load().(string)
 		if strings.Contains(html, `<section class="hourly">`) != (layout == layoutFull || layout == layoutHourly) ||
 			strings.Contains(html, `<section class="weekly">`) != (layout == layoutFull || layout == layoutWeekly) ||
-			strings.Contains(html, `data-layout="`+string(layout)+`"`) != (layout != layoutFull) {
+			!strings.Contains(html, `data-layout="`+string(layout)+`"`) {
 			t.Fatalf("unexpected forecast sections for %s", layout)
+		}
+		if !strings.Contains(html, "<main>\n"+`<header class="now">`) {
+			t.Fatalf("%s must start with the Now header", layout)
 		}
 	}
 	lastPNG := mustRead(t, output)
