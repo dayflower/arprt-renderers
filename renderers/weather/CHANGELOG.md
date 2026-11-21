@@ -1,6 +1,6 @@
 # Weather changelog
 
-## 0.6.0 - 2026-11-21
+## 0.6.1 - 2026-11-21
 
 - Add `--layout daily`, `--layout hourly` and `--layout weekly` with larger
   Today and Tomorrow artwork. The default `full` layout includes both forecast
@@ -8,6 +8,13 @@
 - Use the same top Now header in all four layouts.
 - Show the current weather icon next to the temperature when Open-Meteo
   supplies a current weather code.
+- Publish the multi-platform tag from the tested images even when their
+  manifests use Docker media types.
+
+## 0.6.0 - 2026-11-21
+
+Publication stopped after the platform-specific images were pushed. Weather
+0.6.1 contains the layout changes and completes the release.
 
 ## 0.5.0 - 2026-11-12
 

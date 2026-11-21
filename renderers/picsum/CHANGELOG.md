@@ -1,10 +1,17 @@
 # Picsum changelog
 
-## 0.2.1 - 2026-11-21
+## 0.2.2 - 2026-11-21
 
 - Replace `disintegration/imaging` with `nao1215/imaging` v1.0.12, including
   malformed-palette handling, while retaining EXIF orientation, Lanczos fitting
   and output rotation.
+- Publish the multi-platform tag from the tested images even when their
+  manifests use Docker media types.
+
+## 0.2.1 - 2026-11-21
+
+Publication stopped after the platform-specific images were pushed. Picsum
+0.2.2 contains the dependency update and completes the release.
 
 ## 0.2.0
 
