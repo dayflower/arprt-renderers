@@ -1,6 +1,6 @@
 # Weather changelog
 
-## Unreleased
+## 0.6.0 - 2026-11-21
 
 - Add `--layout daily`, `--layout hourly` and `--layout weekly` with larger
   Today and Tomorrow artwork. The default `full` layout includes both forecast
