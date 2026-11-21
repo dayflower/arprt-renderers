@@ -1,6 +1,6 @@
 # Picsum changelog
 
-## Unreleased
+## 0.2.1 - 2026-11-21
 
 - Replace `disintegration/imaging` with `nao1215/imaging` v1.0.12, including
   malformed-palette handling, while retaining EXIF orientation, Lanczos fitting
