@@ -1,4 +1,4 @@
-# Synthetic configuration; build/load the local image before using this example.
+# Synthetic configuration; pins the verified public Swatch 0.1.0 index.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -26,7 +26,8 @@ spec:
           configMap:
             name: swatch-config-v1
       renderer:
-        image: arprt-renderer-swatch:dev
+        # Swatch 0.1.0; verified public Linux amd64/arm64 multi-platform image.
+        image: ghcr.io/dayflower/arprt-renderer-swatch@sha256:7ffdd35f7f81584058388a564c5df5b920ec4503aa0f0c06b1f5e35d1467fe20
         args:
           - --config
           - /etc/swatch/config.json

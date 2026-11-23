@@ -4,7 +4,7 @@ Requirements and specification for the Swatch Job renderer.
 ARPRT is an independent, unofficial Kubernetes controller for TRMNL BYOS,
 with no affiliation with or endorsement by TRMNL.
 
-Status: implemented as unreleased version 0.1.0. Confirmed requirements
+Status: implemented and published as version 0.1.0. Confirmed requirements
 reflect the design discussion; the detailed behavior below defines the initial
 implementation. This document does not extend the ARPRT protocol.
 
@@ -282,4 +282,7 @@ examples, VERSION, changelog and validation record live under this directory.
 Renderer verification/release workflows, normal CI integration, release
 coordinator registration and the root README renderer index follow the
 repository guides. Releases use independent `swatch/vMAJOR.MINOR.PATCH` tags
-and `ghcr.io/dayflower/arprt-renderer-swatch` images, starting at 0.1.0.
+and `ghcr.io/dayflower/arprt-renderer-swatch` images. Version 0.1.0 is
+published; see [the validation record](VALIDATION.md) for verification
+evidence. Publication does not establish deployment or physical-display
+acceptance.

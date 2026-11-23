@@ -325,7 +325,8 @@ cancellation and the shipped CLI under Job restrictions. Real-browser checks are
 opt-in. Swatch exists to collect physical-display observations of ARPRT palette
 conversion; see the renderer [README](../renderers/swatch/README.md) for use and
 [validation record](../renderers/swatch/VALIDATION.md) for architecture,
-browser, cluster and physical-display limits. Swatch 0.1.0 is unreleased.
+browser, cluster and physical-display limits. Swatch 0.1.0 is published for
+Linux amd64/arm64; its renderer documents record the verified public digest.
 
 ## Common release coordinator
 
