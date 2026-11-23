@@ -14,6 +14,7 @@ Release, rather than in this procedure.
 | `weather` | `renderers/weather/` | `weather/vMAJOR.MINOR.PATCH` | `release-weather.yaml` | `ghcr.io/dayflower/arprt-renderer-weather` |
 | `prometheus` | `renderers/prometheus/` | `prometheus/vMAJOR.MINOR.PATCH` | `release-prometheus.yaml` | `ghcr.io/dayflower/arprt-renderer-prometheus` |
 | `countdown` | `renderers/countdown/` | `countdown/vMAJOR.MINOR.PATCH` | `release-countdown.yaml` | `ghcr.io/dayflower/arprt-renderer-countdown` |
+| `swatch` | `renderers/swatch/` | `swatch/vMAJOR.MINOR.PATCH` | `release-swatch.yaml` | `ghcr.io/dayflower/arprt-renderer-swatch` |
 
 ## Initial setup
 

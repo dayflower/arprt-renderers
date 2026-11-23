@@ -303,6 +303,30 @@ under Job restrictions. Real-browser checks are opt-in. See the renderer
 browser, cluster and physical-display limits. Countdown 0.1.0 is published for
 Linux amd64/arm64; its renderer documents record the verified public digest.
 
+## Swatch development
+
+Swatch owns an independent standard-library-only Go module, configuration
+schema, HTML layout, fixtures, image and release tooling under
+`renderers/swatch/`. Its module pins Go 1.27.3 independently. Root setup/check
+discovers its Makefile. Normal CI calls `check-swatch.yaml`; independent Swatch
+releases call only that renderer's verification workflow and publish the exact
+tested native amd64/arm64 images without rebuilding.
+
+```sh
+make -C renderers/swatch setup
+make check
+make -C renderers/swatch image
+make -C renderers/swatch container-check
+```
+
+Ordinary tests are synthetic and offline. They cover configuration, tile
+placement, overlay contrast, escaping, capture, output preservation,
+cancellation and the shipped CLI under Job restrictions. Real-browser checks are
+opt-in. Swatch exists to collect physical-display observations of ARPRT palette
+conversion; see the renderer [README](../renderers/swatch/README.md) for use and
+[validation record](../renderers/swatch/VALIDATION.md) for architecture,
+browser, cluster and physical-display limits. Swatch 0.1.0 is unreleased.
+
 ## Common release coordinator
 
 `tools/release.py` is a repository-level operator tool for bump/check/publish/status,

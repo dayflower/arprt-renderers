@@ -1,0 +1,43 @@
+# Synthetic configuration; build/load the local image before using this example.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swatch-config-v1
+data:
+  config.json: |
+    {
+      "version": 1,
+      "note": "dithering: none"
+    }
+---
+apiVersion: arprt.dayflower.github.io/v1alpha1
+kind: ArprtScreen
+metadata:
+  name: swatch
+spec:
+  # Output changes only with configuration or Context.
+  refreshInterval: 24h
+  imageProcessing:
+    dithering: none
+  source:
+    job:
+      volumes:
+        - name: config
+          configMap:
+            name: swatch-config-v1
+      renderer:
+        image: arprt-renderer-swatch:dev
+        args:
+          - --config
+          - /etc/swatch/config.json
+          - --webcappi-url
+          - https://webcappi.example.com
+        volumeMounts:
+          - {name: config, mountPath: /etc/swatch, readOnly: true}
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 192Mi
