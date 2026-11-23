@@ -6,8 +6,15 @@ ARPRT palette conversion and dithering. ARPRT is an independent, unofficial
 Kubernetes controller for TRMNL BYOS, with no affiliation with or endorsement
 by TRMNL.
 
-Swatch 0.1.0 is unreleased. The renderer sends self-contained HTML to a
-separately operated webcappi, validates capture, rotates once and atomically
+[Swatch 0.1.0](https://github.com/dayflower/arprt-renderers/releases/tag/swatch/v0.1.0)
+is published for Linux amd64 and arm64 as `ghcr.io/dayflower/arprt-renderer-swatch:0.1.0`.
+The verified public multi-platform reference is:
+
+```text
+ghcr.io/dayflower/arprt-renderer-swatch@sha256:7ffdd35f7f81584058388a564c5df5b920ec4503aa0f0c06b1f5e35d1467fe20
+```
+
+The renderer sends self-contained HTML to a separately operated webcappi, validates capture, rotates once and atomically
 writes an opaque RGB PNG. There is no source API, persistent state or runtime
 dependency installation.
 
@@ -97,8 +104,8 @@ self-describing. [screen.yaml](screen.yaml) uses `none`;
 [screen-dithered.yaml](screen-dithered.yaml) uses ARPRT's default `atkinson`.
 `floyd-steinberg` and `bayer` are also supported by ARPRT. Both examples use
 a 24-hour refresh interval because output changes only with configuration or
-Context, and the local `arprt-renderer-swatch:dev` image; replace the synthetic
-webcappi endpoint before use.
+Context, and pin the verified public multi-platform digest; replace the
+synthetic webcappi endpoint before use.
 
 ## Job and capture contract
 
@@ -161,4 +168,6 @@ The independent module pins Go 1.27.3 and uses only the standard library.
 Normal CI calls `check-swatch.yaml`; `swatch/vMAJOR.MINOR.PATCH` releases call
 only Swatch checks and publish the exact tested native amd64/arm64 images to
 `ghcr.io/dayflower/arprt-renderer-swatch` without rebuilding. The renderer is
-registered with the common release coordinator.
+registered with the common release coordinator. See the
+[publication record](VALIDATION.md#2026-11-24-swatch-010-publication) for
+verification evidence and limits.
