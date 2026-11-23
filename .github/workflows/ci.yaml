@@ -41,3 +41,6 @@ jobs:
 
   countdown:
     uses: ./.github/workflows/check-countdown.yaml
+
+  swatch:
+    uses: ./.github/workflows/check-swatch.yaml

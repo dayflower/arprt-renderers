@@ -1,0 +1,8 @@
+**
+!LICENSE
+!renderers/
+!renderers/swatch/
+!renderers/swatch/Dockerfile
+!renderers/swatch/go.mod
+!renderers/swatch/*.go
+!renderers/swatch/THIRD_PARTY_NOTICES.md
