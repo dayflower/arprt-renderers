@@ -44,6 +44,7 @@ type Config struct {
 	Layout     Layout     `json:"layout"`
 	Panels     []Panel    `json:"panels"`
 	AllMissing string     `json:"allMissing"`
+	Dithered   bool       `json:"dithered"`
 }
 type Prometheus struct {
 	URL            string `json:"url"`

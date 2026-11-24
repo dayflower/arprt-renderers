@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Add root `dithered` (default false) to declare that the Screen dithers. Spectra6
+  no longer uses yellow for strokes or labels; undithered `muted` is a thin dotted
+  black line. Dithered spectra6 adds orange, gold, purple and lavender mixtures:
+  `tertiary` becomes purple, `muted` gold, and repeated series colors take spare hues.
+- Keep stale values (red) and gridlines (sparse black dots) visible on undithered
+  spectra6, where light gray converts to white.
+
 ## 0.3.0 (2026-11-08)
 
 - Add fixed `small`/`medium`/`large`/`xlarge` sizes (40/48/64/80 CSS px) to

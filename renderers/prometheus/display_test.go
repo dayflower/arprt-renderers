@@ -108,7 +108,7 @@ func TestDisplaySemantics(t *testing.T) {
 	}
 	for _, pair := range [][2]float64{{0, 0}, {5, 5}, {-5, -5}, {-9, -1}, {-2, 5}, {-1e308, 1e308}} {
 		pm := PanelModel{Series: []SeriesModel{{Points: []Point{{Value: pair[0], Top: pair[0], Present: true, StackKnown: true}, {Value: pair[1], Top: pair[1], Present: true, StackKnown: true}}, Segments: []Segment{{0, 2}}}}}
-		svg := chartSVG(Panel{Type: "line"}, pm, "gray4", time.UTC)
+		svg := chartSVG(Panel{Type: "line"}, pm, "gray4", false, time.UTC)
 		if strings.Contains(svg, "NaN") || strings.Contains(svg, "Inf") {
 			t.Fatalf("invalid coordinates for %v", pair)
 		}
@@ -234,28 +234,30 @@ func TestChartMeaning(t *testing.T) {
 		t.Fatal(got)
 	}
 	for _, palette := range []string{"gray4", "spectra6"} {
-		styles := map[string]bool{}
-		for i := 0; i < 8; i++ {
-			k := seriesInk("primary", palette, i)
-			key := fmt.Sprint(k, i%2, 5+i%3)
-			if styles[key] {
-				t.Fatal("indistinguishable series")
+		for _, dithered := range []bool{false, true} {
+			styles := map[string]bool{}
+			for i := 0; i < 8; i++ {
+				k := seriesInk("primary", palette, dithered, i)
+				key := fmt.Sprint(k, i%2, 5+i%3)
+				if styles[key] {
+					t.Fatal("indistinguishable series")
+				}
+				styles[key] = true
 			}
-			styles[key] = true
-		}
-		neg := seriesInk("negative", palette, 0)
-		if palette == "gray4" && neg.fill != "white" {
-			t.Fatal("negative bar must be outlined")
+			neg := seriesInk("negative", palette, dithered, 0)
+			if palette == "gray4" && neg.fill != "white" {
+				t.Fatal("negative bar must be outlined")
+			}
 		}
 	}
 	p := Panel{Type: "line", Decimals: 1, Prefix: "<", Suffix: "&"}
 	m := PanelModel{Series: []SeriesModel{{Legend: "<unsafe>", Style: "primary", Points: []Point{{Time: 0, Top: 2, Present: true, StackKnown: true}, {Time: 60}, {Time: 120, Top: 3, Present: true, StackKnown: true}}, Segments: []Segment{{0, 1}, {2, 3}}}}, References: []ReferenceModel{{Value: 1, Label: "<limit>", Style: "secondary"}}}
-	s := chartSVG(p, m, "gray4", time.UTC)
+	s := chartSVG(p, m, "gray4", false, time.UTC)
 	if strings.Count(s, `class="segment"`) != 2 || strings.Count(s, `class="marker"`) != 2 || strings.Contains(s, "<unsafe>") || strings.Contains(s, "<limit>") {
 		t.Fatal("gaps/isolated points/escaping")
 	}
 	m = PanelModel{Missing: true}
-	s = chartSVG(p, m, "gray4", time.UTC)
+	s = chartSVG(p, m, "gray4", false, time.UTC)
 	if !strings.Contains(s, "No data") {
 		t.Fatal("all missing")
 	}
@@ -263,7 +265,7 @@ func TestChartMeaning(t *testing.T) {
 	p.Buckets = &BucketConfig{Unit: "day"}
 	p.Stack = true
 	m = PanelModel{Buckets: []Bucket{{Start: 0, End: 1, Partial: true}}, Series: []SeriesModel{{Legend: "Negative", Style: "negative", Points: []Point{{Value: -2, Base: 0, Top: -2, Present: true, StackKnown: true}}}, {Legend: "Unknown", Style: "positive", Points: []Point{{Value: 2, Base: 0, Top: 2, Present: true, StackKnown: false}}}}}
-	s = chartSVG(p, m, "gray4", time.UTC)
+	s = chartSVG(p, m, "gray4", false, time.UTC)
 	if strings.Count(s, `class="bar"`) != 1 || strings.Contains(s, `class="partial"`) || !strings.Contains(s, `01/01*</text>`) || !strings.Contains(s, `* partial`) || !strings.Contains(s, `fill="white"`) || !strings.Contains(s, `class="zero"`) {
 		t.Fatal("negative/unknown/partial stack")
 	}
@@ -273,7 +275,90 @@ func TestChartMeaning(t *testing.T) {
 	m.Buckets = nil
 	m.Series = m.Series[:1]
 	m.Series[0].Points[0].Top = 5
-	if strings.Contains(chartSVG(p, m, "gray4", time.UTC), `class="zero"`) {
+	if strings.Contains(chartSVG(p, m, "gray4", false, time.UTC), `class="zero"`) {
 		t.Fatal("misleading zero baseline")
+	}
+}
+
+func TestSpectraInks(t *testing.T) {
+	styles := []string{"primary", "secondary", "tertiary", "positive", "negative", "muted"}
+	solid := map[string]bool{"#0000ff": true, "#ff0000": true, "#008000": true, "#000000": true}
+	for _, style := range styles {
+		k := seriesInk(style, "spectra6", false, 0)
+		if !solid[k.color] || k.text != k.color {
+			t.Fatalf("undithered %s must use a native non-yellow ink: %+v", style, k)
+		}
+		if d := seriesInk(style, "spectra6", true, 0); d.color == "#ffff00" || d.color == "#aaaa00" {
+			t.Fatalf("dithered %s must avoid yellow: %+v", style, d)
+		}
+	}
+	if k := seriesInk("muted", "spectra6", false, 0); k.dash == "" || k.width != 2 {
+		t.Fatalf("undithered muted must be thin and dotted: %+v", k)
+	}
+	if k := seriesInk("muted", "spectra6", true, 0); k.color != "#cc9900" || k.text != "#000" || k.width != 4 {
+		t.Fatalf("dithered muted must use gold with black labels: %+v", k)
+	}
+	if seriesInk("tertiary", "spectra6", true, 0).color == seriesInk("positive", "spectra6", true, 0).color {
+		t.Fatal("dithered tertiary must differ from positive")
+	}
+
+	series := make([]SeriesModel, 8)
+	for i := range series {
+		series[i].Style = "primary"
+	}
+	series[6].Style, series[7].Style = "positive", "positive"
+	inks := seriesInks(series, "spectra6", true)
+	want := []string{"#0000ff", "#ff8000", "#cc99ff", "#800080", "#cc9900", "#008000", "#008000", "#008000"}
+	for i, k := range inks {
+		if k.color != want[i] {
+			t.Fatalf("series %d: got %s, want %s", i, k.color, want[i])
+		}
+	}
+	for _, k := range seriesInks(series, "spectra6", false) {
+		if spectraMixed[k.color] {
+			t.Fatalf("undithered series must not use mixed inks: %+v", k)
+		}
+	}
+	m := PanelModel{Series: []SeriesModel{
+		{Legend: "a", Style: "primary", Points: []Point{{Time: 0, Top: 1, Present: true, StackKnown: true}, {Time: 60, Top: 2, Present: true, StackKnown: true}}, Segments: []Segment{{0, 2}}},
+		{Legend: "b", Style: "primary", Points: []Point{{Time: 0, Top: 2, Present: true, StackKnown: true}, {Time: 60, Top: 3, Present: true, StackKnown: true}}, Segments: []Segment{{0, 2}}},
+	}}
+	svg := chartSVG(Panel{Type: "line"}, m, "spectra6", true, time.UTC)
+	if !strings.Contains(svg, `stroke="#ff8000" stroke-width="4"`) || !strings.Contains(svg, `class="direct-label" fill="#000"`) {
+		t.Fatal("dithered repeated series must use a spare hue with a legible label")
+	}
+}
+
+func TestNativeInkGrays(t *testing.T) {
+	c := config(t)
+	target := contextFixture(t)
+	_, m, _ := syntheticModel(t, c, target)
+	for _, tc := range []struct {
+		palette  string
+		dithered bool
+		native   bool
+	}{{"gray4", false, false}, {"gray4", true, false}, {"spectra6", false, true}, {"spectra6", true, false}} {
+		target.Target.Palette, c.Dithered = tc.palette, tc.dithered
+		b, err := RenderHTML(c, target, m)
+		if err != nil {
+			t.Fatal(err)
+		}
+		s := string(b)
+		if strings.Contains(s, `<body class="native-inks">`) != tc.native {
+			t.Fatalf("%s dithered=%v: native-inks mismatch", tc.palette, tc.dithered)
+		}
+		if !strings.Contains(s, `class="gridline"`) {
+			t.Fatal("missing gridlines")
+		}
+		// Undithered spectra6 converts light gray to white, hiding it.
+		if tc.native && strings.Contains(s, `stroke="#aaa"`) {
+			t.Fatalf("undithered spectra6 must not draw light gray gridlines")
+		}
+		if !tc.native && !strings.Contains(s, `stroke="#aaa"`) {
+			t.Fatalf("%s dithered=%v: gridlines must stay light gray", tc.palette, tc.dithered)
+		}
+	}
+	if !strings.Contains(displayCSS, ".native-inks .stale{color:#ff0000}") {
+		t.Fatal("undithered spectra6 stale values must use a native ink")
 	}
 }

@@ -22,6 +22,7 @@ h2{font-size:18px;line-height:24px;font-weight:bold;margin:0;height:24px;flex-sh
 .number.large{font-size:64px}
 .number.xlarge{font-size:80px}
 .stale{color:#aaa}
+.native-inks .stale{color:#ff0000}
 .status{font-size:16px;line-height:20px;flex-shrink:0}
 .chart{width:100%;flex:1;min-height:156px;overflow:visible;font-size:14px}
 .panel:has(>.chart){min-height:180px}
