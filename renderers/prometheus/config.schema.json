@@ -31,6 +31,10 @@
         "display"
       ],
       "default": "fail"
+    },
+    "dithered": {
+      "type": "boolean",
+      "default": false
     }
   },
   "required": [

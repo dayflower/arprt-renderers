@@ -90,7 +90,7 @@ func contextFixture(t *testing.T) Context {
 
 func TestConfigDefaultsAndPortrait(t *testing.T) {
 	c := config(t)
-	if c.Timezone != "Asia/Tokyo" || c.Prometheus.ScrapeInterval != "60s" || c.AllMissing != "fail" || c.Panels[2].MinStep != "1s" || c.Panels[1].Panels[0].Grow != 1 || !c.Panels[3].Buckets.IncludeCurrent {
+	if c.Timezone != "Asia/Tokyo" || c.Prometheus.ScrapeInterval != "60s" || c.AllMissing != "fail" || c.Dithered || c.Panels[2].MinStep != "1s" || c.Panels[1].Panels[0].Grow != 1 || !c.Panels[3].Buckets.IncludeCurrent {
 		t.Fatalf("missing defaults: %+v", c)
 	}
 	if !reflect.DeepEqual(c.Layout.Portrait.Areas, []string{"heading", "current", "history", "daily"}) || c.Layout.Portrait.Rows != "auto auto auto 1fr" {

@@ -69,8 +69,10 @@ checks. Duplicate keys, nulls, trailing documents, invalid UTF-8 and JSON nestin
 over 64 levels are rejected. No file or network access occurs during parsing.
 
 Root keys are `version` (required, exactly 1), `timezone` (default `Asia/Tokyo`),
-`prometheus`, `layout`, `panels` (all required), and `allMissing` (`fail` by default,
-or `display`). `Local` and unknown timezones fail. Unknown fields and fields
+`prometheus`, `layout`, `panels` (all required), `allMissing` (`fail` by default,
+or `display`), and `dithered` (boolean, default false). Set `dithered` to true only
+when the Screen's `spec.imageProcessing.dithering` is not `none`; it selects the
+dithered spectra6 inks below and has no effect on gray4. `Local` and unknown timezones fail. Unknown fields and fields
 belonging to another panel type fail, even when supplied as false or zero.
 
 `prometheus` accepts `url`, optional `auth`, and `scrapeInterval` (default `60s`).
@@ -470,19 +472,30 @@ omitted without dropping data. Hour-bucket labels retain UTC offsets. A partial
 bucket has an explicit `*` label and a `* partial` key, without a surrounding
 outline. Its final physical-display treatment is still an operator acceptance item.
 
-| Logical style | gray4 | spectra6 |
-| --- | --- | --- |
-| primary | Black, 3 px solid | Blue, 3 px |
-| secondary | Black, 3 px dashed | Red, 3 px |
-| tertiary | Dark gray, 2 px with markers | Green, 3 px |
-| positive / negative | Black fill / white fill with black outline | Green / red |
-| muted | Light gray | Yellow |
+| Logical style | gray4 | spectra6 | spectra6, `dithered` |
+| --- | --- | --- | --- |
+| primary | Black, 3 px solid | Blue, 3 px | Blue, 3 px |
+| secondary | Black, 3 px dashed | Red, 3 px | Red, 3 px |
+| tertiary | Dark gray, 2 px with markers | Green, 3 px | Purple `#800080`, 4 px |
+| positive / negative | Black fill / white fill with black outline | Green / red | Green / red |
+| muted | Light gray | Black, 2 px dotted | Gold `#cc9900`, 4 px |
+
+The native spectra6 yellow is too close to white on hardware and is never used.
+Dithered mixtures (`#ff8000` orange, `#cc9900` gold, `#800080` purple, `#cc99ff`
+lavender) need area, so their strokes are at least 4 px and their direct labels are
+black. With `dithered`, a series other than positive/negative that repeats an
+earlier series color takes the next unused hue from orange, lavender, purple,
+gold, green, red and blue. Without dithering, these mixtures would collapse into
+native inks, so they are not used. For the same reason, undithered spectra6
+draws gridlines as sparse 1 px black dots and stale values in red instead of
+light gray, which would convert to white.
 
 Returned series additionally receive eight deterministic dash/marker combinations,
 including when they share a logical style. Gray4 bars also vary opaque fills,
 outlines and interior markers. Fills are opaque, with no gradients,
 external fonts, assets or chart libraries. ARPRT owns final dithering/overlays.
-Stale values retain their number in light gray with an explicit `! Stale` mark.
+Stale values retain their number in light gray (red on undithered spectra6) with
+an explicit `! Stale` mark.
 
 ## Synthetic energy examples and browser checks
 
@@ -612,7 +625,8 @@ Record each scope independently in [VALIDATION.md](VALIDATION.md):
   successful image survives without temporary-file leaks.
 - On gray4 and spectra6 hardware, check text/axes, eight-series distinctions,
   stale/missing data, signed stacks and rotation/overlays. Decide whether the
-  provisional `* partial` label is acceptable.
+  provisional `* partial` label is acceptable. Check spectra6 both with
+  and without `dithered` (matching the Screen dithering), including 4 px mixed strokes.
 - Before claiming arm64 support was executed, obtain passing native arm64 CI;
   a cross-build, pull or workflow definition alone does not establish execution.
 

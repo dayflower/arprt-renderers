@@ -13,16 +13,35 @@ import (
 func esc(s string) string { return html.EscapeString(s) }
 
 type ink struct {
-	color, dash, fill string
-	width             int
+	color, dash, fill, text string
+	width                   int
 }
 
-func seriesInk(style, palette string, index int) ink {
-	k := ink{"#000", "", "#000", 3}
+// Spectra6 styles. The panel's own yellow is too close to white on hardware, so
+// it is never used for strokes or text. Without dithering only the six native
+// inks survive palette conversion; muted becomes a thin dotted black line.
+var (
+	spectraSolid    = map[string]string{"primary": "#0000ff", "secondary": "#ff0000", "tertiary": "#008000", "positive": "#008000", "negative": "#ff0000", "muted": "#000000"}
+	spectraDithered = map[string]string{"primary": "#0000ff", "secondary": "#ff0000", "tertiary": "#800080", "positive": "#008000", "negative": "#ff0000", "muted": "#cc9900"}
+	// Mixed inks that read as distinct hues only after ARPRT dithering.
+	spectraMixed = map[string]bool{"#ff8000": true, "#cc9900": true, "#800080": true, "#cc99ff": true}
+	// Replacement order for repeated colors in dithered spectra6 charts.
+	spectraSpare = []string{"#ff8000", "#cc99ff", "#800080", "#cc9900", "#008000", "#ff0000", "#0000ff"}
+)
+
+func seriesInk(style, palette string, dithered bool, index int) ink {
+	k := ink{"#000", "", "#000", "", 3}
 	if palette == "spectra6" {
-		k.color = map[string]string{"primary": "#0000ff", "secondary": "#ff0000", "tertiary": "#008000", "positive": "#008000", "negative": "#ff0000", "muted": "#aaaa00"}[style]
+		colors := spectraSolid
+		if dithered {
+			colors = spectraDithered
+		}
+		k.color = colors[style]
 		if k.color == "" {
 			k.color = "#0000ff"
+		}
+		if style == "muted" && !dithered {
+			k.dash, k.width = "2 4", 2
 		}
 	} else {
 		switch style {
@@ -35,7 +54,7 @@ func seriesInk(style, palette string, index int) ink {
 			k.color = "#aaaaaa"
 		}
 	}
-	k.fill = k.color
+	setInkColor(&k, k.color)
 	if style == "negative" && palette == "gray4" {
 		k.fill = "white"
 	}
@@ -45,6 +64,37 @@ func seriesInk(style, palette string, index int) ink {
 		k.dash = []string{"", "8 5", "2 4", "12 4 2 4", "5 3", "14 6", "2 3 7 3", "10 3 2 3 2 3"}[index%8]
 	}
 	return k
+}
+
+// setInkColor keeps small text legible: dithered mixtures need area, so labels
+// for them stay black, and mixed strokes are widened to carry the pattern.
+func setInkColor(k *ink, color string) {
+	k.color, k.fill, k.text = color, color, color
+	if spectraMixed[color] {
+		k.text = "#000"
+		k.width = max(k.width, 4)
+	}
+}
+
+// seriesInks assigns chart series inks. With dithered spectra6, a non-semantic
+// series repeating an earlier color takes the next unused spare hue.
+func seriesInks(series []SeriesModel, palette string, dithered bool) []ink {
+	out := make([]ink, len(series))
+	used := map[string]bool{}
+	for si, s := range series {
+		k := seriesInk(s.Style, palette, dithered, si)
+		if palette == "spectra6" && dithered && used[k.color] && s.Style != "positive" && s.Style != "negative" {
+			for _, c := range spectraSpare {
+				if !used[c] {
+					setInkColor(&k, c)
+					break
+				}
+			}
+		}
+		used[k.color] = true
+		out[si] = k
+	}
+	return out
 }
 
 // RenderHTML accepts a validated configuration/context and its normalized model.
@@ -69,7 +119,13 @@ func RenderHTML(c Config, target Context, m Model) ([]byte, error) {
 		}
 		b.WriteString(`" `)
 	}
-	b.WriteString(`}</style></head><body><main class="grid">`)
+	b.WriteString(`}</style></head><body`)
+	// Without dithering spectra6 turns light gray into white; switch grays to
+	// native inks so stale values and gridlines stay visible.
+	if target.Target.Palette == "spectra6" && !c.Dithered {
+		b.WriteString(` class="native-inks"`)
+	}
+	b.WriteString(`><main class="grid">`)
 	byID := map[string]PanelModel{}
 	for _, p := range m.Panels {
 		byID[p.ID] = p
@@ -139,7 +195,7 @@ func RenderHTML(c Config, target Context, m Model) ([]byte, error) {
 			}
 		case "line", "bar":
 			fmt.Fprintf(&b, `<h2 class="ellipsis">%s</h2>`, esc(p.Title))
-			b.WriteString(chartSVG(p, pm, target.Target.Palette, loc))
+			b.WriteString(chartSVG(p, pm, target.Target.Palette, c.Dithered, loc))
 		}
 		b.WriteString(`</section>`)
 		return nil
@@ -258,7 +314,7 @@ func niceTicks(lo, hi float64) []float64 {
 	return out
 }
 
-func chartSVG(p Panel, m PanelModel, palette string, loc *time.Location) string {
+func chartSVG(p Panel, m PanelModel, palette string, dithered bool, loc *time.Location) string {
 	var b strings.Builder
 	lo, hi := chartDomain(p, m)
 	scale := math.Max(math.Abs(lo), math.Abs(hi))
@@ -269,14 +325,19 @@ func chartSVG(p Panel, m PanelModel, palette string, loc *time.Location) string 
 	// Fixed-pixel labels surround a nested normalized plot. No text is stretched
 	// with its data; the actual plot width is exactly the sampling reserve of 96px.
 	b.WriteString(`<svg class="chart" xmlns="http://www.w3.org/2000/svg" role="img"><title>` + esc(p.Title) + `</title><svg class="plot" x="48" y="18" width="calc(100% - 96px)" height="calc(100% - 60px)" viewBox="0 0 1000 1000" preserveAspectRatio="none">`)
+	grid := `stroke="#aaa"`
+	if palette == "spectra6" && !dithered {
+		// Sparse 1 px black dots: lighter than a muted series' 2 px dashes.
+		grid = `stroke="#000" stroke-width="1" stroke-dasharray="1 7"`
+	}
 	for _, v := range niceTicks(lo, hi) {
-		fmt.Fprintf(&b, `<path d="M0 %.4f H1000" stroke="#aaa" fill="none" vector-effect="non-scaling-stroke"/>`, y(v))
+		fmt.Fprintf(&b, `<path class="gridline" d="M0 %.4f H1000" %s fill="none" vector-effect="non-scaling-stroke"/>`, y(v), grid)
 	}
 	if lo <= 0 && hi >= 0 {
 		fmt.Fprintf(&b, `<path class="zero" d="M0 %.4f H1000" stroke="#000" fill="none" vector-effect="non-scaling-stroke"/>`, y(0))
 	}
 	for _, r := range m.References {
-		k := seriesInk(r.Style, palette, 0)
+		k := seriesInk(r.Style, palette, dithered, 0)
 		fmt.Fprintf(&b, `<path class="reference" d="M0 %.4f H1000" stroke="%s" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"><title>%s</title></path>`, y(r.Value), k.color, esc(r.Label))
 	}
 	n := len(m.Buckets)
@@ -289,8 +350,9 @@ func chartSVG(p Panel, m PanelModel, palette string, loc *time.Location) string 
 		}
 		return float64(i) * 1000 / float64(max(1, n-1))
 	}
+	inks := seriesInks(m.Series, palette, dithered)
 	for si, s := range m.Series {
-		k := seriesInk(s.Style, palette, si)
+		k := inks[si]
 		if p.Type == "bar" && palette == "gray4" && s.Style != "positive" && s.Style != "negative" {
 			k.fill = []string{"#000", "white", "#555555", "#aaaaaa"}[si%4]
 		}
@@ -378,21 +440,21 @@ func chartSVG(p Panel, m PanelModel, palette string, loc *time.Location) string 
 		for i := len(s.Points) - 1; i >= 0; i-- {
 			q := s.Points[i]
 			if q.Present && q.StackKnown {
-				labels = append(labels, direct{math.Max(0, math.Min(1, y(q.Top)/1000)), fmt.Sprintf("%d %s", si+1, s.Legend), seriesInk(s.Style, palette, si)})
+				labels = append(labels, direct{math.Max(0, math.Min(1, y(q.Top)/1000)), fmt.Sprintf("%d %s", si+1, s.Legend), inks[si]})
 				break
 			}
 		}
 	}
 	for _, r := range m.References {
 		if r.Value >= lo && r.Value <= hi && r.Label != "" {
-			labels = append(labels, direct{y(r.Value) / 1000, r.Label, seriesInk(r.Style, palette, 0)})
+			labels = append(labels, direct{y(r.Value) / 1000, r.Label, seriesInk(r.Style, palette, dithered, 0)})
 		}
 	}
 	sort.SliceStable(labels, func(i, j int) bool { return labels[i].value < labels[j].value })
 	// Store desired positions; readiness resolves collisions using the measured
 	// plot height and rejects a chart too short for its direct labels.
 	for _, d := range labels {
-		fmt.Fprintf(&b, `<text class="direct-label" fill="%s" x="calc(100%% - 44px)" y="0" data-y="%.6f" data-max="43">%s</text>`, d.ink.color, d.value, esc(d.name))
+		fmt.Fprintf(&b, `<text class="direct-label" fill="%s" x="calc(100%% - 44px)" y="0" data-y="%.6f" data-max="43">%s</text>`, d.ink.text, d.value, esc(d.name))
 	}
 	if m.Missing {
 		b.WriteString(`<text class="missing" x="50%" y="50%" text-anchor="middle">No data</text>`)
