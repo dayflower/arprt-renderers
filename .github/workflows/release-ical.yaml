@@ -81,10 +81,8 @@ jobs:
             docker tag "$tested" "$IMAGE:$RELEASE_VERSION-$arch"
             docker push "$IMAGE:$RELEASE_VERSION-$arch"
           done
+          # Docker manifest lists do not support index annotations.
           docker buildx imagetools create --tag "$IMAGE:$RELEASE_VERSION" \
-            --annotation "index:org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
-            --annotation "index:org.opencontainers.image.revision=$SOURCE_REVISION" \
-            --annotation "index:org.opencontainers.image.version=$RELEASE_VERSION" \
             "$IMAGE:$RELEASE_VERSION-amd64" "$IMAGE:$RELEASE_VERSION-arm64"
           mkdir -p dist
           docker buildx imagetools inspect --format '{{json .Manifest}}' "$IMAGE:$RELEASE_VERSION" > dist/ical-index.json
