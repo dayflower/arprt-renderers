@@ -1,5 +1,47 @@
 # Validation record
 
+## 2026-11-24 Prometheus 0.4.1 publication
+
+- Release preparation: [PR #62](https://github.com/dayflower/arprt-renderers/pull/62)
+  (0.4.0) and [PR #63](https://github.com/dayflower/arprt-renderers/pull/63) (0.4.1).
+- Source revision: `3d79873cc3a523998321e93203f20acefe5f1b72`.
+- Release: [Prometheus 0.4.1](https://github.com/dayflower/arprt-renderers/releases/tag/prometheus/v0.4.1).
+- Exact-commit main CI: [successful workflow](https://github.com/dayflower/arprt-renderers/actions/runs/45396820945).
+- Native release verification and publication: [successful workflow](https://github.com/dayflower/arprt-renderers/actions/runs/45397113088).
+- Immutable multi-platform reference:
+  `ghcr.io/dayflower/arprt-renderer-prometheus@sha256:2d5fab44444034a5f085df7bfadd479b9108969a5a41ac6ebff1c3cd454a6688`.
+
+The 0.4.0 [release workflow](https://github.com/dayflower/arprt-renderers/actions/runs/45395892375)
+passed native verification and pushed the `0.4.0-amd64` and `0.4.0-arm64`
+platform tags, then stopped because Docker manifest lists reject index
+annotations. No 0.4.0 index or Release exists; the tag and platform images were
+left in place. 0.4.1 removes the index annotations and completes the release
+with the same renderer changes.
+
+Local `make check` and Job-restricted container checks passed before both
+preparation PRs. Main CI and the release workflow verified native Linux amd64
+and arm64 builds, offline tests and production CLI execution. Publication
+loaded the exact tested image archives without rebuilding. The index is a
+Docker manifest list containing exactly these two platform manifests:
+
+| Platform | Manifest digest |
+| --- | --- |
+| linux/amd64 | `sha256:6f8d5287dcd49a62c80b4a7ff1a7f4be35d0e79d4ad514e2cc3f358811a65a64` |
+| linux/arm64 | `sha256:f97d9cea167835e9d2966e124500d5f60faaa980b1d6569506aa56f9faa6ac52` |
+
+Anonymous version-tag and index-digest pulls passed on both platforms using an
+empty Docker configuration. Per-platform manifest inspection verified
+OS/architecture, OCI version `0.4.1`, revision
+`3d79873cc3a523998321e93203f20acefe5f1b72` and the repository source label.
+The index carries no annotations. The public amd64 index reference passed
+`container-check` with network none, UID/GID 1000, read-only root, dropped
+capabilities and only output storage writable.
+
+Postpublication native arm64 execution was not performed. Real Chromium
+value-size checks were skipped locally without `PROMETHEUS_BROWSER_IMAGE`.
+Live Prometheus, Kubernetes and physical-display acceptance remain unverified.
+Updating example digest pins does not apply resources or change device assignments.
+
 ## 2026-11-08 Prometheus 0.3.0 publication
 
 - Release preparation: [PR #45](https://github.com/dayflower/arprt-renderers/pull/45).
