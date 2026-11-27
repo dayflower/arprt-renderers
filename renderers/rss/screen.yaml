@@ -9,8 +9,8 @@ spec:
   source:
     job:
       renderer:
-        # RSS 0.2.0; verified Linux amd64/arm64 multi-platform image.
-        image: ghcr.io/dayflower/arprt-renderer-rss@sha256:0e4bc54b19458281c31894923a801b8b08551b5aab6d1162bd22a7c6cf907120
+        # RSS 0.3.0, verified Linux amd64/arm64 multi-platform image.
+        image: ghcr.io/dayflower/arprt-renderer-rss@sha256:d89cf2949039c2ea0b9247e913caa7af4112d71bff36ebb69499e07af37e7b36
         args:
           - --feed-url
           - https://news.example.com/feed.xml

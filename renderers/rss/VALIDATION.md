@@ -200,3 +200,29 @@ Postpublication native arm64 execution was not performed. These publication
 checks add no live-source, real-browser, Kubernetes or physical-display acceptance.
 Earlier browser evidence has its own scope above. Updating the example digest
 pins does not apply resources or change existing Device assignments.
+
+## 2026-11-27 RSS 0.3.0 publication
+
+- Source revision: `fff303c51d1990f211ea67e037ed699422bd1204`.
+- Release: [RSS 0.3.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.3.0).
+- [Main CI](https://github.com/dayflower/arprt-renderers/actions/runs/46000084909) and the
+  [release workflow](https://github.com/dayflower/arprt-renderers/actions/runs/46000326910) passed. The release verified native Linux
+  amd64 and arm64 builds, offline tests and production CLI execution under Job
+  security restrictions.
+- Immutable multi-platform reference:
+  `ghcr.io/dayflower/arprt-renderer-rss@sha256:d89cf2949039c2ea0b9247e913caa7af4112d71bff36ebb69499e07af37e7b36`.
+
+Before publication, `make check`, the RSS image build and the local
+`container-check` passed on native Linux amd64. The opt-in
+`TestBrowserPagination` passed against a temporary, loopback-only webcappi
+0.2.0 container with synthetic articles and safe-area insets. The two
+consecutive captures showed articles ABC and DEF at rotation 0, and ABCDE
+and FGHIJ at rotation 90. The local capture service used `sandbox: false`
+because Chromium could not start with its sandbox in the host's Docker setup.
+
+After publication, source, revision and version OCI labels matched on both
+platforms. Anonymous tag and index-digest pulls passed for both platforms
+using an empty Docker configuration. The published amd64 digest also passed
+`container-check` on the native amd64 host. Postpublication native arm64
+execution, live-feed pagination, Kubernetes state handoff and physical-display
+behavior were not tested for this release.
