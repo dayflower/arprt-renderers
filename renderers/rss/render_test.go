@@ -185,7 +185,7 @@ func TestCaptureHTTP(t *testing.T) {
 			t.Error("incorrect capture request")
 		}
 		q := r.URL.Query()
-		if q.Get("width") != "800" || q.Get("height") != "480" || q.Get("html_mode") != "file" || q.Get("ready_selector") != "#rss-ready" || q.Has("output_width") || q.Has("full_page") || q.Has("profile") {
+		if q.Get("width") != "800" || q.Get("height") != "480" || q.Get("html_mode") != "file" || q.Get("ready_selector") != "#rss-ready" || q.Has("output_width") || q.Has("full_page") || q.Has("profile") || q.Has("capture_metadata") {
 			t.Error("incorrect capture query")
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -231,7 +231,7 @@ func TestCaptureHTTP(t *testing.T) {
 	defer server.Close()
 	for _, p := range []string{"/ok", "/retry", "/retry504"} {
 		attempts.Store(0)
-		if _, err := capture(context.Background(), newHTTPClient(), server.URL+p, "synthetic-token", []byte("<html>合成</html>"), 800, 480); err != nil {
+		if _, err := capture(context.Background(), newHTTPClient(), server.URL+p, "synthetic-token", []byte("<html>合成</html>"), 800, 480, false); err != nil {
 			t.Fatal(err)
 		}
 		if p != "/ok" && attempts.Load() != 2 {
@@ -243,7 +243,7 @@ func TestCaptureHTTP(t *testing.T) {
 			attempts.Store(0)
 			ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 			defer cancel()
-			if _, err := capture(ctx, newHTTPClient(), server.URL+p, "synthetic-token", []byte("<html>合成</html>"), 800, 480); err == nil {
+			if _, err := capture(ctx, newHTTPClient(), server.URL+p, "synthetic-token", []byte("<html>合成</html>"), 800, 480, false); err == nil {
 				t.Fatal("accepted capture error")
 			}
 			if p == "/always" && attempts.Load() != 2 || p == "/bad" && attempts.Load() != 1 {
@@ -255,7 +255,7 @@ func TestCaptureHTTP(t *testing.T) {
 		t.Fatal("capture followed redirect")
 	}
 	for _, base := range []string{"file:///tmp/a", "https://user:pass@example.com", "https://example.com?x=1", "https://example.com/#fragment"} {
-		if _, err := captureURL(base, 800, 480); err == nil {
+		if _, err := captureURL(base, 800, 480, false); err == nil {
 			t.Fatalf("accepted URL %s", base)
 		}
 	}
@@ -269,7 +269,7 @@ func TestAtomicWrite(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if err := writeOutput(ctx, path, []byte("new")); err == nil {
+	if err := writeOutput(ctx, path, []byte("new"), "", nil); err == nil {
 		t.Fatal("cancelled write succeeded")
 	}
 	data, _ := os.ReadFile(path)
@@ -280,11 +280,11 @@ func TestAtomicWrite(t *testing.T) {
 	if len(entries) != 0 {
 		t.Fatal("temporary files leaked")
 	}
-	if err := writeOutput(context.Background(), path, []byte("new")); err != nil {
+	if err := writeOutput(context.Background(), path, []byte("new"), "", nil); err != nil {
 		t.Fatal(err)
 	}
 	// Rename failure must also clean its sibling temporary file.
-	if err := writeOutput(context.Background(), root, []byte("new")); err == nil {
+	if err := writeOutput(context.Background(), root, []byte("new"), "", nil); err == nil {
 		t.Fatal("rename to directory succeeded")
 	}
 	entries, _ = filepath.Glob(filepath.Join(root, ".rss-*.tmp"))
@@ -314,6 +314,7 @@ func TestProductionCLI(t *testing.T) {
 	checkCLI(t, binary)
 	checkProfilesCLI(t, binary)
 	checkImagesCLI(t, binary)
+	checkPaginationCLI(t, binary)
 }
 func checkCLI(t *testing.T, binary string) {
 	t.Helper()

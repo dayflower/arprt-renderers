@@ -178,7 +178,9 @@ operator. Restrict outbound access accordingly.
 | `--webcappi-token-file` | Optional read-only Bearer token file, at most 8 KiB |
 | `--profile` | `auto`; also `generic`, `hatena`, `livedoor`, `google-news` |
 | `--title` | Optional feed display title override |
-| `--max-items` | `8`, accepted range 1–20 |
+| `--max-items` | Up to `8` article candidates per render, accepted range 1–20 |
+| `--paginate` | Enable article pagination using ARPRT Job state; off by default |
+| `--result` | With `--paginate`, override `result.json` beside the output PNG |
 | `--summary` | `true`; use `--summary=false` to hide summaries |
 | `--images` | `true`; use `--images=false` to disable image requests |
 | `--public-images-only` | `true`; use `--public-images-only=false` to allow internal image destinations |
@@ -189,6 +191,35 @@ browser profile. Tokens, feed bodies, Context device data and endpoint URLs are
 not logged. Tokens must not contain internal whitespace. Authentication is sent
 only to webcappi, never the feed. Capture redirects are rejected; feed redirects
 are bounded to five HTTP(S) redirects. Successful requests require HTTP 200.
+
+## Article pagination
+
+Pagination requires [ARPRT v0.9.0 Job state](https://github.com/dayflower/arprt/blob/v0.9.0/notes/RENDERERS.md#cursor-input-and-output-example)
+and [webcappi 0.2.0 capture metadata](https://github.com/dayflower/webcappi/blob/v0.2.0/notes/API.md#capture-metadata-from-posted-html).
+Use a renderer image built with pagination support. In `spec.source.job`, add
+`state: {}` and append `--paginate` to the existing `renderer.args` list.
+If you set `state.resultPath`, pass the same path with `--result`. The result
+must be a separate file in the PNG output directory. With pagination disabled
+the renderer starts at the feed head and uses the baseline capture API.
+
+The browser reports how many articles fit after applying safe-area and layout
+constraints. The renderer writes a cursor for the last visible article, and
+ARPRT commits that state once it delivers the candidate's display URL. Replays
+and PNG downloads do not advance it. Each Device and Screen pair progresses
+independently. Scheduled Jobs prepare another page after the previous candidate
+is consumed and the refresh interval allows it, so faster requests may repeat a
+page. OnDemand is also supported by the state contract. Measure Pod startup,
+feed and image requests, capture and collection against its maximum 10-second
+budget before using it for RSS.
+
+The next render resumes after the stored article in the current feed. The
+cursor uses a digest of the existing article identifier or, when absent, the
+title, date, source and occurrence among items with those same values. An edit
+or reorder of indistinguishable items can affect the fallback match. When the
+cursor article has disappeared or the last visible article reaches the end of
+the parsed feed, the next page starts at the head. An empty feed preserves the
+cursor. Invalid or missing capture metadata, or a nonempty page with zero
+visible articles, fails the Job without publishing a candidate.
 
 ## Contracts and runtime
 
@@ -280,6 +311,15 @@ correction was needed. These are point-in-time visual checks. See the
 [validation record](VALIDATION.md) for observed feed behavior, software and cluster
 verification, public-image checks and the limits of physical-display observation.
 See [third-party notices](THIRD_PARTY_NOTICES.md) for dependency licenses.
+
+Run the opt-in pagination browser test from the renderer directory against a
+local webcappi 0.2.0 instance. It compares two consecutive captures to reference
+captures of the reported articles at both orientations with safe-area insets.
+
+```sh
+RSS_PAGINATION_WEBCAPPI=http://127.0.0.1:8080 \
+go test -run '^TestBrowserPagination$' -v .
+```
 
 ## Screen configuration
 
