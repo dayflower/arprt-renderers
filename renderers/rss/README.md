@@ -6,9 +6,9 @@ service, and atomically writes the PNG to the output file.
 It displays headlines, optional summaries, categories, sources, bookmark counts,
 optional thumbnails and feed-supplied article dates.
 ARPRT is independent and unofficial, with no affiliation with or endorsement by
-TRMNL. [RSS 0.2.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.2.0)
+TRMNL. [RSS 0.3.0](https://github.com/dayflower/arprt-renderers/releases/tag/rss/v0.3.0)
 is publicly available for Linux amd64 and arm64 as
-`ghcr.io/dayflower/arprt-renderer-rss:0.2.0`.
+`ghcr.io/dayflower/arprt-renderer-rss:0.3.0`.
 
 ## Safe area
 
@@ -196,7 +196,7 @@ are bounded to five HTTP(S) redirects. Successful requests require HTTP 200.
 
 Pagination requires [ARPRT v0.9.0 Job state](https://github.com/dayflower/arprt/blob/v0.9.0/notes/RENDERERS.md#cursor-input-and-output-example)
 and [webcappi 0.2.0 capture metadata](https://github.com/dayflower/webcappi/blob/v0.2.0/notes/API.md#capture-metadata-from-posted-html).
-Use a renderer image built with pagination support. In `spec.source.job`, add
+Use RSS 0.3.0 or later. In `spec.source.job`, add
 `state: {}` and append `--paginate` to the existing `renderer.args` list.
 If you set `state.resultPath`, pass the same path with `--result`. The result
 must be a separate file in the PNG output directory. With pagination disabled
@@ -323,7 +323,7 @@ go test -run '^TestBrowserPagination$' -v .
 
 ## Screen configuration
 
-[screen.yaml](screen.yaml) pins the verified multi-platform digest of RSS 0.2.0
+[screen.yaml](screen.yaml) pins the verified multi-platform digest of RSS 0.3.0
 from `ghcr.io/dayflower/arprt-renderer-rss`. It uses synthetic feed and webcappi
 endpoints: replace both before applying it. Anonymous tag and digest pulls were
 verified for Linux amd64 and arm64. To use a development build instead, run
@@ -352,19 +352,14 @@ CLI defaults. Input mounts must be read-only and the output parent writable.
 Ruff checks, fixed-module setup, Go checks and offline release guard tests.
 Separate native Linux amd64 and arm64 runners build the production image,
 check OCI version/revision labels and execute the offline container checker.
-[Normal CI](../../.github/workflows/ci.yaml) also runs shared checks and Picsum
-verification. The RSS 0.2.0 release passed both native jobs; its public amd64 image
-also passed the container checker after publication. Anonymous arm64 pulls confirm
-availability, while native arm64 execution was verified before publication.
-
-The independently published VERSION is `0.2.0`. This release adds
-ARPRT v0.8.0 safe-area support for feed headings, articles and thumbnails, with
-content fitting inside the inset rectangle and unchanged full-size PNG output.
-The Screen example pins the verified public 0.2.0 index digest.
+[Normal CI](../../.github/workflows/ci.yaml) runs shared checks and checks for
+all renderers. The RSS 0.3.0 release passed both native jobs, and its public
+amd64 image passed the container checker after publication. See the
+[validation record](VALIDATION.md) for browser tests and platform coverage.
 [RSS releases](../../.github/workflows/release-rss.yaml) accept annotated,
 canonical stable `rss/vMAJOR.MINOR.PATCH` tags matching VERSION on `origin/main`.
 They call only RSS verification, transfer the exact tested native image archives
 to publication, and refuse existing version/platform tags or GitHub releases.
 No `latest` tag is published. The index metadata and release notes record the
-immutable reference and source revision. See [release instructions](../../notes/RELEASE.md#publishing-rss)
+immutable reference and source revision. See [release instructions](../../notes/RELEASE.md)
 for setup, partial-publication recovery and public-availability verification.
