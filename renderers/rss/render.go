@@ -39,7 +39,8 @@ type renderContext struct {
 	Device struct {
 		Name string `json:"name"`
 	} `json:"device"`
-	rotation int
+	RendererState json.RawMessage `json:"rendererState"`
+	rotation      int
 }
 
 func parseContext(data []byte) (renderContext, error) {
@@ -84,7 +85,37 @@ article{display:flow-root;padding:8px 0;border-top:1px solid #888;break-inside:a
 .summary{font-size:17px;line-height:1.4;margin-top:4px;max-height:4.2em;overflow:hidden;overflow-wrap:anywhere}.block{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}.summary-label{font-size:14px;line-height:1.4;margin-top:4px}.bullet:before{content:"• "}.empty{font-size:20px}
 </style></head><body><main><h1>{{.Title}}</h1>{{range .Articles}}<article>{{if .Image}}<img class="thumbnail" src="{{.Image}}" alt="" width="96" height="72">{{end}}<h2>{{.Title}}</h2>{{if .Meta}}<div class="meta">{{.Meta}}</div>{{end}}{{if .Summary}}{{if .SummaryLabel}}<div class="summary-label">{{.SummaryLabel}}</div>{{end}}<div class="summary">{{range .Summary}}<span class="block{{if .Bullet}} bullet{{end}}">{{.Text}}</span>{{end}}</div>{{end}}</article>{{else}}<p class="empty">No articles available.</p>{{end}}</main>
 <script>
-(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(img=>img.decode().catch(()=>img.remove())));await new Promise(requestAnimationFrame);for(const summary of document.querySelectorAll('.summary')){let remaining=3;for(const block of [...summary.children]){if(!remaining){block.remove();continue}block.style.webkitLineClamp=String(remaining);const line=parseFloat(getComputedStyle(block).lineHeight);remaining-=Math.min(remaining,Math.ceil(block.getBoundingClientRect().height/line))}}await new Promise(requestAnimationFrame);const main=document.querySelector('main');let rows=[...main.querySelectorAll('article')];const fits=row=>row.getBoundingClientRect().bottom<=main.getBoundingClientRect().bottom;while(rows.length>1&&!fits(rows.at(-1)))rows.pop().remove();if(rows.length&&!fits(rows[0]))rows[0].querySelector('.thumbnail')?.remove();if(rows.length&&!fits(rows[0])){rows[0].querySelector('.summary')?.remove();rows[0].querySelector('.summary-label')?.remove();rows[0].querySelector('.meta')?.remove()}if(rows.length&&!fits(rows[0]))rows[0].remove();document.body.id='rss-ready'})();
+(async () => {
+  await document.fonts.ready;
+  await Promise.all([...document.images].map(img => img.decode().catch(() => img.remove())));
+  await new Promise(requestAnimationFrame);
+  for (const summary of document.querySelectorAll('.summary')) {
+    let remaining = 3;
+    for (const block of [...summary.children]) {
+      if (!remaining) {
+        block.remove();
+        continue;
+      }
+      block.style.webkitLineClamp = String(remaining);
+      const line = parseFloat(getComputedStyle(block).lineHeight);
+      remaining -= Math.min(remaining, Math.ceil(block.getBoundingClientRect().height / line));
+    }
+  }
+  await new Promise(requestAnimationFrame);
+  const main = document.querySelector('main');
+  const rows = [...main.querySelectorAll('article')];
+  const fits = row => row.getBoundingClientRect().bottom <= main.getBoundingClientRect().bottom;
+  while (rows.length > 1 && !fits(rows.at(-1))) rows.pop().remove();
+  if (rows.length && !fits(rows[0])) rows[0].querySelector('.thumbnail')?.remove();
+  if (rows.length && !fits(rows[0])) {
+    rows[0].querySelector('.summary')?.remove();
+    rows[0].querySelector('.summary-label')?.remove();
+    rows[0].querySelector('.meta')?.remove();
+  }
+  if (rows.length && !fits(rows[0])) rows.pop().remove();
+  document.body.dataset.count = String(rows.length);
+  document.body.id = 'rss-ready';
+})();
 </script></body></html>`))
 
 type viewArticle struct {
@@ -221,7 +252,7 @@ func fetchFeed(ctx context.Context, client *http.Client, address string) ([]byte
 	}
 	return readBounded(resp.Body, feedLimit)
 }
-func captureURL(base string, width, height int) (string, error) {
+func captureURL(base string, width, height int, paginate bool) (string, error) {
 	if httpURL(base) == "" {
 		return "", errors.New("expected HTTP(S) webcappi base URL without credentials")
 	}
@@ -232,13 +263,23 @@ func captureURL(base string, width, height int) (string, error) {
 	u.Path = strings.TrimRight(u.Path, "/") + "/capture"
 	u.RawPath = ""
 	q := url.Values{"width": {strconv.Itoa(width)}, "height": {strconv.Itoa(height)}, "html_mode": {"file"}, "ready_selector": {"#rss-ready"}}
+	if paginate {
+		q.Set("capture_metadata", captureCountQuery)
+	}
 	u.RawQuery = q.Encode()
 	return u.String(), nil
 }
-func capture(ctx context.Context, client *http.Client, base, token string, body []byte, width, height int) ([]byte, error) {
-	address, err := captureURL(base, width, height)
+
+type captureResult struct {
+	image     image.Image
+	displayed int
+}
+
+func capture(ctx context.Context, client *http.Client, base, token string, body []byte, width, height int, paginate bool) (captureResult, error) {
+	var result captureResult
+	address, err := captureURL(base, width, height, paginate)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 	ctx, cancel := context.WithTimeout(ctx, 40*time.Second)
 	defer cancel()
@@ -248,7 +289,7 @@ func capture(ctx context.Context, client *http.Client, base, token string, body 
 	for attempt := 0; attempt < 2; attempt++ {
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, address, bytes.NewReader(body))
 		if err != nil {
-			return nil, errors.New("invalid capture request")
+			return result, errors.New("invalid capture request")
 		}
 		req.Header.Set("Content-Type", "text/html; charset=utf-8")
 		req.Header.Set("Accept", "image/png")
@@ -257,7 +298,7 @@ func capture(ctx context.Context, client *http.Client, base, token string, body 
 		}
 		resp, err := noRedirect.Do(req)
 		if err != nil {
-			return nil, errors.New("capture request failed or timed out")
+			return result, errors.New("capture request failed or timed out")
 		}
 		if (resp.StatusCode == 503 || resp.StatusCode == 504) && attempt == 0 {
 			// Bound error reads and retry delays; all attempts share the same deadline.
@@ -274,31 +315,36 @@ func capture(ctx context.Context, client *http.Client, base, token string, body 
 			select {
 			case <-ctx.Done():
 				timer.Stop()
-				return nil, errors.New("capture deadline exceeded")
+				return result, errors.New("capture deadline exceeded")
 			case <-timer.C:
 			}
 			continue
 		}
 		if resp.StatusCode != http.StatusOK {
 			resp.Body.Close()
-			return nil, fmt.Errorf("capture: HTTP %d", resp.StatusCode)
+			return result, fmt.Errorf("capture: HTTP %d", resp.StatusCode)
 		}
 		media, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 		if err != nil || media != "image/png" {
 			resp.Body.Close()
-			return nil, errors.New("capture did not return image/png")
+			return result, errors.New("capture did not return image/png")
+		}
+		if paginate {
+			result.displayed, err = captureArticleCount(resp.Header)
+			if err != nil {
+				resp.Body.Close()
+				return result, err
+			}
 		}
 		data, err := readBounded(resp.Body, pngLimit)
 		resp.Body.Close()
 		if err != nil {
-			return nil, err
+			return result, err
 		}
-		if _, err := decodePNG(data, width, height); err != nil {
-			return nil, err
-		}
-		return data, nil
+		result.image, err = decodePNG(data, width, height)
+		return result, err
 	}
-	return nil, errors.New("capture failed")
+	return result, errors.New("capture failed")
 }
 
 func decodePNG(data []byte, width, height int) (image.Image, error) {
@@ -377,25 +423,50 @@ func outputPNG(src image.Image, rotation int) ([]byte, error) {
 	}
 	return b.Bytes(), nil
 }
-func writeOutput(ctx context.Context, path string, data []byte) error {
-	f, err := os.CreateTemp(filepath.Dir(path), ".rss-*.tmp")
+func writeOutput(ctx context.Context, path string, data []byte, resultPath string, result []byte) error {
+	imageTemp, err := stageOutput(path, data)
 	if err != nil {
 		return err
 	}
-	defer os.Remove(f.Name())
-	if _, err := f.Write(data); err != nil {
-		f.Close()
-		return err
-	}
-	if err := f.Chmod(0o644); err != nil {
-		f.Close()
-		return err
-	}
-	if err := f.Close(); err != nil {
-		return err
+	defer os.Remove(imageTemp)
+	if resultPath != "" {
+		resultTemp, err := stageOutput(resultPath, result)
+		if err != nil {
+			return fmt.Errorf("stage result: %w", err)
+		}
+		defer os.Remove(resultTemp)
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		// Commit the PNG last. ARPRT only collects files from a successful Job.
+		if err := os.Rename(resultTemp, resultPath); err != nil {
+			return fmt.Errorf("replace result: %w", err)
+		}
 	}
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	return os.Rename(f.Name(), path)
+	return os.Rename(imageTemp, path)
+}
+
+func stageOutput(path string, data []byte) (string, error) {
+	f, err := os.CreateTemp(filepath.Dir(path), ".rss-*.tmp")
+	if err != nil {
+		return "", err
+	}
+	if _, err := f.Write(data); err != nil {
+		f.Close()
+		os.Remove(f.Name())
+		return "", err
+	}
+	if err := f.Chmod(0o644); err != nil {
+		f.Close()
+		os.Remove(f.Name())
+		return "", err
+	}
+	if err := f.Close(); err != nil {
+		os.Remove(f.Name())
+		return "", err
+	}
+	return f.Name(), nil
 }

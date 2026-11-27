@@ -19,6 +19,8 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	flags.SetOutput(stderr)
 	contextPath := flags.String("context", "/arprt/context.json", "Render Context v1 JSON")
 	output := flags.String("output", "/arprt/output.png", "Output PNG path")
+	paginate := flags.Bool("paginate", false, "Continue from the last displayed article using ARPRT Job state")
+	result := flags.String("result", "", "Job state result path with --paginate (default: result.json beside the output PNG)")
 	input := flags.String("input", "", "Read a local RSS file (exclusive with --feed-url)")
 	feedURL := flags.String("feed-url", "", "HTTP(S) RSS feed URL")
 	webcappi := flags.String("webcappi-url", "", "Required webcappi base URL; uses its default browser profile")
@@ -42,7 +44,7 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	if *feedURL != "" && httpURL(*feedURL) == "" {
 		return errors.New("expected HTTP(S) feed URL without credentials")
 	}
-	if _, err := captureURL(*webcappi, 800, 480); err != nil {
+	if _, err := captureURL(*webcappi, 800, 480, *paginate); err != nil {
 		return err
 	}
 	if *maxItems < 1 || *maxItems > 20 {
@@ -50,6 +52,16 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	}
 	if !validProfile(*profile) {
 		return errors.New("unknown feed profile")
+	}
+	resultPath := ""
+	if *paginate {
+		var err error
+		resultPath, err = resultFile(*result, *output, *contextPath, *input, *tokenFile)
+		if err != nil {
+			return err
+		}
+	} else if *result != "" {
+		return errors.New("--result requires --paginate")
 	}
 	location, err := time.LoadLocation(*timezone)
 	if err != nil {
@@ -89,6 +101,14 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 	if err != nil {
 		return err
 	}
+	parsedCount := len(f.Articles)
+	var remainingKeys []string
+	if *paginate {
+		keys := articleKeys(f.Articles)
+		start := pageStart(keys, target.RendererState)
+		remainingKeys = keys[start:]
+		f.Articles = f.Articles[start:]
+	}
 	if *images {
 		imageClient := newImageClient(*publicImagesOnly)
 		defer imageClient.CloseIdleConnections()
@@ -102,22 +122,25 @@ func run(parent context.Context, args []string, stdout, stderr io.Writer) error 
 		return err
 	}
 	width, height := target.logicalSize()
-	data, err = capture(ctx, client, *webcappi, token, body, width, height)
+	shot, err := capture(ctx, client, *webcappi, token, body, width, height, *paginate)
 	if err != nil {
 		return err
 	}
-	img, err := decodePNG(data, width, height)
+	var state []byte
+	if *paginate {
+		state, err = pageResult(remainingKeys, min(len(f.Articles), *maxItems), shot.displayed)
+		if err != nil {
+			return err
+		}
+	}
+	data, err = outputPNG(shot.image, target.rotation)
 	if err != nil {
 		return err
 	}
-	data, err = outputPNG(img, target.rotation)
-	if err != nil {
+	if err := writeOutput(ctx, *output, data, resultPath, state); err != nil {
 		return err
 	}
-	if err := writeOutput(ctx, *output, data); err != nil {
-		return err
-	}
-	fmt.Fprintf(stdout, "Rendered RSS: %d parsed articles, %s profile, 800x480 RGB, %d bytes\n", len(f.Articles), f.Profile, len(data))
+	fmt.Fprintf(stdout, "Rendered RSS: %d parsed articles, %s profile, 800x480 RGB, %d bytes\n", parsedCount, f.Profile, len(data))
 	return nil
 }
 func main() {
