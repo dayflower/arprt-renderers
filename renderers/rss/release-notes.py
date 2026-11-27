@@ -30,6 +30,9 @@ Path("dist/rss-release.md").write_text(
     "and CLI checks under Job security restrictions passed before publication.\n"
     "- No live feeds, webcappi browser, Kubernetes cluster or physical display acceptance is "
     "performed by this release workflow.\n\n"
+    "Article pagination is opt-in and requires ARPRT v0.9.0 or later and "
+    "webcappi 0.2.0 or later. Set `spec.source.job.state: {}` and append "
+    "`--paginate` to the existing `spec.source.job.renderer.args` list.\n\n"
     "For the first publication, set the GHCR package visibility to public and "
     "verify anonymous pulls on both platforms before advertising public availability.\n"
 )
